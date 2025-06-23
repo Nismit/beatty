@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Beatty</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zOnN2Z2pzPSJodHRwOi8vc3ZnanMuY29tL3N2Z2pzIiB3aWR0aD0iMTAwMCIgaGVpZ2h0PSIxMDAwIj48cmVjdCB3aWR0aD0iMTAwMCIgaGVpZ2h0PSIxMDAwIiByeD0iMCIgcnk9IjAiIGZpbGw9IiNmZmZmZmYiPjwvcmVjdD48ZyB0cmFuc2Zvcm09Im1hdHJpeCgxMCwwLDAsMTAsMCwwKSI+PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zOnN2Z2pzPSJodHRwOi8vc3ZnanMuY29tL3N2Z2pzIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCI+PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjIuNSIgeT0iMi41IiB3aWR0aD0iOTUiIGhlaWdodD0iOTUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iNSI+PC9yZWN0Pgo8cmVjdCB4PSI2LjQxNTA2IiB5PSIzOC45MTUxIiB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHRyYW5zZm9ybT0icm90YXRlKC0zMCA2LjQxNTA2IDM4LjkxNTEpIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjUiPjwvcmVjdD4KPHJlY3QgeD0iMjMuNDE1MSIgeT0iNTcuMDg0OSIgd2lkdGg9IjM5IiBoZWlnaHQ9IjM5IiB0cmFuc2Zvcm09InJvdGF0ZSgtNjAgMjMuNDE1MSA1Ny4wODQ5KSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSI1Ij48L3JlY3Q+CjxyZWN0IHg9IjQwLjUiIHk9IjYwLjUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdHJhbnNmb3JtPSJyb3RhdGUoLTkwIDQwLjUgNjAuNSkiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iNSI+PC9yZWN0Pgo8L3N2Zz48L3N2Zz48L2c+PC9zdmc+" type="image/x-icon">
+    <script type="module" src="main.js"></script>
+</head>
+<body>
+    <div class="canvas-layer">
+        <canvas id="visualizerCanvas"></canvas>
+    </div>
+    
+    <!-- Mobile control buttons -->
+    <div class="mobile-controls">
+        <button id="mobilePlayToggle" class="mobile-btn" title="Play/Pause (⌘P)">⏯</button>
+        <button id="mobileReset" class="mobile-btn" title="Reset (⌘I)">⏹</button>
+        <button id="mobileCompile" class="mobile-btn" title="Compile (⌘S)">🔧</button>
+        <button id="mobileApply" class="mobile-btn" title="Apply (⌘R)">✓</button>
+        <div class="mobile-btn-separator"></div>
+        <button id="mobileToggleEditor" class="mobile-btn" title="Toggle Editor (⌘T)">📝</button>
+        <button id="mobileToggleMode" class="mobile-btn" title="Switch Mode (⌘E)">🔄</button>
+        <button id="mobileHelp" class="mobile-btn" title="Help">?</button>
+    </div>
+    
+    <div class="editor-layer">
+        <div class="editor-container">
+            <div class="editor-content">
+                <div id="editor"></div>
+            </div>
+            <div class="status-line">
+                <div class="status-left">
+                    <span id="editMode">[Sound]</span>
+                    <span id="statusText">Initializing...</span>
+                </div>
+                <div class="status-right">
+                    <span class="status-clickable" id="helpStatus">HELP</span> | 
+                    <span class="status-clickable" id="bpmStatus">BPM:<span id="statusBpm">120</span></span> | 
+                    BARS:<span id="statusBars">0</span> | 
+                    <span id="statusPlayState">PAUSE</span> | 
+                    <span class="status-clickable" id="volumeStatus">VOL:<span id="statusVolume">0.3</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="slider-popup" id="bpmSliderPopup">
+        <label>BPM</label>
+        <input type="range" id="bpmSlider" min="90" max="180" value="120">
+        <span id="bpmValue">120</span>
+    </div>
+    
+    <div class="slider-popup" id="volumeSliderPopup">
+        <label>Volume</label>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.3">
+        <span id="volumeValue">0.3</span>
+    </div>
+    
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Beatty - Help</h2>
+                <button class="modal-close" id="closeHelp">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>Keyboard Shortcuts</h3>
+                    <ul class="shortcut-list">
+                        <li><kbd>⌘P</kbd> Play/Pause</li>
+                        <li><kbd>⌘I</kbd> Reset</li>
+                        <li><kbd>⌘S</kbd> Compile Shader</li>
+                        <li><kbd>⌘R</kbd> Apply Compiled Shader</li>
+                        <li><kbd>⌘T</kbd> Toggle Editor Visibility</li>
+                        <li><kbd>⌘E</kbd> Switch Sound/Visual Mode</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h3>Sound Shader Uniforms</h3>
+                    <ul class="uniform-list">
+                        <li><code>float u_bpm</code> - Beats per minute</li>
+                        <li><code>float u_sampleRate</code> - Audio sample rate</li>
+                        <li><code>float u_blockOffset</code> - Current audio block offset</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h3>Visual Shader Uniforms</h3>
+                    <ul class="uniform-list">
+                        <li><code>vec2 u_resolution</code> - Screen resolution</li>
+                        <li><code>float u_time</code> - Current time in seconds</li>
+                        <li><code>float u_kick</code> - Low frequency band (20-80 Hz) - kick drum range</li>
+                        <li><code>float u_hihat</code> - High frequency band (5000-12000 Hz) - hi-hat range</li>
+                        <li><code>float u_bass</code> - Mid-low frequency band (100-300 Hz) - bass range</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
