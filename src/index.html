@@ -1,11 +1,23 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Beatty</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="description" content="Real-time audio generation and visualization using WebGL shaders">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Beatty">
+    
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zOnN2Z2pzPSJodHRwOi8vc3ZnanMuY29tL3N2Z2pzIiB3aWR0aD0iMTAwMCIgaGVpZ2h0PSIxMDAwIj48cmVjdCB3aWR0aD0iMTAwMCIgaGVpZ2h0PSIxMDAwIiByeD0iMCIgcnk9IjAiIGZpbGw9IiNmZmZmZmYiPjwvcmVjdD48ZyB0cmFuc2Zvcm09Im1hdHJpeCgxMCwwLDAsMTAsMCwwKSI+PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zOnN2Z2pzPSJodHRwOi8vc3ZnanMuY29tL3N2Z2pzIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCI+PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHg9IjIuNSIgeT0iMi41IiB3aWR0aD0iOTUiIGhlaWdodD0iOTUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iNSI+PC9yZWN0Pgo8cmVjdCB4PSI2LjQxNTA2IiB5PSIzOC45MTUxIiB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHRyYW5zZm9ybT0icm90YXRlKC0zMCA2LjQxNTA2IDM4LjkxNTEpIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjUiPjwvcmVjdD4KPHJlY3QgeD0iMjMuNDE1MSIgeT0iNTcuMDg0OSIgd2lkdGg9IjM5IiBoZWlnaHQ9IjM5IiB0cmFuc2Zvcm09InJvdGF0ZSgtNjAgMjMuNDE1MSA1Ny4wODQ5KSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSI1Ij48L3JlY3Q+CjxyZWN0IHg9IjQwLjUiIHk9IjYwLjUiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgdHJhbnNmb3JtPSJyb3RhdGUoLTkwIDQwLjUgNjAuNSkiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iNSI+PC9yZWN0Pgo8L3N2Zz48L3N2Zz48L2c+PC9zdmc+" type="image/x-icon">
+    
     <script type="module" src="main.js"></script>
 </head>
 <body>
@@ -100,5 +112,20 @@
             </div>
         </div>
     </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
