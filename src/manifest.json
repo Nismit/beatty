@@ -1,5 +1,5 @@
 {
-  "name": "Beatty - Audio Visualizer",
+  "name": "Beatty",
   "short_name": "Beatty",
   "description": "Real-time audio generation and visualization using WebGL shaders",
   "start_url": "./index.html",

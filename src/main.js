@@ -45,6 +45,7 @@ class AudioVisualizerSystem {
     this.setupCallbacks();
     
     this.init();
+    this.setupServiceWorker();
   }
 
   setupCallbacks() {
@@ -459,6 +460,38 @@ class AudioVisualizerSystem {
     const modal = document.getElementById('helpModal');
     if (modal) {
       modal.classList.remove('visible');
+    }
+  }
+
+  // Service Worker setup for automatic updates
+  setupServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then((registration) => {
+          registration.update();
+          
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('New version available, reloading...');
+                  window.location.reload();
+                }
+              });
+            }
+          });
+        })
+        .catch((error) => {
+          console.error('Service Worker registration failed:', error);
+        });
+
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SW_UPDATED') {
+          console.log('Service Worker updated, reloading...');
+          window.location.reload();
+        }
+      });
     }
   }
 }
