@@ -1,4 +1,5 @@
 import { EditorView, highlightActiveLine, lineNumbers, keymap } from 'https://esm.run/@codemirror/view@6.36.2';
+// import { EditorState } from 'https://esm.run/@codemirror/state@6.4.1';
 
 /**
  * Editor Module - Handles code editing functionality
@@ -53,6 +54,13 @@ export class Editor {
         highlightActiveLine(),
         lineNumbers(),
         darkTheme,
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            const newCode = update.state.doc.toString();
+            this.updateCode(newCode);
+            this.onCodeChange(this.editMode, newCode);
+          }
+        }),
       ],
     });
 
@@ -63,6 +71,10 @@ export class Editor {
    * Get the current code based on edit mode
    */
   getCurrentEditCode() {
+    if (this.editorView) {
+      return this.editorView.state.doc.toString();
+    }
+
     return this.editMode === 'sound'
       ? this.currentSoundCode
       : this.currentVisualCode;

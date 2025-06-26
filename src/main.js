@@ -375,7 +375,7 @@ class AudioVisualizerSystem {
   }
 
   applyCompiledShader() {
-    try {
+    try {      
       if (this.editor.editMode === 'sound') {
         this.soundGL.applyCompiledShader();
         this.appState.pendingApply = true;
