@@ -1,5 +1,9 @@
-import { EditorView, highlightActiveLine, lineNumbers, keymap } from 'https://esm.run/@codemirror/view@6.36.2';
-// import { EditorState } from 'https://esm.run/@codemirror/state@6.4.1';
+import { basicSetup, EditorView } from "https://esm.sh/codemirror@6.0.2";
+import { keymap, ViewPlugin, Decoration } from "https://esm.sh/@codemirror/view";
+import { indentWithTab } from "https://esm.sh/@codemirror/commands";
+import { indentUnit, syntaxHighlighting, HighlightStyle, syntaxTree } from "https://esm.sh/@codemirror/language";
+import { glsl } from "https://esm.sh/codemirror-lang-glsl@0.5.0";
+import { tags as t } from "https://esm.sh/@lezer/highlight@1.2.1";
 
 /**
  * Editor Module - Handles code editing functionality
@@ -23,6 +27,71 @@ export class Editor {
    * Initialize the CodeMirror editor with dark theme
    */
   initEditor() {
+    const builtins = new Set([
+      "abs","acos","acosh","asin","asinh","atan","atanh",
+      "ceil","clamp","cos","cosh","cross",
+      "degrees","dFdx","dFdy","distance","dot",
+      "equal","exp","exp2",
+      "floor","fract","fwidth",
+      "gl_FragCoord","gl_FragColor","gl_Position","gl_PointCoord","gl_VertexID","greaterThan","greaterThanEqual",
+      "max","min","mix","mod",
+      "pow","reflect","sin","sign","step","smoothstep","tan","sqrt","texture","normalize",
+    ]);
+
+    const builtinDeco = Decoration.mark({ class: "cm-builtinFunc" });
+    const userDeco = Decoration.mark({ class: "cm-userFunc" });
+
+    const fnHighlighter = ViewPlugin.fromClass(class {
+      decorations;
+      constructor(view) {
+        this.decorations = this.build(view);
+      }
+      update(update) {
+        if (update.docChanged || update.viewportChanged) {
+          this.decorations = this.build(update.view);
+        }
+      }
+      build(view) {
+        let decos = [];
+        const tree = syntaxTree(view.state);
+        tree.iterate({
+          enter: node => {
+            if (node.name === "Identifier") {
+              const { from } = node;
+              const fullNode = tree.resolveInner(from, 1);
+              const parent = fullNode.parent;
+              if (parent?.name === "CallExpression") {
+                const name = view.state.doc.sliceString(node.from, node.to);
+                const deco = builtins.has(name) ? builtinDeco : userDeco;
+                decos.push(deco.range(node.from, node.to));
+              }
+            }
+          }
+        });
+        return Decoration.set(decos);
+      }
+    }, {
+      decorations: v => v.decorations
+    });
+
+
+    const glslHighlightStyle = HighlightStyle.define([
+      { tag: t.standard(t.typeName), color: "#a68cee"},             // Types (vec3, mat4, float, int, etc) #a68cee
+      // { tag: t.typeName, color: "#a68cee" },                     // Alternative for Types
+      { tag: t.controlKeyword, color: "#cdcb99" },                  // void, if, return, etc. #cdcb99
+      { tag: t.processingInstruction, color: "#cdcb99"},            // #define, #include  #cdcb99
+      { tag: t.definitionKeyword, color: " #deb492"},             // struct #deb492
+      
+      // IdentifierDefinition: t.definition(t.variableName), 
+      // { tag: t.definition(t.variableName), color: "#eb1111" },      // type and variable (e.g. float a;)
+      
+      { tag: t.brace, color: "#cdcdcd" },                           // { } #cdcdcd
+      { tag: t.strong, color: "#cdcdcd" },                          // ( )  #cdcdcd
+      { tag: t.variableName, color: "#fff" },                       // all variable names
+      { tag: t.number, color: "#d19a66" },                          // number
+      { tag: t.comment, color: "#5c6370", fontStyle: "italic" },    // comments
+    ]);
+
     const darkTheme = EditorView.theme(
       {
         '&': { color: '#f8f8f2', backgroundColor: 'rgb(0,0,0,.3)' },
@@ -31,18 +100,24 @@ export class Editor {
           fontSize: '14px',
           lineHeight: '1.5',
         },
-        '.cm-focused': { outline: 'none' },
-        '.cm-editor': { border: '1px solid #444' },
-        '.cm-editor.cm-focused': { borderColor: '#4CAF50' },
+        "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
+          backgroundColor: "rgba(255, 255, 255, 0.15)",
+        },
+        "& .cm-selectionBackground": { background: "rgba(255, 255, 255, 0.15)" },
+        "&.cm-focused .cm-cursor": { borderLeftColor: "#61afef" },
         '.cm-line': { padding: '0 4px' },
         '.cm-cursor': { borderLeftColor: '#f8f8f2' },
-        '.cm-activeLine': { backgroundColor: '#2a2a2a' },
+        '.cm-activeLine': { backgroundColor: 'none' },
         '.cm-gutters': {
           backgroundColor: '#1e1e1e',
           color: '#858585',
           border: 'none',
         },
         '.cm-activeLineGutter': { backgroundColor: '#2a2a2a' },
+        '.cm-foldGutter span': { padding: '0 4px', fontSize: '1rem', lineHeight: '1' },
+        // GLSL specific styles
+        '.cm-builtinFunc span': { color: '#A3CEF1' }, // Built-in functions
+        '.cm-userFunc span': { color: '#72e2bd' },    // User-defined functions #72e2bd
       },
       { dark: true },
     );
@@ -51,9 +126,13 @@ export class Editor {
       doc: this.getCurrentEditCode(),
       parent: document.getElementById('editor'),
       extensions: [
-        highlightActiveLine(),
-        lineNumbers(),
+        basicSetup,
+        glsl(),
+        syntaxHighlighting(glslHighlightStyle),
+        indentUnit.of("  "),
+        keymap.of([indentWithTab]),
         darkTheme,
+        fnHighlighter,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const newCode = update.state.doc.toString();
