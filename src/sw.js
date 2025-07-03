@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beatty-v1.0.1';
+const CACHE_NAME = 'beatty-v1.0.2';
 const urlsToCache = [
   './',
   './index.html',
@@ -39,7 +39,11 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        return fetch(event.request, { redirect: 'follow' });
+        return fetch(event.request, { 
+          redirect: 'follow',
+          mode: 'cors',
+          credentials: 'same-origin'
+        });
       }
     )
   );
