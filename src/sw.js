@@ -39,7 +39,7 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        return fetch(event.request);
+        return fetch(event.request, { redirect: 'follow' });
       }
     )
   );
