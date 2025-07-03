@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beatty-v1.0.3';
+const CACHE_NAME = 'beatty-v1.0.4';
 const urlsToCache = [
   './',
   './index.html',
@@ -31,31 +31,27 @@ self.addEventListener('install', (event) => {
 });
 
 // Fetch event - serve from cache when offline
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request, {
-      ignoreSearch: true,
-      ignoreVary: true
-    })
-      .then((response) => {
-        // Return cached version or fetch from network
-        if (response) {
-          return response;
-        }
-        return fetch(event.request, { 
-          redirect: 'follow',
-          mode: 'cors',
-          credentials: 'same-origin'
-        });
-      })
-      .catch(() => {
-        // Fallback to index.html for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-        throw error;
-      })
-  );
+async function cleanRedirect(response) {
+  const cached = response.clone();
+  const blob = await cached.blob();
+  return new Response(blob, {
+    headers: cached.headers,
+    status: cached.status,
+    statusText: cached.statusText
+  });
+}
+
+self.addEventListener('fetch', event => {
+  event.respondWith((async () => {
+    const resp = await caches.match(event.request);
+    if (resp) {
+      if (event.request.mode === 'navigate' && resp.redirected) {
+        return cleanRedirect(resp);
+      }
+      return resp;
+    }
+    return fetch(event.request, { redirect: 'follow', mode: 'cors', credentials: 'same-origin' });
+  })());
 });
 
 // Activate event - clean up old caches
