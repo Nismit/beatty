@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beatty-v1.0.2';
+const CACHE_NAME = 'beatty-v1.0.3';
 const urlsToCache = [
   './',
   './index.html',
@@ -33,7 +33,10 @@ self.addEventListener('install', (event) => {
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
+    caches.match(event.request, {
+      ignoreSearch: true,
+      ignoreVary: true
+    })
       .then((response) => {
         // Return cached version or fetch from network
         if (response) {
@@ -44,8 +47,14 @@ self.addEventListener('fetch', (event) => {
           mode: 'cors',
           credentials: 'same-origin'
         });
-      }
-    )
+      })
+      .catch(() => {
+        // Fallback to index.html for navigation requests
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        throw error;
+      })
   );
 });
 
