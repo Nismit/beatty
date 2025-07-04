@@ -210,10 +210,19 @@ export class Editor {
    */
   switchEditMode() {
     const oldMode = this.editMode;
+    
+    // Save current editor content to the current mode
+    if (this.editorView) {
+      const currentCode = this.editorView.state.doc.toString();
+      this.updateCode(currentCode);
+    }
+    
+    // Switch mode
     this.editMode = this.editMode === 'sound' ? 'visual' : 'sound';
 
+    // Load code for the new mode
     if (this.editorView) {
-      const newCode = this.getCurrentEditCode();
+      const newCode = this.editMode === 'sound' ? this.currentSoundCode : this.currentVisualCode;
       this.editorView.dispatch({
         changes: {
           from: 0,

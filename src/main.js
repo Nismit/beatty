@@ -30,8 +30,6 @@ class AudioVisualizerSystem {
     // Editor
     this.editor = new Editor({
       editMode: 'sound',
-      currentSoundCode: savedSoundCode,
-      currentVisualCode: savedVisualCode,
       isEditorVisible: true,
       onCodeChange: (mode, code) => {},
       onModeSwitch: (oldMode, newMode) => {
@@ -41,6 +39,9 @@ class AudioVisualizerSystem {
         this.updateMobileEditorButton();
       }
     });
+
+    this.editor.setCode('sound', savedSoundCode);
+    this.editor.setCode('visual', savedVisualCode);
 
     this.setupCallbacks();
     
@@ -97,12 +98,6 @@ class AudioVisualizerSystem {
     
     this.soundGL.compile(soundCode);
     this.visualGL.compile(visualCode);
-    
-    // Log storage info
-    const storageInfo = getStorageInfo();
-    if (storageInfo.hasSound || storageInfo.hasVisual) {
-      console.log('[Storage] Loaded saved shaders:', storageInfo);
-    }
   }
 
   startAnimationLoop() {
@@ -123,7 +118,6 @@ class AudioVisualizerSystem {
 
   setupEventListeners() {
     document.addEventListener('keydown', (e) => {
-      // ESCキーでヘルプモーダルを閉じる
       if (e.key === 'Escape') {
         this.hideHelpModal();
         return;
