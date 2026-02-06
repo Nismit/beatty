@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beatty-v1.0.5';
+const CACHE_NAME = 'beatty-v1.0.6';
 const urlsToCache = [
   './',
   './index.html',
@@ -19,53 +19,80 @@ const urlsToCache = [
   './manifest.json'
 ];
 
-// Install event - cache resources
+// Install event - cache resources and skip waiting
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
+        console.log('[SW] Caching resources');
         return cache.addAll(urlsToCache);
+      })
+      .then(() => {
+        console.log('[SW] Skip waiting');
+        return self.skipWaiting();
       })
   );
 });
 
-// Fetch event - serve from cache when offline
-async function cleanRedirect(response) {
-  const cached = response.clone();
-  const blob = await cached.blob();
-  return new Response(blob, {
-    headers: cached.headers,
-    status: cached.status,
-    statusText: cached.statusText
-  });
-}
+// Fetch event - Network-First strategy
+self.addEventListener('fetch', (event) => {
+  // Only handle same-origin requests
+  if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
 
-self.addEventListener('fetch', event => {
-  event.respondWith((async () => {
-    const resp = await caches.match(event.request);
-    if (resp) {
-      if (event.request.mode === 'navigate' && resp.redirected) {
-        return cleanRedirect(resp);
+  event.respondWith(
+    (async () => {
+      try {
+        // Try network first
+        const networkResponse = await fetch(event.request);
+
+        // Cache successful responses
+        if (networkResponse.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, networkResponse.clone());
+        }
+
+        return networkResponse;
+      } catch (error) {
+        // Network failed, try cache
+        console.log('[SW] Network failed, serving from cache:', event.request.url);
+        const cachedResponse = await caches.match(event.request);
+
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        // If no cache and it's a navigation request, return cached index.html
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+
+        throw error;
       }
-      return resp;
-    }
-    return fetch(event.request, { redirect: 'follow', mode: 'cors', credentials: 'same-origin' });
-  })());
+    })()
+  );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and claim clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    Promise.all([
+      // Clean old caches
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('[SW] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Take control of all clients immediately
+      self.clients.claim().then(() => {
+        console.log('[SW] Claimed all clients');
+      })
+    ])
   );
 });

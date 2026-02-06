@@ -457,34 +457,16 @@ class AudioVisualizerSystem {
     }
   }
 
-  // Service Worker setup for automatic updates
+  // Service Worker setup
   setupServiceWorker() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js')
-        .then((registration) => {
-          registration.update();
-          
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('New version available, reloading...');
-                  window.location.reload();
-                }
-              });
-            }
-          });
-        })
-        .catch((error) => {
-          console.error('Service Worker registration failed:', error);
-        });
+        .then(() => console.log('[App] Service Worker registered'))
+        .catch((error) => console.error('[App] Service Worker registration failed:', error));
 
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'SW_UPDATED') {
-          console.log('Service Worker updated, reloading...');
-          window.location.reload();
-        }
+      // Reload when a new SW takes control
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
       });
     }
   }
