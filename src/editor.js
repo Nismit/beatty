@@ -3,7 +3,7 @@ import { keymap, ViewPlugin, Decoration } from "https://esm.sh/@codemirror/view"
 import { indentWithTab } from "https://esm.sh/@codemirror/commands";
 import { indentUnit, syntaxHighlighting, HighlightStyle, syntaxTree } from "https://esm.sh/@codemirror/language";
 import { glsl } from "https://esm.sh/codemirror-lang-glsl@0.5.0";
-import { tags as t } from "https://esm.sh/@lezer/highlight@1.2.1";
+import { tags as t } from "https://esm.sh/@lezer/highlight@1.2.3";
 
 /**
  * Editor Module - Handles code editing functionality
@@ -16,7 +16,7 @@ export class Editor {
     this.currentVisualCode = options.currentVisualCode || '';
     this.isEditorVisible = options.isEditorVisible !== false;
     this.editorView = null;
-    
+
     // Callbacks for communication with main system
     this.onCodeChange = options.onCodeChange || (() => {});
     this.onModeSwitch = options.onModeSwitch || (() => {});
@@ -24,24 +24,32 @@ export class Editor {
   }
 
   /**
-   * Initialize the CodeMirror editor with dark theme
+   * GLSL組み込み関数のセットを作成
    */
-  initEditor() {
-    const builtins = new Set([
-      "abs","acos","acosh","asin","asinh","atan","atanh",
-      "ceil","clamp","cos","cosh","cross",
-      "degrees","dFdx","dFdy","distance","dot",
-      "equal","exp","exp2",
-      "floor","fract","fwidth",
-      "gl_FragCoord","gl_FragColor","gl_Position","gl_PointCoord","gl_VertexID","greaterThan","greaterThanEqual",
-      "max","min","mix","mod",
-      "pow","reflect","sin","sign","step","smoothstep","tan","sqrt","texture","normalize",
+  #createGlslBuiltins() {
+    return new Set([
+      "abs", "acos", "acosh", "asin", "asinh", "atan", "atanh",
+      "ceil", "clamp", "cos", "cosh", "cross",
+      "degrees", "dFdx", "dFdy", "distance", "dot",
+      "equal", "exp", "exp2",
+      "floor", "fract", "fwidth",
+      "gl_FragCoord", "gl_FragColor", "gl_Position", "gl_PointCoord", "gl_VertexID",
+      "greaterThan", "greaterThanEqual",
+      "max", "min", "mix", "mod",
+      "pow", "reflect", "sin", "sign", "step", "smoothstep", "tan", "sqrt",
+      "texture", "normalize",
     ]);
+  }
 
+  /**
+   * 関数ハイライト用ViewPluginを作成
+   * @param {Set<string>} builtins - 組み込み関数のセット
+   */
+  #createFunctionHighlighter(builtins) {
     const builtinDeco = Decoration.mark({ class: "cm-builtinFunc" });
     const userDeco = Decoration.mark({ class: "cm-userFunc" });
 
-    const fnHighlighter = ViewPlugin.fromClass(class {
+    return ViewPlugin.fromClass(class {
       decorations;
       constructor(view) {
         this.decorations = this.build(view);
@@ -73,26 +81,30 @@ export class Editor {
     }, {
       decorations: v => v.decorations
     });
+  }
 
-
-    const glslHighlightStyle = HighlightStyle.define([
-      { tag: t.standard(t.typeName), color: "#a68cee"},             // Types (vec3, mat4, float, int, etc) #a68cee
-      // { tag: t.typeName, color: "#a68cee" },                     // Alternative for Types
-      { tag: t.controlKeyword, color: "#cdcb99" },                  // void, if, return, etc. #cdcb99
-      { tag: t.processingInstruction, color: "#cdcb99"},            // #define, #include  #cdcb99
-      { tag: t.definitionKeyword, color: " #deb492"},             // struct #deb492
-      
-      // IdentifierDefinition: t.definition(t.variableName), 
-      // { tag: t.definition(t.variableName), color: "#eb1111" },      // type and variable (e.g. float a;)
-      
-      { tag: t.brace, color: "#cdcdcd" },                           // { } #cdcdcd
-      { tag: t.strong, color: "#cdcdcd" },                          // ( )  #cdcdcd
-      { tag: t.variableName, color: "#fff" },                       // all variable names
-      { tag: t.number, color: "#d19a66" },                          // number
-      { tag: t.comment, color: "#5c6370", fontStyle: "italic" },    // comments
+  /**
+   * GLSLシンタックスハイライトスタイルを作成
+   */
+  #createHighlightStyle() {
+    return HighlightStyle.define([
+      { tag: t.standard(t.typeName), color: "#a68cee" },           // Types (vec3, mat4, float, int)
+      { tag: t.controlKeyword, color: "#cdcb99" },                 // void, if, return
+      { tag: t.processingInstruction, color: "#cdcb99" },          // #define, #include
+      { tag: t.definitionKeyword, color: "#deb492" },              // struct
+      { tag: t.brace, color: "#cdcdcd" },                          // { }
+      { tag: t.strong, color: "#cdcdcd" },                         // ( )
+      { tag: t.variableName, color: "#fff" },                      // variable names
+      { tag: t.number, color: "#d19a66" },                         // numbers
+      { tag: t.comment, color: "#5c6370", fontStyle: "italic" },   // comments
     ]);
+  }
 
-    const darkTheme = EditorView.theme(
+  /**
+   * ダークテーマを作成
+   */
+  #createDarkTheme() {
+    return EditorView.theme(
       {
         '&': { color: '#f8f8f2', backgroundColor: 'rgb(0,0,0,.3)' },
         '.cm-content': {
@@ -115,32 +127,48 @@ export class Editor {
         },
         '.cm-activeLineGutter': { backgroundColor: '#2a2a2a' },
         '.cm-foldGutter span': { padding: '0 4px', fontSize: '1rem', lineHeight: '1' },
-        // GLSL specific styles
-        '.cm-builtinFunc span': { color: '#A3CEF1' }, // Built-in functions
-        '.cm-userFunc span': { color: '#72e2bd' },    // User-defined functions #72e2bd
+        '.cm-builtinFunc span': { color: '#A3CEF1' },    // Built-in functions
+        '.cm-userFunc span': { color: '#72e2bd' },       // User-defined functions
       },
       { dark: true },
     );
+  }
 
+  /**
+   * エディタ拡張機能をまとめて作成
+   */
+  #createEditorExtensions() {
+    const builtins = this.#createGlslBuiltins();
+    const fnHighlighter = this.#createFunctionHighlighter(builtins);
+    const highlightStyle = this.#createHighlightStyle();
+    const darkTheme = this.#createDarkTheme();
+
+    return [
+      basicSetup,
+      glsl(),
+      syntaxHighlighting(highlightStyle),
+      indentUnit.of("  "),
+      keymap.of([indentWithTab]),
+      darkTheme,
+      fnHighlighter,
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const newCode = update.state.doc.toString();
+          this.updateCode(newCode);
+          this.onCodeChange(this.editMode, newCode);
+        }
+      }),
+    ];
+  }
+
+  /**
+   * Initialize the CodeMirror editor with dark theme
+   */
+  initEditor() {
     this.editorView = new EditorView({
       doc: this.getCurrentEditCode(),
       parent: document.getElementById('editor'),
-      extensions: [
-        basicSetup,
-        glsl(),
-        syntaxHighlighting(glslHighlightStyle),
-        indentUnit.of("  "),
-        keymap.of([indentWithTab]),
-        darkTheme,
-        fnHighlighter,
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) {
-            const newCode = update.state.doc.toString();
-            this.updateCode(newCode);
-            this.onCodeChange(this.editMode, newCode);
-          }
-        }),
-      ],
+      extensions: this.#createEditorExtensions(),
     });
 
     this.updateEditModeDisplay();
@@ -179,7 +207,7 @@ export class Editor {
     } else {
       this.currentVisualCode = code;
     }
-    
+
     // If we're currently in this mode, update the editor
     if (this.editMode === mode && this.editorView) {
       this.editorView.dispatch({
@@ -210,13 +238,13 @@ export class Editor {
    */
   switchEditMode() {
     const oldMode = this.editMode;
-    
+
     // Save current editor content to the current mode
     if (this.editorView) {
       const currentCode = this.editorView.state.doc.toString();
       this.updateCode(currentCode);
     }
-    
+
     // Switch mode
     this.editMode = this.editMode === 'sound' ? 'visual' : 'sound';
 
@@ -250,7 +278,7 @@ export class Editor {
     } else {
       editorContainer.classList.add('hidden');
     }
-    
+
     // Notify visibility change
     this.onVisibilityToggle(this.isEditorVisible);
   }
@@ -283,7 +311,7 @@ export class Editor {
     if (state.isEditorVisible !== undefined) {
       this.isEditorVisible = state.isEditorVisible;
     }
-    
+
     this.updateEditModeDisplay();
   }
 
