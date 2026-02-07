@@ -109,6 +109,7 @@ class AudioVisualizerSystem {
       await this.audio.init();
 
       this.appState.setAudioContext(this.audio.audioContext);
+      this.statusManager.initializeDisplays();
       this.statusManager.startStatusUpdate();
       this.playbackController.startAnimationLoop(this.visualGL);
       this.inputHandler.setupEventListeners();

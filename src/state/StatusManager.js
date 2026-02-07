@@ -11,13 +11,25 @@ export class StatusManager {
     this.appState.on('bpmChanged', ({ new: newBpm }) => {
       this.updateBpmDisplay(newBpm);
     });
-    
+
     this.appState.on('volumeChanged', ({ new: newVolume }) => {
       this.updateVolumeDisplay(newVolume);
     });
-    
+
     this.appState.on('playStateChanged', ({ new: newState }) => {
       this.updatePlayStateDisplay(newState);
+    });
+  }
+
+  /**
+   * 初期化時にUIを現在の状態で更新
+   */
+  initializeDisplays() {
+    this.updateBpmDisplay(this.appState.bpm);
+    this.updateVolumeDisplay(this.appState.volume);
+    this.updatePlayStateDisplay({
+      isPlaying: this.appState.isPlaying,
+      isPaused: this.appState.isPaused
     });
   }
   
@@ -27,8 +39,11 @@ export class StatusManager {
       const element = document.getElementById(id);
       if (element) element.textContent = bpm;
     });
+
+    const slider = document.getElementById('bpmSlider');
+    if (slider) slider.value = bpm;
   }
-  
+
   updateVolumeDisplay(volume) {
     const volumeText = volume.toFixed(1);
     const elements = ['volumeValue', 'statusVolume'];
@@ -36,6 +51,9 @@ export class StatusManager {
       const element = document.getElementById(id);
       if (element) element.textContent = volumeText;
     });
+
+    const slider = document.getElementById('volumeSlider');
+    if (slider) slider.value = volume;
   }
   
   updatePlayStateDisplay({ isPlaying, isPaused }) {

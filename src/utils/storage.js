@@ -6,6 +6,7 @@
 // Storage keys
 const SOUND_SHADER_KEY = 'melu_sound_shader';
 const VISUAL_SHADER_KEY = 'melu_visual_shader';
+const SETTINGS_KEY = 'melu_settings';
 
 /**
  * Get storage key for given mode
@@ -88,4 +89,51 @@ export function getStorageInfo() {
     hasSound: hasShader('sound'),
     hasVisual: hasShader('visual')
   };
+}
+
+/**
+ * Save application settings to LocalStorage
+ * @param {object} settings - Settings object with volume, bpm, etc.
+ * @returns {boolean} Success status
+ */
+export function saveSettings(settings) {
+  try {
+    const data = {
+      volume: settings.volume,
+      bpm: settings.bpm,
+      timestamp: Date.now(),
+      version: '1.0'
+    };
+
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error('[Storage] Failed to save settings:', error);
+    return false;
+  }
+}
+
+/**
+ * Load application settings from LocalStorage
+ * @returns {object|null} Settings object or null if not found
+ */
+export function loadSettings() {
+  try {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+
+    if (!stored) {
+      return null;
+    }
+
+    const data = JSON.parse(stored);
+
+    // Validate and return only known settings
+    return {
+      volume: typeof data.volume === 'number' ? data.volume : null,
+      bpm: typeof data.bpm === 'number' ? data.bpm : null
+    };
+  } catch (error) {
+    console.error('[Storage] Failed to load settings:', error);
+    return null;
+  }
 }
