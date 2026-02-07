@@ -100,7 +100,6 @@ void main(void) {}`;
     
         const buffer = this.getBuffer(samplesPerBar);
 
-        // setupTransformFeedback(this.gl, this.transformFeedback, buffer);
         gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.transformFeedback);
         gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, buffer);
 

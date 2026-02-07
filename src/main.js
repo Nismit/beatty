@@ -32,7 +32,6 @@ class AudioVisualizerSystem {
     this.editor = new Editor({
       editMode: 'sound',
       isEditorVisible: true,
-      onCodeChange: (mode, code) => {},
       onModeSwitch: (oldMode, newMode) => {
         this.uiController?.updateModeButton();
       },

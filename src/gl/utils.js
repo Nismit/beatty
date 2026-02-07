@@ -78,17 +78,6 @@ export function createBuffer(gl, size, usage) {
 }
 
 /**
- * Setup transform feedback with specified buffer
- * @param {WebGL2RenderingContext} gl - WebGL context
- * @param {WebGLTransformFeedback} transformFeedback - Transform feedback object
- * @param {WebGLBuffer} buffer - Target buffer
- */
-export function setupTransformFeedback(gl, transformFeedback, buffer) {
-  gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, transformFeedback);
-  gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, buffer);
-}
-
-/**
  * Cleanup transform feedback state
  * @param {WebGL2RenderingContext} gl - WebGL context
  */

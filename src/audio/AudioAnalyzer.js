@@ -206,38 +206,4 @@ export class AudioAnalyzer {
       smoothingTimeConstant: this.smoothingTimeConstant
     };
   }
-
-  /**
-   * Static method to create frequency band extractor
-   * @param {number} startFreq - Start frequency in Hz
-   * @param {number} endFreq - End frequency in Hz
-   * @returns {Function} Band extractor function
-   */
-  static createBandExtractor(startFreq, endFreq) {
-    return (frequencyDataArray, freqPerBin) => {
-      const startBin = Math.floor(startFreq / freqPerBin);
-      const endBin = Math.floor(endFreq / freqPerBin);
-      
-      let sum = 0;
-      for (let i = startBin; i <= endBin; i++) {
-        sum += frequencyDataArray[i];
-      }
-      
-      return sum / (endBin - startBin + 1) / 255.0;
-    };
-  }
-
-  /**
-   * Static method to calculate RMS from time domain data
-   * @param {Uint8Array} timeDataArray - Time domain data
-   * @returns {number} RMS value
-   */
-  static calculateRMS(timeDataArray) {
-    let rmsSum = 0;
-    for (let i = 0; i < timeDataArray.length; i++) {
-      const sample = (timeDataArray[i] - 128) / 128.0;
-      rmsSum += sample * sample;
-    }
-    return Math.sqrt(rmsSum / timeDataArray.length);
-  }
 }
