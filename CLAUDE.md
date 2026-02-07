@@ -110,9 +110,17 @@ npx serve src
 利用可能なUniform:
 - `u_resolution` - 画面解像度
 - `u_time` - 経過時間
+
+オーディオ解析 (スムージング済み、0-1):
 - `u_kick` - キック (20-80Hz)
 - `u_hihat` - ハイハット (5000-12000Hz)
 - `u_bass` - ベース (100-300Hz)
+
+ピーク値 (減衰付き、フラッシュエフェクト用):
+- `u_kickPeak`, `u_hihatPeak`, `u_bassPeak`
+
+オンセット検出 (ビート検出、1.0 or 0.0):
+- `u_kickOnset`, `u_hihatOnset`, `u_bassOnset`
 
 ## キーボードショートカット
 

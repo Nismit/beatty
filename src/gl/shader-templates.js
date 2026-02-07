@@ -210,26 +210,13 @@ vec2 mainSound(float time) {
 }`,
 
   /**
-   * Default visual shader template with audio-reactive morphing shapes,
-   * HSV color conversion, and responsive visual effects
+   * Default visual shader template with audio-reactive effects
+   * Uses new uniforms: u_kickPeak, u_hihatPeak, u_bassPeak, u_kickOnset, u_hihatOnset, u_bassOnset
    */
-  defaultVisualCode: `// uniforms: u_kick, u_hihat, u_bass, u_time, u_resolution
-
-float smoothValue(float value, float smoothing) {
-    return smoothstep(0.0, 1.0, value * smoothing);
-}
-
-float processAudioValue(float raw, float threshold, float gain) {
-    float processed = max(0.0, raw - threshold) * gain;
-    return smoothstep(0.0, 1.0, processed);
-}
-
-float morphShape(vec2 pos, float morphFactor) {
-    float circle = length(pos);
-    vec2 absPos = abs(pos);
-    float square = max(absPos.x, absPos.y);
-    return mix(circle, square, morphFactor);
-}
+  defaultVisualCode: `// Audio uniforms:
+// Smoothed: u_kick, u_hihat, u_bass (0-1)
+// Peak: u_kickPeak, u_hihatPeak, u_bassPeak (decay付き)
+// Onset: u_kickOnset, u_hihatOnset, u_bassOnset (1.0 on beat, 0.0 otherwise)
 
 vec3 hsv2rgb(vec3 c) {
     vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
@@ -237,71 +224,73 @@ vec3 hsv2rgb(vec3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-// メイン関数（必須）
+float sdCircle(vec2 p, float r) {
+    return length(p) - r;
+}
+
+float sdRing(vec2 p, float r, float thickness) {
+    return abs(length(p) - r) - thickness;
+}
+
 vec3 visualMain(vec2 uv, vec2 resolution) {
-    vec2 center = vec2(0.5, 0.5);
-    vec2 pos = (uv - center) * 2.0;
+    // Center and aspect correct
+    vec2 pos = (uv - 0.5) * 2.0;
     pos.x *= resolution.x / resolution.y;
-    
-    float kick = processAudioValue(u_kick, 0.1, 2.0);
-    float hihat = processAudioValue(u_hihat, 0.05, 1.5);
-    float bass = processAudioValue(u_bass, 0.15, 1.8);
-    
-    kick = smoothValue(kick, 1.2);
-    hihat = smoothValue(hihat, 0.8);
-    bass = smoothValue(bass, 1.0);
-    
-    float baseScale = 0.3;
-    float kickScale = kick * 0.4;
-    float totalScale = baseScale + kickScale;
-    
-    float timeOscillation = sin(u_time * 5.0 + kick * 20.0) * 0.02;
-    totalScale += timeOscillation;
-    
-    vec2 scaledPos = pos / totalScale;
-    
-    float morphFactor = bass * 0.8;
-    float shapeDist = morphShape(scaledPos, morphFactor);
-    
-    float objectRadius = 1.0;
-    float edge = 0.02;
-    float objectMask = 1.0 - smoothstep(objectRadius - edge, objectRadius + edge, shapeDist);
-    
-    float baseHue = 0.6 + sin(u_time * 0.3) * 0.1;
-    float hihatHue = hihat * 0.5;
-    float finalHue = fract(baseHue + hihatHue);
-    
-    float baseSaturation = 0.7;
-    float hihatSaturation = hihat * 0.3;
-    float finalSaturation = min(1.0, baseSaturation + hihatSaturation);
-    
-    float baseBrightness = 0.8;
-    float kickBrightness = kick * 0.2;
-    float finalBrightness = min(1.0, baseBrightness + kickBrightness);
-    
-    vec3 mainColor = hsv2rgb(vec3(finalHue, finalSaturation, finalBrightness));
-    
-    float innerGrad = 1.0 - smoothstep(0.0, 0.7, shapeDist);
-    float gradIntensity = 0.3 + bass * 0.4;
-    innerGrad *= gradIntensity;
-    
-    float glowRadius = 1.2 + kick * 0.3;
-    float glow = 1.0 - smoothstep(objectRadius, glowRadius, shapeDist);
-    glow *= kick * 0.5;
-    
-    float pulseEffect = sin(u_time * 8.0 + kick * 30.0) * kick * 0.1 + 1.0;
-    
-    vec3 finalColor = mainColor * objectMask;
-    finalColor += mainColor * innerGrad * 0.5;
-    finalColor += vec3(1.0, 0.8, 0.6) * glow;
-    finalColor *= pulseEffect;
-    
-    float totalEnergy = (kick + hihat + bass) / 3.0;
-    vec3 bgColor = vec3(0.02, 0.01, 0.03) * (1.0 + totalEnergy * 0.5);
-    
-    float alpha = clamp(objectMask + glow, 0.0, 1.0);
-    finalColor = mix(bgColor, finalColor, alpha);
-    
-    return finalColor;
+
+    // Background
+    vec3 bgColor = vec3(0.02, 0.02, 0.04);
+    vec3 color = bgColor;
+
+    // === Kick: Center circle with pulse ===
+    float kickScale = 0.3 + u_kickPeak * 0.4;
+    float kickCircle = sdCircle(pos, kickScale);
+
+    // Flash on onset
+    float kickFlash = u_kickOnset * 0.8;
+    vec3 kickColor = hsv2rgb(vec3(0.0, 0.8, 0.9 + kickFlash));
+
+    // Glow effect
+    float kickGlow = exp(-kickCircle * 3.0) * (u_kick + kickFlash);
+    color += kickColor * kickGlow;
+
+    // === Hihat: Rotating rings ===
+    float angle = u_time * 2.0 + u_hihatPeak * 3.14159;
+    mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    vec2 rotPos = rot * pos;
+
+    // Multiple rings
+    for (float i = 0.0; i < 3.0; i++) {
+        float ringRadius = 0.5 + i * 0.2 + u_hihatPeak * 0.1;
+        float ring = sdRing(rotPos, ringRadius, 0.01 + u_hihat * 0.02);
+
+        // Color shift on onset
+        float hue = 0.55 + i * 0.1 + u_hihatOnset * 0.3;
+        vec3 ringColor = hsv2rgb(vec3(hue, 0.7, 0.8));
+
+        float ringGlow = exp(-abs(ring) * 20.0) * (u_hihat * 0.5 + u_hihatOnset * 0.5);
+        color += ringColor * ringGlow;
+    }
+
+    // === Bass: Background pulse and distortion ===
+    float bassWave = sin(length(pos) * 10.0 - u_time * 3.0 - u_bassPeak * 5.0);
+    bassWave = bassWave * 0.5 + 0.5;
+
+    vec3 bassColor = hsv2rgb(vec3(0.7 + u_bassOnset * 0.2, 0.6, 0.3));
+    color += bassColor * bassWave * u_bass * 0.3;
+
+    // Vignette that pulses with bass
+    float vignette = 1.0 - length(pos) * (0.4 - u_bassPeak * 0.1);
+    vignette = clamp(vignette, 0.0, 1.0);
+    color *= vignette;
+
+    // === Combined onset flash (white flash on any strong beat) ===
+    float totalOnset = max(max(u_kickOnset, u_hihatOnset), u_bassOnset);
+    color += vec3(1.0) * totalOnset * 0.15;
+
+    // === Subtle noise for texture ===
+    float noise = fract(sin(dot(uv * u_time, vec2(12.9898, 78.233))) * 43758.5453);
+    color += vec3(noise * 0.02);
+
+    return clamp(color, 0.0, 1.0);
 }`,
 };

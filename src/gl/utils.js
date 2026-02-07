@@ -184,10 +184,23 @@ export function buildVisualShader(visualCode) {
   return `#version 300 es
 precision highp float;
 uniform vec2 u_resolution;
+uniform float u_time;
+
+// Audio analysis - smoothed values (0-1)
 uniform float u_kick;
 uniform float u_hihat;
 uniform float u_bass;
-uniform float u_time;
+
+// Peak values with decay (for flash effects)
+uniform float u_kickPeak;
+uniform float u_hihatPeak;
+uniform float u_bassPeak;
+
+// Onset detection (1.0 on beat hit, 0.0 otherwise)
+uniform float u_kickOnset;
+uniform float u_hihatOnset;
+uniform float u_bassOnset;
+
 in vec2 v_uv;
 out vec4 fragColor;
 

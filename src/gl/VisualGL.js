@@ -80,9 +80,20 @@ export class VisualGL {
     setUniform(gl, this.program, 'u_time', '1f', currentTime);
     
     if (audioAnalysisData) {
+      // Main smoothed values
       setUniform(gl, this.program, 'u_kick', '1f', audioAnalysisData.kick || 0);
       setUniform(gl, this.program, 'u_hihat', '1f', audioAnalysisData.hihat || 0);
       setUniform(gl, this.program, 'u_bass', '1f', audioAnalysisData.bass || 0);
+
+      // Peak values (for flash effects)
+      setUniform(gl, this.program, 'u_kickPeak', '1f', audioAnalysisData.kickPeak || 0);
+      setUniform(gl, this.program, 'u_hihatPeak', '1f', audioAnalysisData.hihatPeak || 0);
+      setUniform(gl, this.program, 'u_bassPeak', '1f', audioAnalysisData.bassPeak || 0);
+
+      // Onset detection (1.0 if onset, 0.0 otherwise)
+      setUniform(gl, this.program, 'u_kickOnset', '1f', audioAnalysisData.kickOnset ? 1.0 : 0.0);
+      setUniform(gl, this.program, 'u_hihatOnset', '1f', audioAnalysisData.hihatOnset ? 1.0 : 0.0);
+      setUniform(gl, this.program, 'u_bassOnset', '1f', audioAnalysisData.bassOnset ? 1.0 : 0.0);
     }
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
