@@ -3,6 +3,7 @@ import { UI_CONSTANTS, APP } from '../utils/consts.js';
 export class StatusManager {
   constructor(appState) {
     this.appState = appState;
+    this.statusUpdateInterval = null;
     this.setupStateListeners();
   }
   
@@ -72,16 +73,7 @@ export class StatusManager {
 
   updateTimeDisplay() {
     if (!this.appState.isPlaying) return;
-    
-    // const currentTime = this.appState.getCurrentTime();
-    // const minutes = Math.floor(currentTime / 60);
-    // const seconds = (currentTime % 60).toFixed(1);
-    
-    // const timeElement = document.getElementById('statusTime');
-    // if (timeElement) {
-    //   timeElement.textContent = `${minutes}:${seconds.padStart(4, '0')}`;
-    // }
-    
+
     const currentBars = this.appState.currentBars;
     if (currentBars !== undefined) {
       this.updateBarsDisplay(currentBars.toFixed(0));
@@ -101,15 +93,32 @@ export class StatusManager {
 
   updateCurrentBars() {
     if (!this.appState.isPlaying) return;
-    
+
     const currentTime = this.appState.getCurrentTime();
     const bpm = this.appState.bpm;
-    
+
     const beatsPerSecond = bpm / 60;
     const beatsElapsed = currentTime * beatsPerSecond;
     const barsElapsed = beatsElapsed / 4;
-    
+
     this.appState.currentBars = barsElapsed;
     this.updateBarsDisplay(barsElapsed.toFixed(0));
+  }
+
+  /**
+   * ステータス更新を停止しリソースをクリーンアップ
+   */
+  stopStatusUpdate() {
+    if (this.statusUpdateInterval) {
+      clearInterval(this.statusUpdateInterval);
+      this.statusUpdateInterval = null;
+    }
+  }
+
+  /**
+   * インスタンス破棄時のクリーンアップ
+   */
+  destroy() {
+    this.stopStatusUpdate();
   }
 }

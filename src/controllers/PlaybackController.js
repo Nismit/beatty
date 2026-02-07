@@ -7,6 +7,7 @@ export class PlaybackController {
     this.appState = appState;
     this.statusManager = statusManager;
     this.uiController = uiController;
+    this.animationFrameId = null;
   }
 
   /**
@@ -57,6 +58,9 @@ export class PlaybackController {
    * @param {VisualGL} visualGL - ビジュアルシェーダーインスタンス
    */
   startAnimationLoop(visualGL) {
+    // 既存のループがあれば停止
+    this.stopAnimationLoop();
+
     const animate = () => {
       if (this.appState.isPlaying) {
         this.audio.analyzeAudioData();
@@ -67,8 +71,18 @@ export class PlaybackController {
         this.appState
       );
 
-      requestAnimationFrame(animate);
+      this.animationFrameId = requestAnimationFrame(animate);
     };
     animate();
+  }
+
+  /**
+   * アニメーションループを停止
+   */
+  stopAnimationLoop() {
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
   }
 }

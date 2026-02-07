@@ -1,4 +1,4 @@
-import { AUDIO } from './consts.js';
+import { AUDIO } from '../utils/consts.js';
 
 export class AppState {
   constructor() {
