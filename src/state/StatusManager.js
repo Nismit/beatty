@@ -1,4 +1,4 @@
-import { UI_CONSTANTS, APP } from './consts.js';
+import { UI_CONSTANTS, APP } from '../utils/consts.js';
 
 export class StatusManager {
   constructor(appState) {

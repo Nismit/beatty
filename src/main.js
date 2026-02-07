@@ -1,16 +1,15 @@
-import { Audio } from './audio.js';
-import { SoundGL } from './SoundGL.js';
-import { VisualGL } from './VisualGL.js';
-import { Editor } from './editor.js';
-import { AppState } from './AppState.js';
-import { StatusManager } from './StatusManager.js';
-import { ShaderTemplates } from './shader-templates.js';
-import { loadShader } from './storage.js';
-
-import { UIController } from './UIController.js';
-import { PlaybackController } from './PlaybackController.js';
-import { ShaderController } from './ShaderController.js';
-import { InputHandler } from './InputHandler.js';
+import { Audio } from './audio/Audio.js';
+import { SoundGL } from './gl/SoundGL.js';
+import { VisualGL } from './gl/VisualGL.js';
+import { ShaderTemplates } from './gl/shader-templates.js';
+import { Editor } from './editor/Editor.js';
+import { AppState } from './state/AppState.js';
+import { StatusManager } from './state/StatusManager.js';
+import { loadShader } from './utils/storage.js';
+import { UIController } from './controllers/UIController.js';
+import { PlaybackController } from './controllers/PlaybackController.js';
+import { ShaderController } from './controllers/ShaderController.js';
+import { InputHandler } from './controllers/InputHandler.js';
 
 /**
  * AudioVisualizerSystem - アプリケーションのファサード

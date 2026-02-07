@@ -1,5 +1,5 @@
-import { AUDIO } from './consts.js';
-import { AudioAnalyzer } from './audio-analyzer.js';
+import { AUDIO } from '../utils/consts.js';
+import { AudioAnalyzer } from './AudioAnalyzer.js';
 
 export class Audio {
   constructor() {
@@ -28,7 +28,7 @@ export class Audio {
   async init() {
     this.audioContext = new AudioContext();
 
-    await this.audioContext.audioWorklet.addModule('./audio-worklet.js');
+    await this.audioContext.audioWorklet.addModule('./audio/audio-worklet.js');
 
     this.audioWorkletNode = new AudioWorkletNode(
       this.audioContext,

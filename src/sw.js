@@ -1,22 +1,38 @@
-const CACHE_NAME = 'beatty-v1.0.6';
+const CACHE_NAME = 'beatty-v1.1.0';
 const urlsToCache = [
   './',
   './index.html',
   './main.js',
-  './AppState.js',
-  './audio.js',
-  './audio-analyzer.js',
-  './audio-worklet.js',
-  './SoundGL.js',
-  './VisualGL.js',
-  './editor.js',
-  './shader-templates.js',
-  './StatusManager.js',
-  './storage.js',
-  './consts.js',
-  './utils.js',
   './styles.css',
-  './manifest.json'
+  './manifest.json',
+  // audio
+  './audio/Audio.js',
+  './audio/AudioAnalyzer.js',
+  './audio/audio-worklet.js',
+  './audio/index.js',
+  // gl
+  './gl/SoundGL.js',
+  './gl/VisualGL.js',
+  './gl/shader-templates.js',
+  './gl/utils.js',
+  './gl/index.js',
+  // controllers
+  './controllers/PlaybackController.js',
+  './controllers/ShaderController.js',
+  './controllers/UIController.js',
+  './controllers/InputHandler.js',
+  './controllers/index.js',
+  // editor
+  './editor/Editor.js',
+  './editor/index.js',
+  // state
+  './state/AppState.js',
+  './state/StatusManager.js',
+  './state/index.js',
+  // utils
+  './utils/consts.js',
+  './utils/storage.js',
+  './utils/index.js',
 ];
 
 // Install event - cache resources and skip waiting

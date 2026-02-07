@@ -1,4 +1,4 @@
-import { saveShader } from './storage.js';
+import { saveShader } from '../utils/storage.js';
 
 /**
  * ShaderController - シェーダーのコンパイルと適用
