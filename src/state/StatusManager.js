@@ -1,4 +1,4 @@
-import { APP, UI_CONSTANTS } from '../utils/consts.js';
+import { APP, UI } from '../utils/consts.js';
 
 export class StatusManager {
   constructor(appState) {
@@ -76,7 +76,7 @@ export class StatusManager {
     playStateElement.className = stateClass;
   }
 
-  updateStatusLine(message, type = UI_CONSTANTS.STATUS_TYPES.READY) {
+  updateStatusLine(message, type = UI.STATUS_TYPES.READY) {
     const statusText = document.getElementById('statusText');
     if (statusText) {
       statusText.textContent = message;
