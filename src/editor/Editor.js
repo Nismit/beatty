@@ -151,6 +151,7 @@ export class Editor {
       keymap.of([indentWithTab]),
       darkTheme,
       fnHighlighter,
+      EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           const newCode = update.state.doc.toString();
