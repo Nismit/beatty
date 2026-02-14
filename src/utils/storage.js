@@ -1,25 +1,22 @@
 /**
- * Storage utilities for shader code persistence
- * Provides functions for saving and loading shader code to/from LocalStorage
+ * Storage utilities for shader code and settings persistence
+ * Provides pure functions for saving and loading data to/from LocalStorage
  */
 
-// Storage keys
-const SOUND_SHADER_KEY = 'melu_sound_shader';
-const VISUAL_SHADER_KEY = 'melu_visual_shader';
-const SETTINGS_KEY = 'melu_settings';
+import { STORAGE_KEYS } from './consts.js';
 
 /**
  * Get storage key for given mode
- * @param {string} mode - 'sound' or 'visual'
+ * @param {'sound' | 'visual'} mode - Shader mode
  * @returns {string} Storage key
  */
 function getStorageKey(mode) {
-  return mode === 'sound' ? SOUND_SHADER_KEY : VISUAL_SHADER_KEY;
+  return mode === 'sound' ? STORAGE_KEYS.SOUND_SHADER : STORAGE_KEYS.VISUAL_SHADER;
 }
 
 /**
  * Save shader code to LocalStorage
- * @param {string} mode - 'sound' or 'visual'
+ * @param {'sound' | 'visual'} mode - Shader mode
  * @param {string} code - Shader code to save
  * @returns {boolean} Success status
  */
@@ -27,7 +24,7 @@ export function saveShader(mode, code) {
   try {
     const key = getStorageKey(mode);
     const data = {
-      code: code,
+      code,
       timestamp: Date.now(),
       version: '1.0',
     };
@@ -42,8 +39,8 @@ export function saveShader(mode, code) {
 
 /**
  * Load shader code from LocalStorage
- * @param {string} mode - 'sound' or 'visual'
- * @returns {string|null} Shader code or null if not found
+ * @param {'sound' | 'visual'} mode - Shader mode
+ * @returns {string | null} Shader code or null if not found
  */
 export function loadShader(mode) {
   try {
@@ -71,8 +68,24 @@ export function loadShader(mode) {
 }
 
 /**
+ * Clear shader from storage
+ * @param {'sound' | 'visual'} mode - Shader mode
+ * @returns {boolean} Success status
+ */
+export function clearShader(mode) {
+  try {
+    const key = getStorageKey(mode);
+    localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    console.error(`[Storage] Failed to clear ${mode} shader:`, error);
+    return false;
+  }
+}
+
+/**
  * Check if shader exists in storage
- * @param {string} mode - 'sound' or 'visual'
+ * @param {'sound' | 'visual'} mode - Shader mode
  * @returns {boolean}
  */
 export function hasShader(mode) {
@@ -82,7 +95,7 @@ export function hasShader(mode) {
 
 /**
  * Get storage usage information
- * @returns {object} Storage info with hasSound and hasVisual flags
+ * @returns {{ hasSound: boolean, hasVisual: boolean }}
  */
 export function getStorageInfo() {
   return {
@@ -93,7 +106,7 @@ export function getStorageInfo() {
 
 /**
  * Save application settings to LocalStorage
- * @param {object} settings - Settings object with volume, bpm, etc.
+ * @param {{ volume?: number, bpm?: number }} settings - Settings object
  * @returns {boolean} Success status
  */
 export function saveSettings(settings) {
@@ -105,7 +118,7 @@ export function saveSettings(settings) {
       version: '1.0',
     };
 
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(data));
     return true;
   } catch (error) {
     console.error('[Storage] Failed to save settings:', error);
@@ -115,11 +128,11 @@ export function saveSettings(settings) {
 
 /**
  * Load application settings from LocalStorage
- * @returns {object|null} Settings object or null if not found
+ * @returns {{ volume: number | null, bpm: number | null } | null}
  */
 export function loadSettings() {
   try {
-    const stored = localStorage.getItem(SETTINGS_KEY);
+    const stored = localStorage.getItem(STORAGE_KEYS.SETTINGS);
 
     if (!stored) {
       return null;
@@ -135,5 +148,35 @@ export function loadSettings() {
   } catch (error) {
     console.error('[Storage] Failed to load settings:', error);
     return null;
+  }
+}
+
+/**
+ * Clear all application settings from LocalStorage
+ * @returns {boolean} Success status
+ */
+export function clearSettings() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    return true;
+  } catch (error) {
+    console.error('[Storage] Failed to clear settings:', error);
+    return false;
+  }
+}
+
+/**
+ * Clear all Beatty data from LocalStorage
+ * @returns {boolean} Success status
+ */
+export function clearAllData() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.SOUND_SHADER);
+    localStorage.removeItem(STORAGE_KEYS.VISUAL_SHADER);
+    localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    return true;
+  } catch (error) {
+    console.error('[Storage] Failed to clear all data:', error);
+    return false;
   }
 }
