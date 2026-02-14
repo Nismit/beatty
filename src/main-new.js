@@ -1,0 +1,180 @@
+/**
+ * Beatty - main.js
+ * Facade module: wires all components together, contains no logic
+ */
+
+import { AudioEngine } from './audio/AudioEngine.js';
+import { AudioAnalyzer } from './audio/AudioAnalyzer-new.js';
+import { createAudioScheduler } from './audio/AudioScheduler.js';
+import { createPlaybackController } from './controllers/PlaybackController-new.js';
+import { createShaderController } from './controllers/ShaderController-new.js';
+import { createUIController } from './controllers/UIController-new.js';
+import { Editor } from './editor/Editor-new.js';
+import { SoundRenderer } from './gl/SoundRenderer.js';
+import { DEFAULT_SOUND_SHADER, DEFAULT_VISUAL_SHADER } from './gl/shader-templates-new.js';
+import { VisualRenderer } from './gl/VisualRenderer.js';
+import { createKeyboardController } from './input/KeyboardController.js';
+import { createMobileController } from './input/MobileController.js';
+import { createModalController } from './input/ModalController.js';
+import { createAudioSettings } from './state/AudioSettings.js';
+import { createEventBus } from './state/EventBus.js';
+import { createPlaybackState } from './state/PlaybackState.js';
+import { createStatusDisplay } from './ui/StatusDisplay.js';
+import { EVENTS } from './utils/consts.js';
+import { createErrorHandler } from './utils/errors.js';
+import { loadShader } from './utils/storage.js';
+
+async function init() {
+  // Layer 0-1: State
+  const eventBus = createEventBus();
+  const playbackState = createPlaybackState(eventBus);
+  const audioSettings = createAudioSettings(eventBus);
+
+  // Layer 2: Core modules
+  const audioEngine = new AudioEngine();
+  const audioAnalyzer = new AudioAnalyzer();
+  const soundRenderer = new SoundRenderer();
+  const visualRenderer = new VisualRenderer();
+
+  const editor = new Editor({ eventBus });
+
+  // Layer 2: UI
+  const statusDisplay = createStatusDisplay({
+    eventBus,
+    playbackState,
+    audioSettings,
+    getCurrentTime: () => playbackState.getCurrentTime(audioEngine.audioContext),
+  });
+
+  const errorHandler = createErrorHandler(statusDisplay);
+
+  // Layer 2: Audio scheduling (injects generateBuffer to decouple Audio↔GL)
+  const audioScheduler = createAudioScheduler({
+    generateBuffer: (blockOffset) =>
+      soundRenderer.generateAudioBuffer(blockOffset, audioSettings.bpm, audioSettings.sampleRate),
+    audioSettings,
+    audioEngine,
+  });
+
+  // Wire audioEngine's next-buffer request to audioScheduler
+  audioEngine.onRequestNextBuffer = () => audioScheduler.requestNextBuffer();
+
+  // Layer 3: Controllers
+  const playbackController = createPlaybackController({
+    audioEngine,
+    audioAnalyzer,
+    audioScheduler,
+    playbackState,
+    audioSettings,
+    visualRenderer,
+    statusDisplay,
+    eventBus,
+    errorHandler,
+  });
+
+  const shaderController = createShaderController({
+    soundRenderer,
+    visualRenderer,
+    editor,
+    statusDisplay,
+    eventBus,
+    errorHandler,
+  });
+
+  const uiController = createUIController({
+    playbackState,
+    audioSettings,
+    editor,
+    eventBus,
+  });
+
+  // Layer 3: Input
+  const keyboardController = createKeyboardController({
+    playbackController,
+    shaderController,
+    uiController,
+    editor,
+  });
+
+  const mobileController = createMobileController({
+    playbackController,
+    shaderController,
+    uiController,
+    editor,
+    audioSettings,
+    audioEngine,
+  });
+
+  const modalController = createModalController({ uiController });
+
+  // Volume sync via EventBus
+  eventBus.on(EVENTS.VOLUME_CHANGED, ({ new: newVolume }) => {
+    audioEngine.setVolume(newVolume);
+  });
+
+  // Initialize
+  try {
+    // Load saved shaders or defaults
+    const soundCode = loadShader('sound') || DEFAULT_SOUND_SHADER;
+    const visualCode = loadShader('visual') || DEFAULT_VISUAL_SHADER;
+
+    editor.setCode('sound', soundCode);
+    editor.setCode('visual', visualCode);
+    editor.init();
+
+    visualRenderer.init();
+    shaderController.initShaders(soundCode, visualCode);
+
+    await audioEngine.init();
+    audioSettings.setSampleRate(audioEngine.sampleRate);
+
+    statusDisplay.init();
+    statusDisplay.startUpdates();
+
+    playbackController.startAnimationLoop();
+
+    keyboardController.init();
+    mobileController.init();
+    modalController.init();
+
+    // Resize handling
+    window.addEventListener('resize', () => playbackController.handleResize());
+
+    statusDisplay.showStatus('Initialized');
+  } catch (error) {
+    errorHandler(error);
+  }
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    playbackController.destroy();
+    keyboardController.destroy();
+    mobileController.destroy();
+    modalController.destroy();
+    statusDisplay.destroy();
+    uiController.destroy();
+    shaderController.destroy();
+    audioScheduler.destroy();
+    audioAnalyzer.destroy();
+    audioEngine.destroy();
+    soundRenderer.destroy();
+    visualRenderer.destroy();
+    editor.destroy();
+    playbackState.destroy();
+    audioSettings.destroy();
+    eventBus.destroy();
+  });
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register('./sw.js')
+      .catch((error) => console.error('[App] SW registration failed:', error));
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  }
+}
+
+init();
