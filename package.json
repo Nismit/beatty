@@ -4,6 +4,9 @@
   "description": "Real-time audio generation and visualization using WebGL shaders",
   "private": true,
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
@@ -28,6 +31,9 @@
   },
   "homepage": "https://github.com/Nismit/beatty#readme",
   "devDependencies": {
-    "@biomejs/biome": "^2.3.15"
+    "@biomejs/biome": "^2.3.15",
+    "@vitest/coverage-v8": "^3.2.4",
+    "jsdom": "^26.0.0",
+    "vitest": "^3.0.0"
   }
 }
