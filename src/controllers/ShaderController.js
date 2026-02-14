@@ -1,73 +1,109 @@
+/**
+ * ShaderController factory function
+ * Manages shader compilation and application, delegates to SoundRenderer/VisualRenderer
+ */
+
+import { EVENTS, UI } from '../utils/consts.js';
 import { saveShader } from '../utils/storage.js';
 
 /**
- * ShaderController - シェーダーのコンパイルと適用
+ * @param {Object} deps
+ * @param {import('../gl/SoundRenderer.js').SoundRenderer} deps.soundRenderer
+ * @param {import('../gl/VisualRenderer.js').VisualRenderer} deps.visualRenderer
+ * @param {import('../editor/Editor.js').Editor} deps.editor
+ * @param {import('../ui/StatusDisplay.js').StatusDisplay} deps.statusDisplay
+ * @param {import('../state/EventBus.js').EventBus} deps.eventBus
+ * @param {function(Error): void} deps.errorHandler
  */
-export class ShaderController {
-  constructor(soundGL, visualGL, editor, statusManager, appState, uiController) {
-    this.soundGL = soundGL;
-    this.visualGL = visualGL;
-    this.editor = editor;
-    this.statusManager = statusManager;
-    this.appState = appState;
-    this.uiController = uiController;
+export function createShaderController({
+  soundRenderer,
+  visualRenderer,
+  editor,
+  statusDisplay,
+  eventBus,
+  errorHandler,
+}) {
+  let statusTimer = null;
+
+  /**
+   * Initialize shaders with the code currently loaded in the editor
+   * @param {string} soundCode
+   * @param {string} visualCode
+   */
+  function initShaders(soundCode, visualCode) {
+    soundRenderer.compile(soundCode);
+    visualRenderer.compile(visualCode);
   }
 
   /**
-   * デフォルトシェーダーを初期化
+   * Compile the current editor code
    */
-  initDefaultShaders() {
-    const soundCode = this.editor.currentSoundCode;
-    const visualCode = this.editor.currentVisualCode;
-
-    this.soundGL.compile(soundCode);
-    this.visualGL.compile(visualCode);
-  }
-
-  /**
-   * 現在のエディタコードをコンパイル
-   */
-  compileShader() {
+  function compileShader() {
     try {
-      const currentMode = this.editor.editMode;
-      const code = this.editor.getCurrentEditCode();
+      const mode = editor.mode;
+      const code = editor.getCurrentCode();
 
-      if (currentMode === 'sound') {
-        this.soundGL.compile(code);
+      eventBus.emit(EVENTS.SHADER_COMPILE_START, { mode });
+
+      if (mode === UI.EDITOR_MODES.SOUND) {
+        soundRenderer.compile(code);
         saveShader('sound', code);
-        this.statusManager.updateStatusLine('Sound Compiled & Saved - Apply with ⌘R', 'success');
+        statusDisplay.showStatus('Sound Compiled & Saved', 'success');
       } else {
-        this.visualGL.compile(code);
+        visualRenderer.compile(code);
         saveShader('visual', code);
-        this.statusManager.updateStatusLine('Visual Compiled & Saved - Apply with ⌘R', 'success');
+        statusDisplay.showStatus('Visual Compiled & Saved', 'success');
       }
 
-      this.uiController.clearStatusMessageAfter(3000);
+      eventBus.emit(EVENTS.SHADER_COMPILE_SUCCESS, { mode });
+      clearStatusAfter(3000);
     } catch (error) {
-      this.statusManager.updateStatusLine(`ERR: ${error.message}`, 'error');
+      eventBus.emit(EVENTS.SHADER_COMPILE_ERROR, { error });
+      errorHandler(error);
     }
   }
 
   /**
-   * コンパイル済みシェーダーを適用
+   * Apply the previously compiled shader
    */
-  applyCompiledShader() {
+  function applyCompiledShader() {
     try {
-      if (this.editor.editMode === 'sound') {
-        this.soundGL.applyCompiledShader();
-        this.appState.pendingApply = true;
-        this.statusManager.updateStatusLine(
-          'Sound Applied - Will take effect in next bar',
-          'success',
-        );
+      const mode = editor.mode;
+
+      if (mode === UI.EDITOR_MODES.SOUND) {
+        soundRenderer.applyCompiledShader();
+        statusDisplay.showStatus('Sound Applied', 'success');
       } else {
-        this.visualGL.applyCompiledShader();
-        this.statusManager.updateStatusLine('Visual Applied - Immediate effect', 'success');
+        visualRenderer.applyCompiledShader();
+        statusDisplay.showStatus('Visual Applied', 'success');
       }
 
-      this.uiController.clearStatusMessageAfter(2000);
+      eventBus.emit(EVENTS.SHADER_APPLIED, { mode });
+      clearStatusAfter(2000);
     } catch (error) {
-      this.statusManager.updateStatusLine(`ERR: ${error.message}`, 'error');
+      errorHandler(error);
     }
   }
+
+  function clearStatusAfter(delay) {
+    if (statusTimer) clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => {
+      statusDisplay.showStatus('Ready');
+      statusTimer = null;
+    }, delay);
+  }
+
+  function destroy() {
+    if (statusTimer) {
+      clearTimeout(statusTimer);
+      statusTimer = null;
+    }
+  }
+
+  return {
+    initShaders,
+    compileShader,
+    applyCompiledShader,
+    destroy,
+  };
 }

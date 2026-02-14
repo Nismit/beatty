@@ -5,7 +5,7 @@
 
 /**
  * @param {Object} deps
- * @param {import('../controllers/UIController-new.js')} deps.uiController
+ * @param {import('../controllers/UIController.js')} deps.uiController
  */
 export function createModalController({ uiController }) {
   const cleanups = [];

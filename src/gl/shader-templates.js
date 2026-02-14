@@ -1,12 +1,9 @@
-// Shader Templates Module
-// Contains default GLSL shader code templates for audio and visual shaders
+/**
+ * Default shader templates
+ * Contains default GLSL code for sound and visual shaders
+ */
 
-export const ShaderTemplates = {
-  /**
-   * Default sound shader template with basic waveform functions,
-   * envelope control, and example instruments (kick, hihat, bass)
-   */
-  defaultSoundCode: `vec2 hash21(float p) {
+export const DEFAULT_SOUND_SHADER = `vec2 hash21(float p) {
 	vec3 p3 = fract(vec3(p) * vec3(.19615, .19901, .023118));
 	p3 += dot(p3, p3.yzx + 33.33);
   return fract((p3.xx + p3.yz) * p3.zy);
@@ -20,8 +17,8 @@ float timeToBeat(float time) {
   return time / 60.0 * u_bpm;
 }
 
-float beatToTime(float beat) { 
-  return beat / u_bpm * 60.0; 
+float beatToTime(float beat) {
+  return beat / u_bpm * 60.0;
 }
 
 float saw(float phase) {
@@ -62,27 +59,24 @@ float kick2(float time) {
 
 vec2 hihat( float time ) {
   float amp = exp( -50.0 * time );
-  // return amp * noise( time * 100.0 ).xy;
   return amp * hash21(time * 100.0).xy;
 }
 
 vec2 hihat2( float time ) {
   float amp = exp( -40.0 * time );
-  // return amp * noise( time * 100.0 ).xy;
   return amp * hash21(time * 300.0).xy;
 }
 
 float snare(float time) {
   float amp = exp(-5.0 * time);
-  // float envelope = exp(-time * 10.0); // エンベロープ（減衰）
-  float noise = 2.0 * (fract(sin(time) * 43758.5453) - 0.5); // ノイズ
-  float frequency = 250.0; // サイン波の周波数
+  float noise = 2.0 * (fract(sin(time) * 43758.5453) - 0.5);
+  float frequency = 250.0;
   float sineWave = sin(2.0 * 3.14159 * frequency * time);
   float envelope = smoothstep(0.0, 1.0, 1.0 - time * 10.0);
 
   float snareSound = amp * envelope * (0.5 * noise + 0.5 * sineWave);
 
-  float highPassCutoff = 100.0; // ハイパスフィルタのカットオフ周波数
+  float highPassCutoff = 100.0;
   snareSound *= smoothstep(highPassCutoff - 50.0, highPassCutoff + 50.0, frequency);
 
   return snareSound;
@@ -141,18 +135,14 @@ vec2 mainSound(float time) {
   vec2 res;
 
   float beat = timeToBeat(time);
-  // 第二引数が各小節とリンクしている
-  // beat, 2.0 = 2小節毎にkickが鳴る
   float kickTime = beatToTime( mod( beat, 1.0 ) );
   float hihatTime = beatToTime( mod( beat + 0.5, 1.0 ) );
   float hihatTime2 = beatToTime( mod( beat + 0.7, 1.0 ) );
   float snareTime = beatToTime( mod( beat, 2.0 ) );
 
-  // 音を小さくする？
   float sidechain = smoothstep( 0.0, 0.3, kickTime );
 
   float freq = mod(beat, 4.0) >= 1.0 ? 440.0 : 880.0;
-  // float amp = exp(-4.0 * fract(beat));
 
   float fmamp = 0.1 * exp( -3.0 * time );
   float fm = fmamp * sine( time * freq * 7.0 );
@@ -162,11 +152,8 @@ vec2 mainSound(float time) {
   float arpSeed = floor( beat / 0.25 );
   float arpDice = fract( noise( arpSeed ) * 100.0 );
 
-  // =============== Main
-
   float bassNote = chord( 0.0 ) - 12.0;
 
-  // 64 小節まで
   if ( 0.0 < beat && beat < 64.0 ) {
     res += vec2(kick(kickTime));
     res += vec2(kick2(kickTime));
@@ -206,13 +193,9 @@ vec2 mainSound(float time) {
   }
 
   return res;
-}`,
+}`;
 
-  /**
-   * Default visual shader template with audio-reactive effects
-   * Uses new uniforms: u_kickPeak, u_hihatPeak, u_bassPeak, u_kickOnset, u_hihatOnset, u_bassOnset
-   */
-  defaultVisualCode: `// Audio uniforms:
+export const DEFAULT_VISUAL_SHADER = `// Audio uniforms:
 // Smoothed: u_kick, u_hihat, u_bass (0-1)
 // Peak: u_kickPeak, u_hihatPeak, u_bassPeak (decay付き)
 // Onset: u_kickOnset, u_hihatOnset, u_bassOnset (1.0 on beat, 0.0 otherwise)
@@ -291,5 +274,4 @@ vec3 visualMain(vec2 uv, vec2 resolution) {
     color += vec3(noise * 0.02);
 
     return clamp(color, 0.0, 1.0);
-}`,
-};
+}`;

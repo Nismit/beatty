@@ -1,85 +1,125 @@
 /**
- * PlaybackController - 再生/一時停止/リセットの制御
+ * PlaybackController factory function
+ * Manages play/pause/reset lifecycle and animation loop
  */
-export class PlaybackController {
-  constructor(audio, appState, statusManager, uiController) {
-    this.audio = audio;
-    this.appState = appState;
-    this.statusManager = statusManager;
-    this.uiController = uiController;
-    this.animationFrameId = null;
-  }
 
-  /**
-   * 再生/一時停止をトグル
-   */
-  async togglePlayback() {
+import { EVENTS } from '../utils/consts.js';
+
+/**
+ * @param {Object} deps
+ * @param {import('../audio/AudioEngine.js').AudioEngine} deps.audioEngine
+ * @param {import('../audio/AudioAnalyzer.js').AudioAnalyzer} deps.audioAnalyzer
+ * @param {import('../audio/AudioScheduler.js').AudioScheduler} deps.audioScheduler
+ * @param {import('../state/PlaybackState.js').PlaybackState} deps.playbackState
+ * @param {import('../state/AudioSettings.js').AudioSettings} deps.audioSettings
+ * @param {import('../gl/VisualRenderer.js').VisualRenderer} deps.visualRenderer
+ * @param {import('../ui/StatusDisplay.js').StatusDisplay} deps.statusDisplay
+ * @param {import('../state/EventBus.js').EventBus} deps.eventBus
+ * @param {function(Error): void} deps.errorHandler
+ */
+export function createPlaybackController({
+  audioEngine,
+  audioAnalyzer,
+  audioScheduler,
+  playbackState,
+  audioSettings,
+  visualRenderer,
+  statusDisplay,
+  eventBus,
+  errorHandler,
+}) {
+  let animationFrameId = null;
+
+  async function togglePlayback() {
     try {
-      if (this.appState.isPlaying) {
-        this.audio.pause();
-        this.appState.recordPauseTime();
-        this.appState.setPlayState(false, true);
-        this.statusManager.updateStatusLine('Paused - Press ⌘P to Resume', 'ready');
-      } else if (this.appState.isPaused) {
-        await this.audio.resume(this.appState.volume, this.appState.pausedReadPos);
-        this.appState.recordStartTime();
-        this.appState.setPlayState(true, false);
-        this.statusManager.updateStatusLine('Playing - Press ⌘P to Pause', 'ready');
+      if (playbackState.isPlaying) {
+        // Playing → Pause
+        audioEngine.pause();
+        playbackState.recordPauseTime(
+          audioEngine.audioContext.currentTime,
+          audioSettings.getSamplesPerBar(),
+        );
+        playbackState.setPlaying(false, true);
+        statusDisplay.showStatus('Paused');
+      } else if (playbackState.isPaused) {
+        // Paused → Resume
+        await audioEngine.resume(audioSettings.volume, playbackState.pausedReadPos);
+        playbackState.recordStartTime(audioEngine.audioContext.currentTime);
+        playbackState.setPlaying(true, false);
+        statusDisplay.showStatus('Playing');
       } else {
-        await this.audio.start(this.appState.volume);
-        this.appState.recordStartTime();
-        this.appState.setPlayState(true, false);
-        this.statusManager.updateStatusLine('Playing - Press ⌘P to Pause', 'ready');
+        // Stopped → Start
+        const initialBuffer = await audioScheduler.requestInitialBuffer();
+        await audioEngine.start(initialBuffer, audioSettings.volume);
+        playbackState.recordStartTime(audioEngine.audioContext.currentTime);
+        playbackState.setPlaying(true, false);
+        statusDisplay.showStatus('Playing');
+
+        // Pre-generate next buffer
+        audioScheduler.requestNextBuffer();
       }
-      this.uiController.updatePlayButton();
     } catch (error) {
-      this.statusManager.updateStatusLine(`ERR[PLAYBACK]: ${error.message}`, 'error');
-      console.error('Playback error:', error);
+      errorHandler(error);
     }
   }
 
-  /**
-   * 再生をリセット
-   */
-  async resetPlayback() {
+  function resetPlayback() {
     try {
-      this.audio.stop();
-      this.appState.resetTiming();
-      this.appState.setPlayState(false, false);
-      this.statusManager.updateStatusLine('Reset - Press ⌘P to Start', 'ready');
-      this.uiController.updatePlayButton();
+      audioEngine.stop();
+      audioScheduler.reset();
+      playbackState.reset();
+      statusDisplay.showStatus('Reset');
     } catch (error) {
-      this.statusManager.updateStatusLine(`ERR[RESET]: ${error.message}`, 'error');
+      errorHandler(error);
     }
   }
 
   /**
-   * アニメーションループを開始
-   * @param {VisualGL} visualGL - ビジュアルシェーダーインスタンス
+   * Start the render loop (audio analysis + visual rendering)
    */
-  startAnimationLoop(visualGL) {
-    // 既存のループがあれば停止
-    this.stopAnimationLoop();
+  function startAnimationLoop() {
+    stopAnimationLoop();
 
     const animate = () => {
-      if (this.appState.isPlaying) {
-        this.audio.analyzeAudioData();
+      if (playbackState.isPlaying) {
+        const data = audioEngine.getAnalysisData();
+        if (data) {
+          audioAnalyzer.analyze(data.frequencyData, data.timeData, audioEngine.sampleRate);
+        }
       }
 
-      visualGL.render(this.audio.audioAnalyzer.getAnalysisValues(), this.appState);
+      const currentTime = playbackState.getCurrentTime(audioEngine.audioContext);
+      visualRenderer.render(audioAnalyzer.getValues(), currentTime);
 
-      this.animationFrameId = requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
     animate();
   }
 
-  /**
-   * アニメーションループを停止
-   */
-  stopAnimationLoop() {
-    if (this.animationFrameId !== null) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
+  function stopAnimationLoop() {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
     }
   }
+
+  /**
+   * Handle window resize
+   */
+  function handleResize() {
+    visualRenderer.resizeCanvas();
+  }
+
+  function destroy() {
+    stopAnimationLoop();
+  }
+
+  return {
+    togglePlayback,
+    resetPlayback,
+    startAnimationLoop,
+    stopAnimationLoop,
+    handleResize,
+    destroy,
+  };
 }

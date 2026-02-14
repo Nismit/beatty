@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beatty-v1.1.1';
+const CACHE_NAME = 'beatty-v2.0.0';
 const urlsToCache = [
   './',
   './index.html',
@@ -6,33 +6,36 @@ const urlsToCache = [
   './styles.css',
   './manifest.json',
   // audio
-  './audio/Audio.js',
+  './audio/AudioEngine.js',
   './audio/AudioAnalyzer.js',
+  './audio/AudioScheduler.js',
   './audio/audio-worklet.js',
-  './audio/index.js',
   // gl
-  './gl/SoundGL.js',
-  './gl/VisualGL.js',
+  './gl/SoundRenderer.js',
+  './gl/VisualRenderer.js',
+  './gl/ShaderCompiler.js',
+  './gl/gl-utils.js',
   './gl/shader-templates.js',
-  './gl/utils.js',
-  './gl/index.js',
   // controllers
   './controllers/PlaybackController.js',
   './controllers/ShaderController.js',
   './controllers/UIController.js',
-  './controllers/InputHandler.js',
-  './controllers/index.js',
+  // input
+  './input/KeyboardController.js',
+  './input/MobileController.js',
+  './input/ModalController.js',
   // editor
   './editor/Editor.js',
-  './editor/index.js',
   // state
-  './state/AppState.js',
-  './state/StatusManager.js',
-  './state/index.js',
+  './state/EventBus.js',
+  './state/PlaybackState.js',
+  './state/AudioSettings.js',
+  // ui
+  './ui/StatusDisplay.js',
   // utils
   './utils/consts.js',
+  './utils/errors.js',
   './utils/storage.js',
-  './utils/index.js',
 ];
 
 // Install event - cache resources and skip waiting
@@ -53,18 +56,25 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - Network-First strategy
 self.addEventListener('fetch', (event) => {
-  // Only handle same-origin requests
+  // Only handle same-origin GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // Skip Service Worker file itself to prevent loops
+  if (event.request.url.includes('sw.js')) {
     return;
   }
 
   event.respondWith(
     (async () => {
       try {
-        // Try network first
         const networkResponse = await fetch(event.request);
 
-        // Cache successful responses
         if (networkResponse.ok) {
           const cache = await caches.open(CACHE_NAME);
           cache.put(event.request, networkResponse.clone());
@@ -72,7 +82,6 @@ self.addEventListener('fetch', (event) => {
 
         return networkResponse;
       } catch (error) {
-        // Network failed, try cache
         console.log('[SW] Network failed, serving from cache:', event.request.url);
         const cachedResponse = await caches.match(event.request);
 
@@ -80,7 +89,6 @@ self.addEventListener('fetch', (event) => {
           return cachedResponse;
         }
 
-        // If no cache and it's a navigation request, return cached index.html
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
@@ -95,7 +103,6 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
-      // Clean old caches
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames
@@ -106,7 +113,6 @@ self.addEventListener('activate', (event) => {
             }),
         );
       }),
-      // Take control of all clients immediately
       self.clients.claim().then(() => {
         console.log('[SW] Claimed all clients');
       }),
