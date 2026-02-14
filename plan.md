@@ -703,10 +703,10 @@ export const EVENTS = {
 ### Phase 6: UI ✅ 完了
 17. ✅ `ui/StatusDisplay.js` - ステータス表示
 
-### Phase 7: Controllers
-18. `controllers/PlaybackController.js` - 再生制御 + resize ハンドリング
-19. `controllers/ShaderController.js` - シェーダー制御
-20. `controllers/UIController.js` - UI制御
+### Phase 7: Controllers ✅ 完了
+18. ✅ `controllers/PlaybackController.js` - 再生制御 + resize ハンドリング
+19. ✅ `controllers/ShaderController.js` - シェーダー制御
+20. ✅ `controllers/UIController.js` - UI制御
 
 ### Phase 8: Input
 21. `input/KeyboardController.js` - キーボード
