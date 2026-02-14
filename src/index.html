@@ -28,9 +28,8 @@
     <!-- Mobile control buttons -->
     <div class="mobile-controls">
         <button id="mobilePlayToggle" class="mobile-btn" title="Play/Pause (⌘P)">⏯</button>
-        <button id="mobileReset" class="mobile-btn" title="Reset (⌘I)">⏹</button>
-        <button id="mobileCompile" class="mobile-btn" title="Compile (⌘S)">🔧</button>
-        <button id="mobileApply" class="mobile-btn" title="Apply (⌘R)">✓</button>
+        <button id="mobileReset" class="mobile-btn" title="Reset (⌘I)">↺</button>
+        <button id="mobileCompileApply" class="mobile-btn" title="Compile (⌘S)">⚙</button>
         <div class="mobile-btn-separator"></div>
         <button id="mobileToggleEditor" class="mobile-btn" title="Toggle Editor (⌘T)">📝</button>
         <button id="mobileToggleMode" class="mobile-btn" title="Switch Mode (⌘E)">🔄</button>
@@ -42,16 +41,15 @@
             <div class="editor-content">
                 <div id="editor"></div>
             </div>
-            <div class="status-line">
+            <div class="error-bar" id="errorBar"></div>
+            <div class="status-line" id="statusLine">
                 <div class="status-left">
-                    <span id="editMode">[Sound]</span>
-                    <span id="statusText">Initializing...</span>
+                    <span class="status-dot" id="statusDot"></span>
                 </div>
                 <div class="status-right">
-                    <span class="status-clickable" id="helpStatus">HELP</span> | 
-                    <span class="status-clickable" id="bpmStatus">BPM:<span id="statusBpm">120</span></span> | 
-                    BARS:<span id="statusBars">0</span> | 
-                    <span id="statusPlayState">PAUSE</span> | 
+                    <span class="status-clickable" id="helpStatus">HELP</span> |
+                    <span class="status-clickable" id="bpmStatus">BPM:<span id="statusBpm">120</span></span> |
+                    BARS:<span id="statusBars">0</span> |
                     <span class="status-clickable" id="volumeStatus">VOL:<span id="statusVolume">0.3</span></span>
                 </div>
             </div>
@@ -89,7 +87,24 @@
                         <li><kbd>⌘E</kbd> Switch Sound/Visual Mode</li>
                     </ul>
                 </div>
-                
+
+                <div class="help-section">
+                    <h3>Status Bar</h3>
+                    <p class="help-description">The status bar background color indicates the current editor mode:</p>
+                    <ul class="indicator-list">
+                        <li><span class="indicator-sample sound-bg"></span> Sound Mode</li>
+                        <li><span class="indicator-sample visual-bg"></span> Visual Mode</li>
+                    </ul>
+                    <p class="help-description">The dot indicator shows the shader state:</p>
+                    <ul class="indicator-list">
+                        <li><span class="indicator-dot ready"></span> Ready</li>
+                        <li><span class="indicator-dot compiling"></span> Compiling</li>
+                        <li><span class="indicator-dot compiled"></span> Compiled</li>
+                        <li><span class="indicator-dot applied"></span> Applied</li>
+                        <li><span class="indicator-dot error"></span> Error</li>
+                    </ul>
+                </div>
+
                 <div class="help-section">
                     <h3>Sound Shader Uniforms</h3>
                     <ul class="uniform-list">

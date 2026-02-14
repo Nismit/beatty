@@ -13,7 +13,6 @@ import { EVENTS } from '../utils/consts.js';
  * @param {import('../state/PlaybackState.js').PlaybackState} deps.playbackState
  * @param {import('../state/AudioSettings.js').AudioSettings} deps.audioSettings
  * @param {import('../gl/VisualRenderer.js').VisualRenderer} deps.visualRenderer
- * @param {import('../ui/StatusDisplay.js').StatusDisplay} deps.statusDisplay
  * @param {import('../state/EventBus.js').EventBus} deps.eventBus
  * @param {function(Error): void} deps.errorHandler
  */
@@ -24,7 +23,6 @@ export function createPlaybackController({
   playbackState,
   audioSettings,
   visualRenderer,
-  statusDisplay,
   eventBus,
   errorHandler,
 }) {
@@ -40,20 +38,17 @@ export function createPlaybackController({
           audioSettings.getSamplesPerBar(),
         );
         playbackState.setPlaying(false, true);
-        statusDisplay.showStatus('Paused');
       } else if (playbackState.isPaused) {
         // Paused → Resume
         await audioEngine.resume(audioSettings.volume, playbackState.pausedReadPos);
         playbackState.recordStartTime(audioEngine.audioContext.currentTime);
         playbackState.setPlaying(true, false);
-        statusDisplay.showStatus('Playing');
       } else {
         // Stopped → Start
         const initialBuffer = await audioScheduler.requestInitialBuffer();
         await audioEngine.start(initialBuffer, audioSettings.volume);
         playbackState.recordStartTime(audioEngine.audioContext.currentTime);
         playbackState.setPlaying(true, false);
-        statusDisplay.showStatus('Playing');
 
         // Pre-generate next buffer
         audioScheduler.requestNextBuffer();
@@ -68,7 +63,6 @@ export function createPlaybackController({
       audioEngine.stop();
       audioScheduler.reset();
       playbackState.reset();
-      statusDisplay.showStatus('Reset');
     } catch (error) {
       errorHandler(error);
     }

@@ -48,12 +48,11 @@ export function createShaderController({
       if (mode === UI.EDITOR_MODES.SOUND) {
         soundRenderer.compile(code);
         saveShader('sound', code);
-        statusDisplay.showStatus('Sound Compiled & Saved', 'success');
       } else {
         visualRenderer.compile(code);
         saveShader('visual', code);
-        statusDisplay.showStatus('Visual Compiled & Saved', 'success');
       }
+      statusDisplay.showStatus(null, UI.STATUS_TYPES.COMPILED);
 
       eventBus.emit(EVENTS.SHADER_COMPILE_SUCCESS, { mode });
       clearStatusAfter(3000);
@@ -72,11 +71,10 @@ export function createShaderController({
 
       if (mode === UI.EDITOR_MODES.SOUND) {
         soundRenderer.applyCompiledShader();
-        statusDisplay.showStatus('Sound Applied', 'success');
       } else {
         visualRenderer.applyCompiledShader();
-        statusDisplay.showStatus('Visual Applied', 'success');
       }
+      statusDisplay.showStatus(null, UI.STATUS_TYPES.APPLIED);
 
       eventBus.emit(EVENTS.SHADER_APPLIED, { mode });
       clearStatusAfter(2000);
@@ -88,7 +86,7 @@ export function createShaderController({
   function clearStatusAfter(delay) {
     if (statusTimer) clearTimeout(statusTimer);
     statusTimer = setTimeout(() => {
-      statusDisplay.showStatus('Ready');
+      statusDisplay.showStatus(null, UI.STATUS_TYPES.READY);
       statusTimer = null;
     }, delay);
   }

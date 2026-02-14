@@ -3,6 +3,8 @@
  * Manages mobile button controls and slider inputs (BPM/Volume)
  */
 
+import { EVENTS } from '../utils/consts.js';
+
 /**
  * @param {Object} deps
  * @param {import('../controllers/PlaybackController.js')} deps.playbackController
@@ -11,6 +13,7 @@
  * @param {import('../editor/Editor.js').Editor} deps.editor
  * @param {import('../state/AudioSettings.js').AudioSettings} deps.audioSettings
  * @param {import('../audio/AudioEngine.js').AudioEngine} deps.audioEngine
+ * @param {import('../state/EventBus.js').EventBus} deps.eventBus
  */
 export function createMobileController({
   playbackController,
@@ -19,8 +22,10 @@ export function createMobileController({
   editor,
   audioSettings,
   audioEngine,
+  eventBus,
 }) {
   const cleanups = [];
+  let isCompiled = false;
 
   /**
    * Bind a click handler to an element by ID
@@ -46,6 +51,19 @@ export function createMobileController({
     cleanups.push(() => el.removeEventListener('input', handler));
   }
 
+  function updateCompileApplyButton() {
+    const btn = document.getElementById('mobileCompileApply');
+    if (!btn) return;
+
+    if (isCompiled) {
+      btn.textContent = '✓';
+      btn.title = 'Apply (⌘R)';
+    } else {
+      btn.textContent = '⚙';
+      btn.title = 'Compile (⌘S)';
+    }
+  }
+
   function init() {
     // Mobile buttons
     bindClick('mobilePlayToggle', (e) => {
@@ -58,14 +76,13 @@ export function createMobileController({
       playbackController.resetPlayback();
     });
 
-    bindClick('mobileCompile', (e) => {
+    bindClick('mobileCompileApply', (e) => {
       e.preventDefault();
-      shaderController.compileShader();
-    });
-
-    bindClick('mobileApply', (e) => {
-      e.preventDefault();
-      shaderController.applyCompiledShader();
+      if (isCompiled) {
+        shaderController.applyCompiledShader();
+      } else {
+        shaderController.compileShader();
+      }
     });
 
     bindClick('mobileToggleEditor', (e) => {
@@ -93,6 +110,25 @@ export function createMobileController({
       audioSettings.setVolume(volume);
       audioEngine.setVolume(volume);
     });
+
+    // Subscribe to shader events
+    const unsubCompileSuccess = eventBus.on(EVENTS.SHADER_COMPILE_SUCCESS, () => {
+      isCompiled = true;
+      updateCompileApplyButton();
+    });
+    cleanups.push(unsubCompileSuccess);
+
+    const unsubCompileError = eventBus.on(EVENTS.SHADER_COMPILE_ERROR, () => {
+      isCompiled = false;
+      updateCompileApplyButton();
+    });
+    cleanups.push(unsubCompileError);
+
+    const unsubApplied = eventBus.on(EVENTS.SHADER_APPLIED, () => {
+      isCompiled = false;
+      updateCompileApplyButton();
+    });
+    cleanups.push(unsubApplied);
 
     // Initialize button states
     uiController.initButtonStates();
