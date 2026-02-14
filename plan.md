@@ -680,9 +680,9 @@ export const EVENTS = {
 3. ✅ `utils/storage.js` - LocalStorage操作（キーを `beatty_` に変更）
 4. ✅ `state/EventBus.js` - 汎用イベントバス
 
-### Phase 2: State
-5. `state/PlaybackState.js` - 再生状態 + タイミング
-6. `state/AudioSettings.js` - BPM/Volume（永続化）
+### Phase 2: State ✅ 完了
+5. ✅ `state/PlaybackState.js` - 再生状態 + タイミング
+6. ✅ `state/AudioSettings.js` - BPM/Volume（永続化）
 
 ### Phase 3: Audio
 7. `audio/audio-worklet.js` - AudioWorkletProcessor
