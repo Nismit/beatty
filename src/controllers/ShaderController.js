@@ -56,7 +56,10 @@ export class ShaderController {
       if (this.editor.editMode === 'sound') {
         this.soundGL.applyCompiledShader();
         this.appState.pendingApply = true;
-        this.statusManager.updateStatusLine('Sound Applied - Will take effect in next bar', 'success');
+        this.statusManager.updateStatusLine(
+          'Sound Applied - Will take effect in next bar',
+          'success',
+        );
       } else {
         this.visualGL.applyCompiledShader();
         this.statusManager.updateStatusLine('Visual Applied - Immediate effect', 'success');

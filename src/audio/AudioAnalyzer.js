@@ -117,7 +117,12 @@ export class AudioAnalyzer {
     // Extract raw features
     this.kickRaw = this.extractBandEnergy(frequencyDataArray, freqPerBin, this.kickFreqRange);
     this.hihatRaw = this.extractBandEnergy(frequencyDataArray, freqPerBin, this.hihatFreqRange);
-    this.bassRaw = this.extractBandEnergyWithRMS(frequencyDataArray, timeDataArray, freqPerBin, this.bassFreqRange);
+    this.bassRaw = this.extractBandEnergyWithRMS(
+      frequencyDataArray,
+      timeDataArray,
+      freqPerBin,
+      this.bassFreqRange,
+    );
 
     // Calculate spectral flux (onset detection)
     this.calculateSpectralFlux();
@@ -266,10 +271,14 @@ export class AudioAnalyzer {
    */
   isOnset(band) {
     switch (band) {
-      case 'kick': return this.kickFlux > this.onsetThreshold;
-      case 'hihat': return this.hihatFlux > this.onsetThreshold;
-      case 'bass': return this.bassFlux > this.onsetThreshold;
-      default: return false;
+      case 'kick':
+        return this.kickFlux > this.onsetThreshold;
+      case 'hihat':
+        return this.hihatFlux > this.onsetThreshold;
+      case 'bass':
+        return this.bassFlux > this.onsetThreshold;
+      default:
+        return false;
     }
   }
 

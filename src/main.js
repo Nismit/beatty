@@ -1,15 +1,15 @@
 import { Audio } from './audio/Audio.js';
-import { SoundGL } from './gl/SoundGL.js';
-import { VisualGL } from './gl/VisualGL.js';
-import { ShaderTemplates } from './gl/shader-templates.js';
+import { InputHandler } from './controllers/InputHandler.js';
+import { PlaybackController } from './controllers/PlaybackController.js';
+import { ShaderController } from './controllers/ShaderController.js';
+import { UIController } from './controllers/UIController.js';
 import { Editor } from './editor/Editor.js';
+import { SoundGL } from './gl/SoundGL.js';
+import { ShaderTemplates } from './gl/shader-templates.js';
+import { VisualGL } from './gl/VisualGL.js';
 import { AppState } from './state/AppState.js';
 import { StatusManager } from './state/StatusManager.js';
 import { loadShader } from './utils/storage.js';
-import { UIController } from './controllers/UIController.js';
-import { PlaybackController } from './controllers/PlaybackController.js';
-import { ShaderController } from './controllers/ShaderController.js';
-import { InputHandler } from './controllers/InputHandler.js';
 
 /**
  * AudioVisualizerSystem - アプリケーションのファサード
@@ -37,7 +37,7 @@ class AudioVisualizerSystem {
       },
       onVisibilityToggle: (isVisible) => {
         this.uiController?.updateEditorButton();
-      }
+      },
     });
 
     this.editor.setCode('sound', savedSoundCode);
@@ -49,7 +49,7 @@ class AudioVisualizerSystem {
       this.audio,
       this.appState,
       this.statusManager,
-      this.uiController
+      this.uiController,
     );
     this.shaderController = new ShaderController(
       this.soundGL,
@@ -57,14 +57,14 @@ class AudioVisualizerSystem {
       this.editor,
       this.statusManager,
       this.appState,
-      this.uiController
+      this.uiController,
     );
     this.inputHandler = new InputHandler(
       this.playbackController,
       this.shaderController,
       this.uiController,
       this.editor,
-      this.appState
+      this.appState,
     );
 
     this.setupCallbacks();
@@ -77,7 +77,7 @@ class AudioVisualizerSystem {
    */
   setupCallbacks() {
     this.audio.generateBufferCallback = (blockOffset) => {
-      const secondsPerBar = 60.0 / this.appState.bpm * 4;
+      const secondsPerBar = (60.0 / this.appState.bpm) * 4;
       const nextBlockOffset = this.appState.currentBlockOffset + secondsPerBar;
 
       this.appState.currentBlockOffset = nextBlockOffset;
@@ -85,7 +85,7 @@ class AudioVisualizerSystem {
       return this.soundGL.generateAudioBuffer(
         nextBlockOffset,
         this.appState.bpm,
-        this.appState.sampleRate
+        this.appState.sampleRate,
       );
     };
 
@@ -126,7 +126,8 @@ class AudioVisualizerSystem {
    */
   setupServiceWorker() {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker
+        .register('./sw.js')
         .then(() => console.log('[App] Service Worker registered'))
         .catch((error) => console.error('[App] Service Worker registration failed:', error));
 
@@ -137,4 +138,4 @@ class AudioVisualizerSystem {
   }
 }
 
-const audioSystem = new AudioVisualizerSystem();
+new AudioVisualizerSystem();

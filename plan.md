@@ -749,6 +749,7 @@ export const EVENTS = {
 - CodeMirror 6
 - PWA (Service Worker)
 - Vitest (テスト)
+- Biome (Linter + Formatter)
 
 ---
 

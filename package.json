@@ -1,0 +1,33 @@
+{
+  "name": "beatty",
+  "version": "1.0.0",
+  "description": "Real-time audio generation and visualization using WebGL shaders",
+  "private": true,
+  "scripts": {
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/",
+    "check": "biome check --write src/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nismit/beatty.git"
+  },
+  "keywords": [
+    "webgl",
+    "audio",
+    "shader",
+    "glsl",
+    "visualization",
+    "pwa"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nismit/beatty/issues"
+  },
+  "homepage": "https://github.com/Nismit/beatty#readme",
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.15"
+  }
+}

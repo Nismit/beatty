@@ -1,6 +1,6 @@
 export const APP = {
   STATUS_UPDATE_INTERVAL: 100,
-}
+};
 
 export const AUDIO = {
   SAMPLE_RATE: 48000,
@@ -16,18 +16,18 @@ export const AUDIO = {
 
 export const WEBGL_CONSTANTS = {
   TRANSFORM_FEEDBACK_VARYINGS: ['v_audioSample'],
-  CLEAR_COLOR: [0.0, 0.0, 0.0, 1.0]
+  CLEAR_COLOR: [0.0, 0.0, 0.0, 1.0],
 };
 
 export const UI_CONSTANTS = {
   EDITOR_MODES: {
     SOUND: 'sound',
-    VISUAL: 'visual'
+    VISUAL: 'visual',
   },
   STATUS_TYPES: {
     READY: 'ready',
     ERROR: 'error',
     SUCCESS: 'success',
-    COMPILING: 'compiling'
-  }
+    COMPILING: 'compiling',
+  },
 };

@@ -66,10 +66,7 @@ export class PlaybackController {
         this.audio.analyzeAudioData();
       }
 
-      visualGL.render(
-        this.audio.audioAnalyzer.getAnalysisValues(),
-        this.appState
-      );
+      visualGL.render(this.audio.audioAnalyzer.getAnalysisValues(), this.appState);
 
       this.animationFrameId = requestAnimationFrame(animate);
     };

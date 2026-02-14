@@ -19,7 +19,7 @@ export class Audio {
       hihatFreqRange: [5000, 12000],
       bassFreqRange: [100, 300],
       historyLength: 5,
-      smoothingTimeConstant: 0.6
+      smoothingTimeConstant: 0.6,
     });
 
     this.generateBufferCallback = null;
@@ -30,10 +30,7 @@ export class Audio {
 
     await this.audioContext.audioWorklet.addModule('./audio/audio-worklet.js');
 
-    this.audioWorkletNode = new AudioWorkletNode(
-      this.audioContext,
-      'glsl-audio-processor',
-    );
+    this.audioWorkletNode = new AudioWorkletNode(this.audioContext, 'glsl-audio-processor');
 
     this.audioWorkletNode.port.onmessage = (event) => {
       if (event.data.type === 'requestNextBuffer') {
@@ -47,9 +44,7 @@ export class Audio {
     this.analyserNode.minDecibels = AUDIO.MIN_DECIBELS;
     this.analyserNode.maxDecibels = AUDIO.MAX_DECIBELS;
 
-    this.frequencyDataArray = new Uint8Array(
-      this.analyserNode.frequencyBinCount,
-    );
+    this.frequencyDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
     this.timeDataArray = new Uint8Array(this.analyserNode.frequencyBinCount);
   }
 
@@ -73,7 +68,6 @@ export class Audio {
       if (this.generateBufferCallback) {
         this.generateNextBuffer();
       }
-      
     } catch (error) {
       console.error('Audio start error:', error);
       throw error;
@@ -82,7 +76,6 @@ export class Audio {
 
   async resume(volume, pausedReadPos = 0) {
     try {
-      
       if (this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
       }
@@ -95,7 +88,6 @@ export class Audio {
 
       this.audioWorkletNode.connect(this.analyserNode);
       this.analyserNode.connect(this.audioContext.destination);
-      
     } catch (error) {
       console.error('Audio resume error:', error);
       throw error;
@@ -116,7 +108,7 @@ export class Audio {
     try {
       this.audioWorkletNode.disconnect();
       this.analyserNode.disconnect();
-      
+
       this.currentBuffer = null;
       this.nextBuffer = null;
     } catch (error) {
@@ -131,13 +123,12 @@ export class Audio {
 
   async generateNextBuffer() {
     if (this.isGeneratingNext || !this.generateBufferCallback) return;
-    
+
     this.isGeneratingNext = true;
 
     try {
       this.nextBuffer = await this.generateBufferCallback();
       this.postMessageToWorklet('setNextBuffer', this.nextBuffer);
-      
     } catch (error) {
       console.error('Buffer generation error:', error);
     } finally {
@@ -163,7 +154,7 @@ export class Audio {
     this.audioAnalyzer.analyzeAudioData(
       this.frequencyDataArray,
       this.timeDataArray,
-      this.audioContext.sampleRate
+      this.audioContext.sampleRate,
     );
   }
 }
