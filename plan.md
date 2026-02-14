@@ -708,10 +708,10 @@ export const EVENTS = {
 19. ✅ `controllers/ShaderController.js` - シェーダー制御
 20. ✅ `controllers/UIController.js` - UI制御
 
-### Phase 8: Input
-21. `input/KeyboardController.js` - キーボード
-22. `input/MobileController.js` - モバイル
-23. `input/ModalController.js` - モーダル
+### Phase 8: Input ✅ 完了
+21. ✅ `input/KeyboardController.js` - キーボード
+22. ✅ `input/MobileController.js` - モバイル
+23. ✅ `input/ModalController.js` - モーダル
 
 ### Phase 9: 統合
 24. `main.js` - Facade + エラーハンドラ接続 + beforeunload
