@@ -697,8 +697,8 @@ export const EVENTS = {
 14. ✅ `gl/SoundRenderer.js` - Transform Feedback
 15. ✅ `gl/VisualRenderer.js` - Fragment shader
 
-### Phase 5: Editor
-16. `editor/Editor.js` - CodeMirror GLSLエディタ
+### Phase 5: Editor ✅ 完了
+16. ✅ `editor/Editor.js` - CodeMirror GLSLエディタ
 
 ### Phase 6: UI
 17. `ui/StatusDisplay.js` - ステータス表示
