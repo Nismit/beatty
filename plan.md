@@ -674,11 +674,11 @@ export const EVENTS = {
 
 ## 実装順序
 
-### Phase 1: 基盤
-1. `utils/consts.js` - 定数定義 + EVENTS
-2. `utils/errors.js` - エラークラス
-3. `utils/storage.js` - LocalStorage操作（キーを `beatty_` に変更）
-4. `state/EventBus.js` - 汎用イベントバス
+### Phase 1: 基盤 ✅ 完了
+1. ✅ `utils/consts.js` - 定数定義 + EVENTS
+2. ✅ `utils/errors.js` - エラークラス
+3. ✅ `utils/storage.js` - LocalStorage操作（キーを `beatty_` に変更）
+4. ✅ `state/EventBus.js` - 汎用イベントバス
 
 ### Phase 2: State
 5. `state/PlaybackState.js` - 再生状態 + タイミング
