@@ -690,12 +690,12 @@ export const EVENTS = {
 9. ✅ `audio/AudioAnalyzer.js` - 周波数解析
 10. ✅ `audio/AudioScheduler.js` - タイミング制御
 
-### Phase 4: GL
-11. `gl/gl-utils.js` - WebGLユーティリティ
-12. `gl/ShaderCompiler.js` - コンパイル・検証
-13. `gl/shader-templates.js` - デフォルトシェーダー
-14. `gl/SoundRenderer.js` - Transform Feedback
-15. `gl/VisualRenderer.js` - Fragment shader
+### Phase 4: GL ✅ 完了
+11. ✅ `gl/gl-utils.js` - WebGLユーティリティ
+12. ✅ `gl/ShaderCompiler.js` - コンパイル・検証
+13. ✅ `gl/shader-templates.js` - デフォルトシェーダー
+14. ✅ `gl/SoundRenderer.js` - Transform Feedback
+15. ✅ `gl/VisualRenderer.js` - Fragment shader
 
 ### Phase 5: Editor
 16. `editor/Editor.js` - CodeMirror GLSLエディタ
