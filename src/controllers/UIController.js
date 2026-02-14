@@ -93,7 +93,7 @@ export function createUIController({ playbackState, audioSettings, editor, event
       if (valueDisplay) valueDisplay.textContent = audioSettings.bpm;
     } else {
       slider.value = audioSettings.volume;
-      if (valueDisplay) valueDisplay.textContent = audioSettings.volume.toFixed(1);
+      if (valueDisplay) valueDisplay.textContent = Math.round(audioSettings.volume * 100) + '%';
     }
 
     const rect = event.target.getBoundingClientRect();
