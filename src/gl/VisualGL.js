@@ -1,10 +1,10 @@
-import { 
-  createProgram, 
-  createFullscreenQuad,
-  setUniform,
-  deleteResource,
+import {
   buildVisualShader,
-  getFullscreenVertexShader
+  createFullscreenQuad,
+  createProgram,
+  deleteResource,
+  getFullscreenVertexShader,
+  setUniform,
 } from './utils.js';
 
 export class VisualGL {
@@ -34,7 +34,7 @@ export class VisualGL {
 
   resizeCanvas() {
     if (!this.visualizerCanvas || !this.gl) return;
-    
+
     this.visualizerCanvas.width = window.innerWidth;
     this.visualizerCanvas.height = window.innerHeight;
     this.gl.viewport(0, 0, this.visualizerCanvas.width, this.visualizerCanvas.height);
@@ -68,17 +68,23 @@ export class VisualGL {
     if (!this.gl || !this.program || !this.vao) return;
 
     const gl = this.gl;
-    
+
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
 
     const currentTime = appState.getCurrentTime();
 
     // Set uniforms
-    setUniform(gl, this.program, 'u_resolution', '2f', 
-      this.visualizerCanvas.width, this.visualizerCanvas.height);
+    setUniform(
+      gl,
+      this.program,
+      'u_resolution',
+      '2f',
+      this.visualizerCanvas.width,
+      this.visualizerCanvas.height,
+    );
     setUniform(gl, this.program, 'u_time', '1f', currentTime);
-    
+
     if (audioAnalysisData) {
       // Main smoothed values
       setUniform(gl, this.program, 'u_kick', '1f', audioAnalysisData.kick || 0);
@@ -104,7 +110,7 @@ export class VisualGL {
     if (this.compiledProgram) {
       const oldProgram = this.program;
       this.program = this.compiledProgram;
-      
+
       if (oldProgram && oldProgram !== this.compiledProgram) {
         deleteResource(this.gl, 'program', oldProgram);
       }

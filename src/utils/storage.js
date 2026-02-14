@@ -29,9 +29,9 @@ export function saveShader(mode, code) {
     const data = {
       code: code,
       timestamp: Date.now(),
-      version: '1.0'
+      version: '1.0',
     };
-    
+
     localStorage.setItem(key, JSON.stringify(data));
     return true;
   } catch (error) {
@@ -49,20 +49,20 @@ export function loadShader(mode) {
   try {
     const key = getStorageKey(mode);
     const stored = localStorage.getItem(key);
-    
+
     if (!stored) {
       return null;
     }
-    
+
     const data = JSON.parse(stored);
-    
+
     // Validate data structure
     if (!data.code || typeof data.code !== 'string') {
       console.warn(`[Storage] Invalid ${mode} shader data, removing`);
       localStorage.removeItem(key);
       return null;
     }
-    
+
     return data.code;
   } catch (error) {
     console.error(`[Storage] Failed to load ${mode} shader:`, error);
@@ -87,7 +87,7 @@ export function hasShader(mode) {
 export function getStorageInfo() {
   return {
     hasSound: hasShader('sound'),
-    hasVisual: hasShader('visual')
+    hasVisual: hasShader('visual'),
   };
 }
 
@@ -102,7 +102,7 @@ export function saveSettings(settings) {
       volume: settings.volume,
       bpm: settings.bpm,
       timestamp: Date.now(),
-      version: '1.0'
+      version: '1.0',
     };
 
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
@@ -130,7 +130,7 @@ export function loadSettings() {
     // Validate and return only known settings
     return {
       volume: typeof data.volume === 'number' ? data.volume : null,
-      bpm: typeof data.bpm === 'number' ? data.bpm : null
+      bpm: typeof data.bpm === 'number' ? data.bpm : null,
     };
   } catch (error) {
     console.error('[Storage] Failed to load settings:', error);

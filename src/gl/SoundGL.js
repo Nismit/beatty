@@ -1,17 +1,16 @@
 import { AUDIO } from '../utils/consts.js';
-import {  
-  createProgram, 
-  createBuffer, 
-  cleanupTransformFeedback, 
-  setUniform, 
-  deleteResource,
+import {
   buildSoundShader,
+  cleanupTransformFeedback,
+  createBuffer,
+  createProgram,
+  deleteResource,
+  setUniform,
 } from './utils.js';
 
-
 /**
- * @param {number} bpm 
- * @param {number} sampleRate 
+ * @param {number} bpm
+ * @param {number} sampleRate
  * @returns {number} Number of samples per 1 bar based on BPM and sample rate
  */
 const getSamplesPer1Bar = (bpm, sampleRate = 44100) => Math.floor((240 * sampleRate) / bpm);
@@ -25,7 +24,7 @@ export class SoundGL {
     }
 
     this.program = null;
-    this.compiledProgram = null
+    this.compiledProgram = null;
     this.transformFeedback = null;
 
     this.pendingBuffers = new Map();
@@ -38,12 +37,7 @@ export class SoundGL {
 void main(void) {}`;
 
     // Use utils functions to create program with transform feedback
-    const program = createProgram(
-      this.gl,
-      vertexSource,
-      fragmentSource,
-      ['v_audioSample']
-    );
+    const program = createProgram(this.gl, vertexSource, fragmentSource, ['v_audioSample']);
 
     if (this.compiledProgram && this.compiledProgram !== this.program) {
       deleteResource(this.gl, 'program', this.compiledProgram);
@@ -64,18 +58,18 @@ void main(void) {}`;
     const gl = this.gl;
 
     const bufferSize = samplesPerBar * 4 * AUDIO.STEREO;
-    
+
     if (!this.bufferPool.has(bufferSize)) {
       this.bufferPool.set(bufferSize, []);
     }
-    
+
     const pool = this.bufferPool.get(bufferSize);
     let buffer = pool.pop();
-    
+
     if (!buffer) {
       buffer = createBuffer(gl, bufferSize, gl.DYNAMIC_READ);
     }
-    
+
     return buffer;
   }
 
@@ -84,7 +78,7 @@ void main(void) {}`;
     const pool = this.bufferPool.get(bufferSize);
     if (pool) {
       pool.push(buffer);
-      
+
       if (pool.length > 3) {
         const oldBuffer = pool.shift();
         deleteResource(this.gl, 'buffer', oldBuffer);
@@ -97,7 +91,7 @@ void main(void) {}`;
       try {
         const gl = this.gl;
         const samplesPerBar = getSamplesPer1Bar(bpm, sampleRate);
-    
+
         const buffer = this.getBuffer(samplesPerBar);
 
         gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.transformFeedback);
@@ -141,10 +135,7 @@ void main(void) {}`;
     const gl = this.gl;
     const status = gl.clientWaitSync(sync, 0, 0);
 
-    if (
-      status === gl.ALREADY_SIGNALED ||
-      status === gl.CONDITION_SATISFIED
-    ) {
+    if (status === gl.ALREADY_SIGNALED || status === gl.CONDITION_SATISFIED) {
       this.completePendingBuffer(sync);
     } else if (status === gl.TIMEOUT_EXPIRED) {
       requestAnimationFrame(() => this.checkFenceCompletion(sync));
@@ -192,17 +183,15 @@ void main(void) {}`;
 
     try {
       const gl = this.gl;
-      
+
       if (this.program && this.program !== this.compiledProgram) {
         deleteResource(gl, 'program', this.program);
       }
 
       this.program = this.compiledProgram;
-      
     } catch (error) {
       console.error('SoundGL: Apply compiled shader error:', error);
       throw error;
     }
   }
 }
-  

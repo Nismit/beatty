@@ -38,7 +38,8 @@ const urlsToCache = [
 // Install event - cache resources and skip waiting
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => {
         console.log('[SW] Caching resources');
         return cache.addAll(urlsToCache);
@@ -46,7 +47,7 @@ self.addEventListener('install', (event) => {
       .then(() => {
         console.log('[SW] Skip waiting');
         return self.skipWaiting();
-      })
+      }),
   );
 });
 
@@ -86,7 +87,7 @@ self.addEventListener('fetch', (event) => {
 
         throw error;
       }
-    })()
+    })(),
   );
 });
 
@@ -97,18 +98,18 @@ self.addEventListener('activate', (event) => {
       // Clean old caches
       caches.keys().then((cacheNames) => {
         return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
+          cacheNames
+            .filter((cacheName) => cacheName !== CACHE_NAME)
+            .map((cacheName) => {
               console.log('[SW] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
-            }
-          })
+            }),
         );
       }),
       // Take control of all clients immediately
       self.clients.claim().then(() => {
         console.log('[SW] Claimed all clients');
-      })
-    ])
+      }),
+    ]),
   );
 });

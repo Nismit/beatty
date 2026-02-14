@@ -85,7 +85,7 @@ export class UIController {
 
     const rect = event.target.getBoundingClientRect();
     popup.style.right = '25px';
-    popup.style.bottom = (window.innerHeight - rect.top + 13) + 'px';
+    popup.style.bottom = `${window.innerHeight - rect.top + 13}px`;
     popup.classList.add('visible');
   }
 
@@ -95,7 +95,7 @@ export class UIController {
   hideAllSliderPopups() {
     const popupIds = ['bpmSliderPopup', 'volumeSliderPopup'];
 
-    popupIds.forEach(id => {
+    popupIds.forEach((id) => {
       const popup = document.getElementById(id);
       if (popup) {
         popup.classList.remove('visible');

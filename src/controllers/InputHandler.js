@@ -73,7 +73,7 @@ export class InputHandler {
         return;
       }
 
-      if ((e.ctrlKey || e.metaKey)) {
+      if (e.ctrlKey || e.metaKey) {
         switch (e.key) {
           case 'p':
             e.preventDefault();
@@ -140,7 +140,7 @@ export class InputHandler {
     // BPM Slider
     if (this.elements.bpmSlider) {
       this.boundHandlers.bpmSliderInput = (e) => {
-        const bpm = parseInt(e.target.value);
+        const bpm = parseInt(e.target.value, 10);
         this.appState.setBpm(bpm);
       };
       this.elements.bpmSlider.addEventListener('input', this.boundHandlers.bpmSliderInput);
@@ -160,7 +160,11 @@ export class InputHandler {
       if (!e.target.closest('.slider-popup') && !e.target.closest('.status-clickable')) {
         this.uiController.hideAllSliderPopups();
       }
-      if (!e.target.closest('.modal-content') && !e.target.closest('#helpStatus') && !e.target.closest('#mobileHelp')) {
+      if (
+        !e.target.closest('.modal-content') &&
+        !e.target.closest('#helpStatus') &&
+        !e.target.closest('#mobileHelp')
+      ) {
         this.uiController.hideHelpModal();
       }
     };
@@ -214,7 +218,10 @@ export class InputHandler {
         this.editor.toggleEditor();
         this.uiController.updateEditorButton();
       };
-      this.elements.mobileToggleEditor.addEventListener('click', this.boundHandlers.mobileToggleEditor);
+      this.elements.mobileToggleEditor.addEventListener(
+        'click',
+        this.boundHandlers.mobileToggleEditor,
+      );
     }
 
     // Toggle Mode
@@ -283,7 +290,10 @@ export class InputHandler {
 
     // Mobile controls
     if (this.elements.mobilePlayToggle && this.boundHandlers.mobilePlayToggle) {
-      this.elements.mobilePlayToggle.removeEventListener('click', this.boundHandlers.mobilePlayToggle);
+      this.elements.mobilePlayToggle.removeEventListener(
+        'click',
+        this.boundHandlers.mobilePlayToggle,
+      );
     }
     if (this.elements.mobileReset && this.boundHandlers.mobileReset) {
       this.elements.mobileReset.removeEventListener('click', this.boundHandlers.mobileReset);
@@ -295,10 +305,16 @@ export class InputHandler {
       this.elements.mobileApply.removeEventListener('click', this.boundHandlers.mobileApply);
     }
     if (this.elements.mobileToggleEditor && this.boundHandlers.mobileToggleEditor) {
-      this.elements.mobileToggleEditor.removeEventListener('click', this.boundHandlers.mobileToggleEditor);
+      this.elements.mobileToggleEditor.removeEventListener(
+        'click',
+        this.boundHandlers.mobileToggleEditor,
+      );
     }
     if (this.elements.mobileToggleMode && this.boundHandlers.mobileToggleMode) {
-      this.elements.mobileToggleMode.removeEventListener('click', this.boundHandlers.mobileToggleMode);
+      this.elements.mobileToggleMode.removeEventListener(
+        'click',
+        this.boundHandlers.mobileToggleMode,
+      );
     }
     if (this.elements.mobileHelp && this.boundHandlers.mobileHelp) {
       this.elements.mobileHelp.removeEventListener('click', this.boundHandlers.mobileHelp);

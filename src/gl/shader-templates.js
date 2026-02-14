@@ -2,7 +2,6 @@
 // Contains default GLSL shader code templates for audio and visual shaders
 
 export const ShaderTemplates = {
-  
   /**
    * Default sound shader template with basic waveform functions,
    * envelope control, and example instruments (kick, hihat, bass)

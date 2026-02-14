@@ -1,4 +1,4 @@
-import { UI_CONSTANTS, APP } from '../utils/consts.js';
+import { APP, UI_CONSTANTS } from '../utils/consts.js';
 
 export class StatusManager {
   constructor(appState) {
@@ -6,7 +6,7 @@ export class StatusManager {
     this.statusUpdateInterval = null;
     this.setupStateListeners();
   }
-  
+
   setupStateListeners() {
     this.appState.on('bpmChanged', ({ new: newBpm }) => {
       this.updateBpmDisplay(newBpm);
@@ -29,13 +29,13 @@ export class StatusManager {
     this.updateVolumeDisplay(this.appState.volume);
     this.updatePlayStateDisplay({
       isPlaying: this.appState.isPlaying,
-      isPaused: this.appState.isPaused
+      isPaused: this.appState.isPaused,
     });
   }
-  
+
   updateBpmDisplay(bpm) {
     const elements = ['bpmValue', 'statusBpm'];
-    elements.forEach(id => {
+    elements.forEach((id) => {
       const element = document.getElementById(id);
       if (element) element.textContent = bpm;
     });
@@ -47,7 +47,7 @@ export class StatusManager {
   updateVolumeDisplay(volume) {
     const volumeText = volume.toFixed(1);
     const elements = ['volumeValue', 'statusVolume'];
-    elements.forEach(id => {
+    elements.forEach((id) => {
       const element = document.getElementById(id);
       if (element) element.textContent = volumeText;
     });
@@ -55,11 +55,11 @@ export class StatusManager {
     const slider = document.getElementById('volumeSlider');
     if (slider) slider.value = volume;
   }
-  
+
   updatePlayStateDisplay({ isPlaying, isPaused }) {
     const playStateElement = document.getElementById('statusPlayState');
     if (!playStateElement) return;
-    
+
     let playState, stateClass;
     if (isPlaying) {
       playState = 'PLAY';
@@ -71,11 +71,11 @@ export class StatusManager {
       playState = 'PAUSE';
       stateClass = 'status-paused';
     }
-    
+
     playStateElement.textContent = playState;
     playStateElement.className = stateClass;
   }
-  
+
   updateStatusLine(message, type = UI_CONSTANTS.STATUS_TYPES.READY) {
     const statusText = document.getElementById('statusText');
     if (statusText) {
@@ -83,7 +83,7 @@ export class StatusManager {
       statusText.className = `status-${type}`;
     }
   }
-  
+
   updateBarsDisplay(bars) {
     const element = document.getElementById('statusBars');
     if (element) element.textContent = bars;
@@ -102,7 +102,7 @@ export class StatusManager {
     if (this.statusUpdateInterval) {
       clearInterval(this.statusUpdateInterval);
     }
-    
+
     this.statusUpdateInterval = setInterval(() => {
       this.updateCurrentBars();
       this.updateTimeDisplay();
