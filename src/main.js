@@ -3,8 +3,8 @@
  * Facade module: wires all components together, contains no logic
  */
 
-import { AudioEngine } from './audio/AudioEngine.js';
 import { AudioAnalyzer } from './audio/AudioAnalyzer.js';
+import { AudioEngine } from './audio/AudioEngine.js';
 import { createAudioScheduler } from './audio/AudioScheduler.js';
 import { createPlaybackController } from './controllers/PlaybackController.js';
 import { createShaderController } from './controllers/ShaderController.js';

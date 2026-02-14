@@ -38,7 +38,13 @@ export function compileShader(gl, type, source, shaderType) {
  * @returns {WebGLProgram}
  * @throws {WebGLError}
  */
-export function createProgram(gl, vertexSource, fragmentSource, shaderType, transformFeedbackVaryings = null) {
+export function createProgram(
+  gl,
+  vertexSource,
+  fragmentSource,
+  shaderType,
+  transformFeedbackVaryings = null,
+) {
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource, shaderType);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource, shaderType);
 
@@ -120,12 +126,24 @@ export function setUniform(gl, program, name, type, ...values) {
   if (location === null) return;
 
   switch (type) {
-    case '1f': gl.uniform1f(location, values[0]); break;
-    case '2f': gl.uniform2f(location, values[0], values[1]); break;
-    case '3f': gl.uniform3f(location, values[0], values[1], values[2]); break;
-    case '4f': gl.uniform4f(location, values[0], values[1], values[2], values[3]); break;
-    case '1i': gl.uniform1i(location, values[0]); break;
-    case '2i': gl.uniform2i(location, values[0], values[1]); break;
+    case '1f':
+      gl.uniform1f(location, values[0]);
+      break;
+    case '2f':
+      gl.uniform2f(location, values[0], values[1]);
+      break;
+    case '3f':
+      gl.uniform3f(location, values[0], values[1], values[2]);
+      break;
+    case '4f':
+      gl.uniform4f(location, values[0], values[1], values[2], values[3]);
+      break;
+    case '1i':
+      gl.uniform1i(location, values[0]);
+      break;
+    case '2i':
+      gl.uniform2i(location, values[0], values[1]);
+      break;
   }
 }
 
@@ -148,8 +166,14 @@ export function deleteResource(gl, type, resource) {
   if (!resource) return;
 
   switch (type) {
-    case 'program': gl.deleteProgram(resource); break;
-    case 'buffer': gl.deleteBuffer(resource); break;
-    case 'sync': gl.deleteSync(resource); break;
+    case 'program':
+      gl.deleteProgram(resource);
+      break;
+    case 'buffer':
+      gl.deleteBuffer(resource);
+      break;
+    case 'sync':
+      gl.deleteSync(resource);
+      break;
   }
 }

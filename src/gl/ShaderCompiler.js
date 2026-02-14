@@ -97,7 +97,13 @@ void main(void) {}`;
 export function compileSoundShader(gl, userCode) {
   const vertexSource = buildSoundShader(userCode);
   const fragmentSource = getAudioFragmentShader();
-  return createProgram(gl, vertexSource, fragmentSource, 'sound', WEBGL.TRANSFORM_FEEDBACK_VARYINGS);
+  return createProgram(
+    gl,
+    vertexSource,
+    fragmentSource,
+    'sound',
+    WEBGL.TRANSFORM_FEEDBACK_VARYINGS,
+  );
 }
 
 /**

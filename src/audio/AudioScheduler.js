@@ -65,7 +65,9 @@ export function createAudioScheduler({ generateBuffer, audioSettings, audioEngin
   return {
     requestInitialBuffer,
     requestNextBuffer,
-    get blockOffset() { return currentBlockOffset; },
+    get blockOffset() {
+      return currentBlockOffset;
+    },
     reset,
     destroy,
   };

@@ -44,7 +44,7 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
   }
 
   function updateVolumeDisplay(volume) {
-    const percent = Math.round(volume * 100) + '%';
+    const percent = `${Math.round(volume * 100)}%`;
     setTextContent('volumeValue', percent);
     setTextContent('statusVolume', Math.round(volume * 100));
 

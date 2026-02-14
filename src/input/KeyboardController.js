@@ -10,7 +10,12 @@
  * @param {import('../controllers/UIController.js')} deps.uiController
  * @param {import('../editor/Editor.js').Editor} deps.editor
  */
-export function createKeyboardController({ playbackController, shaderController, uiController, editor }) {
+export function createKeyboardController({
+  playbackController,
+  shaderController,
+  uiController,
+  editor,
+}) {
   function handleKeydown(e) {
     if (e.key === 'Escape') {
       uiController.hideHelpModal();
