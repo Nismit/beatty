@@ -107,19 +107,76 @@ body {
     font-size: 12px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 0 16px;
     border-top: 1px solid #444;
+    transition: background-color 0.3s ease;
+}
+
+.status-line.sound {
+    background: #1a2a3a;
+}
+
+.status-line.visual {
+    background: #2a1a3a;
 }
 
 .status-left {
-    flex: 1;
     display: flex;
     align-items: center;
-    gap: 8px;
 }
 
 .status-right {
     flex-shrink: 0;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #666;
+    transition: background-color 0.2s ease;
+}
+
+.status-dot.initializing {
+    background-color: #888;
+}
+
+.status-dot.ready {
+    background-color: #4ecdc4;
+}
+
+.status-dot.compiling {
+    background-color: #ffd43b;
+}
+
+.status-dot.compiled {
+    background-color: #51cf66;
+}
+
+.status-dot.applied {
+    background-color: #4a9eff;
+}
+
+.status-dot.error {
+    background-color: #ff6b6b;
+}
+
+.error-bar {
+    display: none;
+    background: rgba(255, 107, 107, 0.15);
+    border-top: 1px solid #ff6b6b;
+    color: #ff6b6b;
+    font-family: monospace;
+    font-size: 11px;
+    padding: 4px 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.error-bar.visible {
+    display: block;
 }
 
 .status-clickable {
@@ -241,26 +298,17 @@ body {
     }
 
     .status-line {
-        /* height: 35px; */
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 4px 8px 30px;
-        gap: 2px;
         font-size: 11px;
-    }
-
-    .status-left {
-        width: 100%;
-        justify-content: flex-start;
+        padding: 0 8px;
+        padding-bottom: env(safe-area-inset-bottom, 0);
     }
 
     .status-right {
-        width: 100%;
         flex-shrink: 1;
     }
 
     .editor-content {
-        height: calc(100dvh - 59px);
+        height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0));
     }
 
     .ͼ1 .cm-scroller {
@@ -399,6 +447,68 @@ code {
     font-size: 13px;
     color: #51cf66;
     font-family: 'Monaco', 'Consolas', monospace;
+}
+
+.help-description {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #ccc;
+}
+
+.indicator-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px 0;
+}
+
+.indicator-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.indicator-sample {
+    width: 40px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid #555;
+}
+
+.indicator-sample.sound-bg {
+    background: #1a2a3a;
+}
+
+.indicator-sample.visual-bg {
+    background: #2a1a3a;
+}
+
+.indicator-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.indicator-dot.ready {
+    background-color: #4ecdc4;
+}
+
+.indicator-dot.compiling {
+    background-color: #ffd43b;
+}
+
+.indicator-dot.compiled {
+    background-color: #51cf66;
+}
+
+.indicator-dot.applied {
+    background-color: #4a9eff;
+}
+
+.indicator-dot.error {
+    background-color: #ff6b6b;
 }
 
 /* Mobile Modal Adjustments */

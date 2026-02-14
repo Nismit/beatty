@@ -1,6 +1,6 @@
 /**
  * StatusDisplay factory function
- * Handles all DOM updates for status information (BPM, volume, play state, bars, status line)
+ * Handles all DOM updates for status information (BPM, volume, bars, status line)
  * Subscribes to EventBus events for automatic UI synchronization
  */
 
@@ -10,7 +10,8 @@ import { APP, EVENTS, UI } from '../utils/consts.js';
  * @typedef {Object} StatusDisplay
  * @property {function(): void} init - Initialize displays with current values
  * @property {function(string, string=): void} showStatus - Show status message
- * @property {function(string): void} showError - Show error message
+ * @property {function(string): void} showError - Show error message in error bar
+ * @property {function(): void} clearError - Clear error bar
  * @property {function(): void} startUpdates - Start periodic status updates
  * @property {function(): void} stopUpdates - Stop periodic status updates
  * @property {function(): void} destroy - Clean up
@@ -32,7 +33,6 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
   const unsubscribers = [
     eventBus.on(EVENTS.BPM_CHANGED, ({ new: newBpm }) => updateBpmDisplay(newBpm)),
     eventBus.on(EVENTS.VOLUME_CHANGED, ({ new: newVolume }) => updateVolumeDisplay(newVolume)),
-    eventBus.on(EVENTS.PLAY_STATE_CHANGED, (state) => updatePlayStateDisplay(state)),
   ];
 
   function updateBpmDisplay(bpm) {
@@ -52,22 +52,6 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
     if (slider) slider.value = volume;
   }
 
-  function updatePlayStateDisplay({ isPlaying, isPaused }) {
-    const el = document.getElementById('statusPlayState');
-    if (!el) return;
-
-    if (isPlaying) {
-      el.textContent = 'PLAY';
-      el.className = 'status-playing';
-    } else if (isPaused) {
-      el.textContent = 'PAUSED';
-      el.className = 'status-paused';
-    } else {
-      el.textContent = 'PAUSE';
-      el.className = 'status-paused';
-    }
-  }
-
   function updateBarsDisplay() {
     if (!playbackState.isPlaying) return;
 
@@ -79,24 +63,37 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
   }
 
   function showStatus(message, type = UI.STATUS_TYPES.READY) {
-    const el = document.getElementById('statusText');
-    if (el) {
-      el.textContent = message;
-      el.className = `status-${type}`;
+    const dot = document.getElementById('statusDot');
+    if (dot) {
+      dot.classList.remove('initializing', 'ready', 'compiling', 'compiled', 'applied', 'error');
+      dot.classList.add(type);
+    }
+    // Clear error bar on non-error status
+    if (type !== UI.STATUS_TYPES.ERROR) {
+      clearError();
     }
   }
 
   function showError(message) {
-    showStatus(message, UI.STATUS_TYPES.ERROR);
+    showStatus(null, UI.STATUS_TYPES.ERROR);
+    const errorBar = document.getElementById('errorBar');
+    if (errorBar) {
+      errorBar.textContent = message;
+      errorBar.classList.add('visible');
+    }
+  }
+
+  function clearError() {
+    const errorBar = document.getElementById('errorBar');
+    if (errorBar) {
+      errorBar.classList.remove('visible');
+      errorBar.textContent = '';
+    }
   }
 
   function init() {
     updateBpmDisplay(audioSettings.bpm);
     updateVolumeDisplay(audioSettings.volume);
-    updatePlayStateDisplay({
-      isPlaying: playbackState.isPlaying,
-      isPaused: playbackState.isPaused,
-    });
   }
 
   function startUpdates() {
@@ -134,6 +131,7 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
     init,
     showStatus,
     showError,
+    clearError,
     startUpdates,
     stopUpdates,
     destroy,

@@ -52,10 +52,12 @@ export const UI = {
     VISUAL: 'visual',
   },
   STATUS_TYPES: {
+    INITIALIZING: 'initializing',
     READY: 'ready',
     ERROR: 'error',
-    SUCCESS: 'success',
     COMPILING: 'compiling',
+    COMPILED: 'compiled',
+    APPLIED: 'applied',
   },
 };
 

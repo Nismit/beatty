@@ -16,7 +16,10 @@ export function createUIController({ playbackState, audioSettings, editor, event
   // Subscribe to state changes for automatic UI updates
   const unsubscribers = [
     eventBus.on(EVENTS.PLAY_STATE_CHANGED, () => updatePlayButton()),
-    eventBus.on(EVENTS.EDITOR_MODE_CHANGED, () => updateModeButton()),
+    eventBus.on(EVENTS.EDITOR_MODE_CHANGED, () => {
+      updateModeButton();
+      updateModeIndicator();
+    }),
     eventBus.on(EVENTS.EDITOR_VISIBILITY_CHANGED, () => updateEditorButton()),
   ];
 
@@ -61,6 +64,14 @@ export function createUIController({ playbackState, audioSettings, editor, event
       btn.textContent = '\uD83C\uDFA8';
       btn.title = 'Switch to Sound Mode';
     }
+  }
+
+  function updateModeIndicator() {
+    const statusLine = document.getElementById('statusLine');
+    if (!statusLine) return;
+
+    statusLine.classList.remove('sound', 'visual');
+    statusLine.classList.add(editor.mode);
   }
 
   /**
@@ -118,6 +129,7 @@ export function createUIController({ playbackState, audioSettings, editor, event
     updatePlayButton();
     updateEditorButton();
     updateModeButton();
+    updateModeIndicator();
   }
 
   function destroy() {
@@ -130,6 +142,7 @@ export function createUIController({ playbackState, audioSettings, editor, event
     updatePlayButton,
     updateEditorButton,
     updateModeButton,
+    updateModeIndicator,
     showSliderPopup,
     hideAllSliderPopups,
     showHelpModal,

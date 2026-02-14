@@ -20,7 +20,7 @@ import { createAudioSettings } from './state/AudioSettings.js';
 import { createEventBus } from './state/EventBus.js';
 import { createPlaybackState } from './state/PlaybackState.js';
 import { createStatusDisplay } from './ui/StatusDisplay.js';
-import { EVENTS } from './utils/consts.js';
+import { EVENTS, UI } from './utils/consts.js';
 import { createErrorHandler } from './utils/errors.js';
 import { loadShader } from './utils/storage.js';
 
@@ -67,7 +67,6 @@ async function init() {
     playbackState,
     audioSettings,
     visualRenderer,
-    statusDisplay,
     eventBus,
     errorHandler,
   });
@@ -103,6 +102,7 @@ async function init() {
     editor,
     audioSettings,
     audioEngine,
+    eventBus,
   });
 
   const modalController = createModalController({ uiController });
@@ -140,7 +140,8 @@ async function init() {
     // Resize handling
     window.addEventListener('resize', () => playbackController.handleResize());
 
-    statusDisplay.showStatus('Initialized');
+    statusDisplay.showStatus(null, UI.STATUS_TYPES.READY);
+    uiController.initButtonStates();
   } catch (error) {
     errorHandler(error);
   }
