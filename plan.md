@@ -719,11 +719,11 @@ export const EVENTS = {
 26. ✅ `styles.css` - スタイル（既存のまま使用）
 27. ✅ `sw.js` - Service Worker
 
-### Phase 10: テスト
-28. Vitest セットアップ
-29. state/ テスト
-30. utils/ テスト
-31. controllers/ テスト
+### Phase 10: テスト ✅ 完了
+28. ✅ Vitest セットアップ
+29. ✅ state/ テスト (EventBus, PlaybackState, AudioSettings - 100%カバレッジ)
+30. ✅ utils/ テスト (storage - 90%+カバレッジ)
+31. controllers/ テスト (将来対応)
 
 ---
 
