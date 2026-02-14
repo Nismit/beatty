@@ -124,10 +124,18 @@ body {
 .status-left {
     display: flex;
     align-items: center;
+    gap: 6px;
 }
 
 .status-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     flex-shrink: 0;
+}
+
+.status-separator {
+    color: #666;
 }
 
 .status-dot {
@@ -210,6 +218,14 @@ body {
 .slider-popup input[type="range"] {
     width: 120px;
     margin: 0 10px;
+}
+
+#bpmSliderPopup {
+    min-width: 240px;
+}
+
+#bpmSlider {
+    width: 200px;
 }
 
 .slider-popup label {

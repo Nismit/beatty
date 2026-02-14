@@ -44,9 +44,9 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
   }
 
   function updateVolumeDisplay(volume) {
-    const text = volume.toFixed(1);
-    setTextContent('volumeValue', text);
-    setTextContent('statusVolume', text);
+    const percent = Math.round(volume * 100) + '%';
+    setTextContent('volumeValue', percent);
+    setTextContent('statusVolume', Math.round(volume * 100));
 
     const slider = document.getElementById('volumeSlider');
     if (slider) slider.value = volume;
