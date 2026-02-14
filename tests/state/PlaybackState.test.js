@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createPlaybackState } from '../../src/state/PlaybackState.js';
 import { EVENTS } from '../../src/utils/consts.js';
 

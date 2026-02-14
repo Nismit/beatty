@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAudioSettings } from '../../src/state/AudioSettings.js';
 import { AUDIO, EVENTS } from '../../src/utils/consts.js';
 

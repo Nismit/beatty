@@ -1,4 +1,4 @@
-import { vi, beforeEach } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 
 // WebGL2 mock
 class WebGL2RenderingContextMock {
@@ -64,7 +64,7 @@ class WebGL2RenderingContextMock {
 }
 
 // Canvas mock
-HTMLCanvasElement.prototype.getContext = function (type) {
+HTMLCanvasElement.prototype.getContext = (type) => {
   if (type === 'webgl2') {
     return new WebGL2RenderingContextMock();
   }
