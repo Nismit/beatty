@@ -765,3 +765,93 @@ export const EVENTS = {
 8. **依存は下から上へ一方向** - 循環参照を防止
 9. **イベント名は EVENTS 定数を使用** - タイポ防止、補完有効化
 10. **エラーは専用クラスで分類** - 一貫したエラーハンドリング
+
+---
+
+## 今後の改善項目
+
+### Phase 11: クリーンアップ（重複コード削除）
+
+リファクタリングにより新規実装と旧実装が並存している。旧ファイルを削除して統合する。
+
+| 削除対象（旧） | 残す（新） | 理由 |
+|---------------|-----------|------|
+| `audio/Audio.js` | `audio/AudioEngine.js` | AudioEngine は分離設計、エラーハンドリング改善 |
+| `gl/SoundGL.js` | `gl/SoundRenderer.js` | SoundRenderer は gl-utils.js 使用、private fields |
+| `gl/VisualGL.js` | `gl/VisualRenderer.js` | VisualRenderer は gl-utils.js 使用、private fields |
+| `gl/utils.js` | `gl/gl-utils.js` + `gl/ShaderCompiler.js` | 機能分離済み |
+| `state/AppState.js` | `state/PlaybackState.js` + `state/AudioSettings.js` | Factory関数パターンに統一 |
+| `state/StatusManager.js` | `ui/StatusDisplay.js` | ui/ に移動済み |
+| `controllers/InputHandler.js` | `input/KeyboardController.js` + `input/MobileController.js` + `input/ModalController.js` | 機能分離済み |
+
+**推定削減**: 500+ 行
+
+**手順**:
+1. 旧ファイルが使われていないことを確認（main.js の import チェック）
+2. 旧ファイル削除
+3. index.js の re-export 更新
+4. テスト実行で動作確認
+
+### Phase 12: 入力バリデーション追加
+
+現在、公開APIに入力検証がない。不正な値でクラッシュする可能性あり。
+
+**対象モジュール**:
+- `state/AudioSettings.js`
+  - `setBpm(bpm)`: 20-300 の範囲チェック
+  - `setVolume(volume)`: 0-1 にクランプ
+  - `setSampleRate(rate)`: 正の整数チェック
+- `state/PlaybackState.js`
+  - `advanceBlock(seconds)`: 正の数チェック
+  - `recordStartTime(time)`: 非負チェック
+
+**実装パターン**:
+```javascript
+function setBpm(newBpm) {
+  if (typeof newBpm !== 'number' || Number.isNaN(newBpm)) {
+    throw new TypeError('BPM must be a number');
+  }
+  const clamped = Math.max(20, Math.min(300, newBpm));
+  // ...
+}
+```
+
+### Phase 13: シェーダーエラー改善
+
+GLSLコンパイルエラーの行番号がユーザーコードと一致しない問題。
+
+**現状**:
+```
+ERROR: 0:15: 'mainSound' : no matching overloaded function found
+```
+→ 行番号15はプリアンブル込み。ユーザーコードでは行3など。
+
+**改善案**:
+1. ShaderCompiler でプリアンブル行数を記録
+2. エラーメッセージから行番号をパース (`/ERROR: \d+:(\d+):/`)
+3. プリアンブル行数を引いて実際の行番号を算出
+4. Editor にエラー行ハイライト機能追加
+
+### Phase 14: controllers/ テスト追加
+
+Phase 10 で未実装だった controllers のテストを追加。
+
+**対象**:
+- `controllers/PlaybackController.js`
+- `controllers/ShaderController.js`
+- `controllers/UIController.js`
+
+**テスト観点**:
+- 依存モジュールのモック
+- イベント発火の検証
+- エラーハンドリング
+- destroy() でのクリーンアップ
+
+### Phase 15: パフォーマンス最適化
+
+**候補**:
+1. **VisualRenderer uniform キャッシュ**: `u_resolution` はリサイズ時のみ更新
+2. **AudioAnalyzer RingBuffer**: 3つの独立バッファを統合、TypedArray 使用
+3. **localStorage デバウンス**: 頻繁な保存を抑制
+
+**優先度**: プロファイリング後に判断
