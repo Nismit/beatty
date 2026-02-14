@@ -66,9 +66,15 @@ export function createAudioSettings(eventBus) {
   }
 
   return {
-    get bpm() { return state.bpm; },
-    get volume() { return state.volume; },
-    get sampleRate() { return state.sampleRate; },
+    get bpm() {
+      return state.bpm;
+    },
+    get volume() {
+      return state.volume;
+    },
+    get sampleRate() {
+      return state.sampleRate;
+    },
 
     setBpm,
     setVolume,

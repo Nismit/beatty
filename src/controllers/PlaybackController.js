@@ -3,8 +3,6 @@
  * Manages play/pause/reset lifecycle and animation loop
  */
 
-import { EVENTS } from '../utils/consts.js';
-
 /**
  * @param {Object} deps
  * @param {import('../audio/AudioEngine.js').AudioEngine} deps.audioEngine

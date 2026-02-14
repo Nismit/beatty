@@ -55,17 +55,31 @@ export class AudioAnalyzer {
   #normDecay;
 
   // Current values
-  #kickRaw; #hihatRaw; #bassRaw;
-  #kickValue; #hihatValue; #bassValue;
-  #kickPeak; #hihatPeak; #bassPeak;
-  #kickFlux; #hihatFlux; #bassFlux;
-  #prevKick; #prevHihat; #prevBass;
+  #kickRaw;
+  #hihatRaw;
+  #bassRaw;
+  #kickValue;
+  #hihatValue;
+  #bassValue;
+  #kickPeak;
+  #hihatPeak;
+  #bassPeak;
+  #kickFlux;
+  #hihatFlux;
+  #bassFlux;
+  #prevKick;
+  #prevHihat;
+  #prevBass;
 
   // Ring buffers
-  #kickBuffer; #hihatBuffer; #bassBuffer;
+  #kickBuffer;
+  #hihatBuffer;
+  #bassBuffer;
 
   // Adaptive normalization
-  #kickMax; #hihatMax; #bassMax;
+  #kickMax;
+  #hihatMax;
+  #bassMax;
 
   /**
    * @param {Object} [options]
@@ -96,11 +110,21 @@ export class AudioAnalyzer {
   }
 
   #initValues() {
-    this.#kickRaw = 0; this.#hihatRaw = 0; this.#bassRaw = 0;
-    this.#kickValue = 0; this.#hihatValue = 0; this.#bassValue = 0;
-    this.#kickPeak = 0; this.#hihatPeak = 0; this.#bassPeak = 0;
-    this.#kickFlux = 0; this.#hihatFlux = 0; this.#bassFlux = 0;
-    this.#prevKick = 0; this.#prevHihat = 0; this.#prevBass = 0;
+    this.#kickRaw = 0;
+    this.#hihatRaw = 0;
+    this.#bassRaw = 0;
+    this.#kickValue = 0;
+    this.#hihatValue = 0;
+    this.#bassValue = 0;
+    this.#kickPeak = 0;
+    this.#hihatPeak = 0;
+    this.#bassPeak = 0;
+    this.#kickFlux = 0;
+    this.#hihatFlux = 0;
+    this.#bassFlux = 0;
+    this.#prevKick = 0;
+    this.#prevHihat = 0;
+    this.#prevBass = 0;
     this.#kickMax = ANALYSIS.MIN_MAX_VALUE;
     this.#hihatMax = ANALYSIS.MIN_MAX_VALUE;
     this.#bassMax = ANALYSIS.MIN_MAX_VALUE;
@@ -121,7 +145,12 @@ export class AudioAnalyzer {
     // Extract raw band energies
     this.#kickRaw = this.#extractBandEnergy(frequencyData, freqPerBin, this.#kickFreqRange);
     this.#hihatRaw = this.#extractBandEnergy(frequencyData, freqPerBin, this.#hihatFreqRange);
-    this.#bassRaw = this.#extractBandEnergyWithRMS(frequencyData, timeData, freqPerBin, this.#bassFreqRange);
+    this.#bassRaw = this.#extractBandEnergyWithRMS(
+      frequencyData,
+      timeData,
+      freqPerBin,
+      this.#bassFreqRange,
+    );
 
     // Spectral flux (onset detection)
     this.#kickFlux = Math.max(0, this.#kickRaw - this.#prevKick);
@@ -129,9 +158,21 @@ export class AudioAnalyzer {
     this.#bassFlux = Math.max(0, this.#bassRaw - this.#prevBass);
 
     // Adaptive normalization
-    this.#kickMax = Math.max(this.#kickMax * this.#normDecay, this.#kickRaw, ANALYSIS.MIN_MAX_VALUE);
-    this.#hihatMax = Math.max(this.#hihatMax * this.#normDecay, this.#hihatRaw, ANALYSIS.MIN_MAX_VALUE);
-    this.#bassMax = Math.max(this.#bassMax * this.#normDecay, this.#bassRaw, ANALYSIS.MIN_MAX_VALUE);
+    this.#kickMax = Math.max(
+      this.#kickMax * this.#normDecay,
+      this.#kickRaw,
+      ANALYSIS.MIN_MAX_VALUE,
+    );
+    this.#hihatMax = Math.max(
+      this.#hihatMax * this.#normDecay,
+      this.#hihatRaw,
+      ANALYSIS.MIN_MAX_VALUE,
+    );
+    this.#bassMax = Math.max(
+      this.#bassMax * this.#normDecay,
+      this.#bassRaw,
+      ANALYSIS.MIN_MAX_VALUE,
+    );
 
     // Normalized ring buffer + EMA
     this.#kickBuffer.push(this.#kickRaw / this.#kickMax);

@@ -84,11 +84,21 @@ export function createPlaybackState(eventBus) {
   }
 
   return {
-    get isPlaying() { return state.isPlaying; },
-    get isPaused() { return state.isPaused; },
-    get blockOffset() { return state.blockOffset; },
-    get totalElapsedTime() { return state.totalElapsedTime; },
-    get pausedReadPos() { return state.pausedReadPos; },
+    get isPlaying() {
+      return state.isPlaying;
+    },
+    get isPaused() {
+      return state.isPaused;
+    },
+    get blockOffset() {
+      return state.blockOffset;
+    },
+    get totalElapsedTime() {
+      return state.totalElapsedTime;
+    },
+    get pausedReadPos() {
+      return state.pausedReadPos;
+    },
 
     setPlaying,
     advanceBlock,

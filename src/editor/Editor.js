@@ -41,8 +41,12 @@ export class Editor {
     this.#isVisible = isVisible;
   }
 
-  get mode() { return this.#editMode; }
-  get isVisible() { return this.#isVisible; }
+  get mode() {
+    return this.#editMode;
+  }
+  get isVisible() {
+    return this.#isVisible;
+  }
 
   /**
    * Get current code from the active editor
@@ -99,9 +103,8 @@ export class Editor {
     }
 
     // Toggle mode
-    this.#editMode = this.#editMode === UI.EDITOR_MODES.SOUND
-      ? UI.EDITOR_MODES.VISUAL
-      : UI.EDITOR_MODES.SOUND;
+    this.#editMode =
+      this.#editMode === UI.EDITOR_MODES.SOUND ? UI.EDITOR_MODES.VISUAL : UI.EDITOR_MODES.SOUND;
 
     // Load code for the new mode
     if (this.#editorView) {
@@ -164,17 +167,50 @@ export class Editor {
    */
   #createGlslBuiltins() {
     return new Set([
-      'abs', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atanh',
-      'ceil', 'clamp', 'cos', 'cosh', 'cross',
-      'degrees', 'dFdx', 'dFdy', 'distance', 'dot',
-      'equal', 'exp', 'exp2',
-      'floor', 'fract', 'fwidth',
-      'gl_FragCoord', 'gl_FragColor', 'gl_Position', 'gl_PointCoord', 'gl_VertexID',
-      'greaterThan', 'greaterThanEqual',
-      'max', 'min', 'mix', 'mod',
-      'pow', 'reflect',
-      'sin', 'sign', 'step', 'smoothstep',
-      'tan', 'sqrt', 'texture', 'normalize',
+      'abs',
+      'acos',
+      'acosh',
+      'asin',
+      'asinh',
+      'atan',
+      'atanh',
+      'ceil',
+      'clamp',
+      'cos',
+      'cosh',
+      'cross',
+      'degrees',
+      'dFdx',
+      'dFdy',
+      'distance',
+      'dot',
+      'equal',
+      'exp',
+      'exp2',
+      'floor',
+      'fract',
+      'fwidth',
+      'gl_FragCoord',
+      'gl_FragColor',
+      'gl_Position',
+      'gl_PointCoord',
+      'gl_VertexID',
+      'greaterThan',
+      'greaterThanEqual',
+      'max',
+      'min',
+      'mix',
+      'mod',
+      'pow',
+      'reflect',
+      'sin',
+      'sign',
+      'step',
+      'smoothstep',
+      'tan',
+      'sqrt',
+      'texture',
+      'normalize',
     ]);
   }
 
@@ -190,7 +226,9 @@ export class Editor {
     return ViewPlugin.fromClass(
       class {
         decorations;
-        constructor(view) { this.decorations = this.build(view); }
+        constructor(view) {
+          this.decorations = this.build(view);
+        }
         update(update) {
           if (update.docChanged || update.viewportChanged) {
             this.decorations = this.build(update.view);
@@ -205,7 +243,9 @@ export class Editor {
                 const fullNode = tree.resolveInner(node.from, 1);
                 if (fullNode.parent?.name === 'CallExpression') {
                   const name = view.state.doc.sliceString(node.from, node.to);
-                  decos.push((builtins.has(name) ? builtinDeco : userDeco).range(node.from, node.to));
+                  decos.push(
+                    (builtins.has(name) ? builtinDeco : userDeco).range(node.from, node.to),
+                  );
                 }
               }
             },
