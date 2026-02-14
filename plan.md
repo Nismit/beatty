@@ -713,11 +713,11 @@ export const EVENTS = {
 22. ✅ `input/MobileController.js` - モバイル
 23. ✅ `input/ModalController.js` - モーダル
 
-### Phase 9: 統合
-24. `main.js` - Facade + エラーハンドラ接続 + beforeunload
-25. `index.html` - HTML
-26. `styles.css` - スタイル
-27. `sw.js` - Service Worker
+### Phase 9: 統合 ✅ 完了
+24. ✅ `main.js` - Facade + エラーハンドラ接続 + beforeunload
+25. ✅ `index.html` - HTML（既存のまま使用）
+26. ✅ `styles.css` - スタイル（既存のまま使用）
+27. ✅ `sw.js` - Service Worker
 
 ### Phase 10: テスト
 28. Vitest セットアップ
