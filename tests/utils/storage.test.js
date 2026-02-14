@@ -1,16 +1,16 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import {
-  saveShader,
-  loadShader,
-  clearShader,
-  hasShader,
-  getStorageInfo,
-  saveSettings,
-  loadSettings,
-  clearSettings,
-  clearAllData,
-} from '../../src/utils/storage.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { STORAGE_KEYS } from '../../src/utils/consts.js';
+import {
+  clearAllData,
+  clearSettings,
+  clearShader,
+  getStorageInfo,
+  hasShader,
+  loadSettings,
+  loadShader,
+  saveSettings,
+  saveShader,
+} from '../../src/utils/storage.js';
 
 describe('storage', () => {
   beforeEach(() => {
