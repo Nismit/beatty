@@ -700,8 +700,8 @@ export const EVENTS = {
 ### Phase 5: Editor ✅ 完了
 16. ✅ `editor/Editor.js` - CodeMirror GLSLエディタ
 
-### Phase 6: UI
-17. `ui/StatusDisplay.js` - ステータス表示
+### Phase 6: UI ✅ 完了
+17. ✅ `ui/StatusDisplay.js` - ステータス表示
 
 ### Phase 7: Controllers
 18. `controllers/PlaybackController.js` - 再生制御 + resize ハンドリング
