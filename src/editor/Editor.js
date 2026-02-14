@@ -1,3 +1,9 @@
+/**
+ * Editor class
+ * Manages CodeMirror 6 GLSL editor with sound/visual mode switching
+ * Communicates state changes via EventBus
+ */
+
 import { indentWithTab } from 'https://esm.sh/@codemirror/commands';
 import {
   HighlightStyle,
@@ -10,79 +16,172 @@ import { tags as t } from 'https://esm.sh/@lezer/highlight@1.2.3';
 import { basicSetup, EditorView } from 'https://esm.sh/codemirror@6.0.2';
 import { glsl } from 'https://esm.sh/codemirror-lang-glsl@0.5.0';
 
-/**
- * Editor Module - Handles code editing functionality
- * Manages editor initialization, mode switching, and code management
- */
-export class Editor {
-  constructor(options = {}) {
-    this.editMode = options.editMode || 'sound';
-    this.currentSoundCode = options.currentSoundCode || '';
-    this.currentVisualCode = options.currentVisualCode || '';
-    this.isEditorVisible = options.isEditorVisible !== false;
-    this.editorView = null;
+import { EVENTS, UI } from '../utils/consts.js';
 
-    // Callbacks for communication with main system
-    this.onCodeChange = options.onCodeChange || (() => {});
-    this.onModeSwitch = options.onModeSwitch || (() => {});
-    this.onVisibilityToggle = options.onVisibilityToggle || (() => {});
+export class Editor {
+  #editorView;
+  #editMode;
+  #soundCode;
+  #visualCode;
+  #isVisible;
+  #eventBus;
+
+  /**
+   * @param {Object} options
+   * @param {import('../state/EventBus.js').EventBus} options.eventBus
+   * @param {string} [options.editMode='sound']
+   * @param {boolean} [options.isVisible=true]
+   */
+  constructor({ eventBus, editMode = UI.EDITOR_MODES.SOUND, isVisible = true }) {
+    this.#eventBus = eventBus;
+    this.#editorView = null;
+    this.#editMode = editMode;
+    this.#soundCode = '';
+    this.#visualCode = '';
+    this.#isVisible = isVisible;
+  }
+
+  get mode() { return this.#editMode; }
+  get isVisible() { return this.#isVisible; }
+
+  /**
+   * Get current code from the active editor
+   * @returns {string}
+   */
+  getCurrentCode() {
+    if (this.#editorView) {
+      return this.#editorView.state.doc.toString();
+    }
+    return this.#editMode === UI.EDITOR_MODES.SOUND ? this.#soundCode : this.#visualCode;
   }
 
   /**
-   * GLSL組み込み関数のセットを作成
+   * Set code for a specific mode
+   * @param {'sound' | 'visual'} mode
+   * @param {string} code
+   */
+  setCode(mode, code) {
+    if (mode === UI.EDITOR_MODES.SOUND) {
+      this.#soundCode = code;
+    } else {
+      this.#visualCode = code;
+    }
+
+    if (this.#editMode === mode && this.#editorView) {
+      this.#editorView.dispatch({
+        changes: { from: 0, to: this.#editorView.state.doc.length, insert: code },
+      });
+    }
+  }
+
+  /**
+   * Initialize the CodeMirror editor
+   */
+  init() {
+    this.#editorView = new EditorView({
+      doc: this.getCurrentCode(),
+      parent: document.getElementById('editor'),
+      extensions: this.#createExtensions(),
+    });
+
+    this.#updateModeDisplay();
+  }
+
+  /**
+   * Switch between sound and visual modes
+   */
+  switchMode() {
+    const oldMode = this.#editMode;
+
+    // Save current content
+    if (this.#editorView) {
+      this.#saveCurrentCode();
+    }
+
+    // Toggle mode
+    this.#editMode = this.#editMode === UI.EDITOR_MODES.SOUND
+      ? UI.EDITOR_MODES.VISUAL
+      : UI.EDITOR_MODES.SOUND;
+
+    // Load code for the new mode
+    if (this.#editorView) {
+      const newCode = this.#editMode === UI.EDITOR_MODES.SOUND ? this.#soundCode : this.#visualCode;
+      this.#editorView.dispatch({
+        changes: { from: 0, to: this.#editorView.state.doc.length, insert: newCode },
+      });
+    }
+
+    this.#updateModeDisplay();
+    this.#eventBus.emit(EVENTS.EDITOR_MODE_CHANGED, { old: oldMode, new: this.#editMode });
+  }
+
+  /**
+   * Toggle editor visibility
+   */
+  toggleVisibility() {
+    const container = document.querySelector('.editor-container');
+    if (!container) return;
+
+    this.#isVisible = !this.#isVisible;
+
+    if (this.#isVisible) {
+      container.classList.remove('hidden');
+    } else {
+      container.classList.add('hidden');
+    }
+
+    this.#eventBus.emit(EVENTS.EDITOR_VISIBILITY_CHANGED, { isVisible: this.#isVisible });
+  }
+
+  /**
+   * Save current editor content to the appropriate code store
+   */
+  #saveCurrentCode() {
+    if (!this.#editorView) return;
+    const code = this.#editorView.state.doc.toString();
+    if (this.#editMode === UI.EDITOR_MODES.SOUND) {
+      this.#soundCode = code;
+    } else {
+      this.#visualCode = code;
+    }
+  }
+
+  /**
+   * Update the edit mode indicator in the DOM
+   */
+  #updateModeDisplay() {
+    const el = document.getElementById('editMode');
+    if (!el) return;
+
+    const isSound = this.#editMode === UI.EDITOR_MODES.SOUND;
+    el.textContent = isSound ? '[Sound]' : '[Visual]';
+    el.style.color = isSound ? '#51cf66' : '#ffd43b';
+  }
+
+  /**
+   * Create GLSL built-in function set for highlighting
+   * @returns {Set<string>}
    */
   #createGlslBuiltins() {
     return new Set([
-      'abs',
-      'acos',
-      'acosh',
-      'asin',
-      'asinh',
-      'atan',
-      'atanh',
-      'ceil',
-      'clamp',
-      'cos',
-      'cosh',
-      'cross',
-      'degrees',
-      'dFdx',
-      'dFdy',
-      'distance',
-      'dot',
-      'equal',
-      'exp',
-      'exp2',
-      'floor',
-      'fract',
-      'fwidth',
-      'gl_FragCoord',
-      'gl_FragColor',
-      'gl_Position',
-      'gl_PointCoord',
-      'gl_VertexID',
-      'greaterThan',
-      'greaterThanEqual',
-      'max',
-      'min',
-      'mix',
-      'mod',
-      'pow',
-      'reflect',
-      'sin',
-      'sign',
-      'step',
-      'smoothstep',
-      'tan',
-      'sqrt',
-      'texture',
-      'normalize',
+      'abs', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atanh',
+      'ceil', 'clamp', 'cos', 'cosh', 'cross',
+      'degrees', 'dFdx', 'dFdy', 'distance', 'dot',
+      'equal', 'exp', 'exp2',
+      'floor', 'fract', 'fwidth',
+      'gl_FragCoord', 'gl_FragColor', 'gl_Position', 'gl_PointCoord', 'gl_VertexID',
+      'greaterThan', 'greaterThanEqual',
+      'max', 'min', 'mix', 'mod',
+      'pow', 'reflect',
+      'sin', 'sign', 'step', 'smoothstep',
+      'tan', 'sqrt', 'texture', 'normalize',
     ]);
   }
 
   /**
-   * 関数ハイライト用ViewPluginを作成
-   * @param {Set<string>} builtins - 組み込み関数のセット
+   * Create function highlighter ViewPlugin
+   * @param {Set<string>} builtins
+   * @returns {ViewPlugin}
    */
   #createFunctionHighlighter(builtins) {
     const builtinDeco = Decoration.mark({ class: 'cm-builtinFunc' });
@@ -91,9 +190,7 @@ export class Editor {
     return ViewPlugin.fromClass(
       class {
         decorations;
-        constructor(view) {
-          this.decorations = this.build(view);
-        }
+        constructor(view) { this.decorations = this.build(view); }
         update(update) {
           if (update.docChanged || update.viewportChanged) {
             this.decorations = this.build(update.view);
@@ -105,13 +202,10 @@ export class Editor {
           tree.iterate({
             enter: (node) => {
               if (node.name === 'Identifier') {
-                const { from } = node;
-                const fullNode = tree.resolveInner(from, 1);
-                const parent = fullNode.parent;
-                if (parent?.name === 'CallExpression') {
+                const fullNode = tree.resolveInner(node.from, 1);
+                if (fullNode.parent?.name === 'CallExpression') {
                   const name = view.state.doc.sliceString(node.from, node.to);
-                  const deco = builtins.has(name) ? builtinDeco : userDeco;
-                  decos.push(deco.range(node.from, node.to));
+                  decos.push((builtins.has(name) ? builtinDeco : userDeco).range(node.from, node.to));
                 }
               }
             },
@@ -119,31 +213,31 @@ export class Editor {
           return Decoration.set(decos);
         }
       },
-      {
-        decorations: (v) => v.decorations,
-      },
+      { decorations: (v) => v.decorations },
     );
   }
 
   /**
-   * GLSLシンタックスハイライトスタイルを作成
+   * Create GLSL syntax highlight style
+   * @returns {HighlightStyle}
    */
   #createHighlightStyle() {
     return HighlightStyle.define([
-      { tag: t.standard(t.typeName), color: '#a68cee' }, // Types (vec3, mat4, float, int)
-      { tag: t.controlKeyword, color: '#cdcb99' }, // void, if, return
-      { tag: t.processingInstruction, color: '#cdcb99' }, // #define, #include
-      { tag: t.definitionKeyword, color: '#deb492' }, // struct
-      { tag: t.brace, color: '#cdcdcd' }, // { }
-      { tag: t.strong, color: '#cdcdcd' }, // ( )
-      { tag: t.variableName, color: '#fff' }, // variable names
-      { tag: t.number, color: '#d19a66' }, // numbers
-      { tag: t.comment, color: '#5c6370', fontStyle: 'italic' }, // comments
+      { tag: t.standard(t.typeName), color: '#a68cee' },
+      { tag: t.controlKeyword, color: '#cdcb99' },
+      { tag: t.processingInstruction, color: '#cdcb99' },
+      { tag: t.definitionKeyword, color: '#deb492' },
+      { tag: t.brace, color: '#cdcdcd' },
+      { tag: t.strong, color: '#cdcdcd' },
+      { tag: t.variableName, color: '#fff' },
+      { tag: t.number, color: '#d19a66' },
+      { tag: t.comment, color: '#5c6370', fontStyle: 'italic' },
     ]);
   }
 
   /**
-   * ダークテーマを作成
+   * Create dark editor theme
+   * @returns {Extension}
    */
   #createDarkTheme() {
     return EditorView.theme(
@@ -169,198 +263,44 @@ export class Editor {
         },
         '.cm-activeLineGutter': { backgroundColor: '#2a2a2a' },
         '.cm-foldGutter span': { padding: '0 4px', fontSize: '1rem', lineHeight: '1' },
-        '.cm-builtinFunc span': { color: '#A3CEF1' }, // Built-in functions
-        '.cm-userFunc span': { color: '#72e2bd' }, // User-defined functions
+        '.cm-builtinFunc span': { color: '#A3CEF1' },
+        '.cm-userFunc span': { color: '#72e2bd' },
       },
       { dark: true },
     );
   }
 
   /**
-   * エディタ拡張機能をまとめて作成
+   * Create all editor extensions
+   * @returns {Extension[]}
    */
-  #createEditorExtensions() {
+  #createExtensions() {
     const builtins = this.#createGlslBuiltins();
-    const fnHighlighter = this.#createFunctionHighlighter(builtins);
-    const highlightStyle = this.#createHighlightStyle();
-    const darkTheme = this.#createDarkTheme();
 
     return [
       basicSetup,
       glsl(),
-      syntaxHighlighting(highlightStyle),
+      syntaxHighlighting(this.#createHighlightStyle()),
       indentUnit.of('  '),
       keymap.of([indentWithTab]),
-      darkTheme,
-      fnHighlighter,
+      this.#createDarkTheme(),
+      this.#createFunctionHighlighter(builtins),
       EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
-          const newCode = update.state.doc.toString();
-          this.updateCode(newCode);
-          this.onCodeChange(this.editMode, newCode);
+          this.#saveCurrentCode();
         }
       }),
     ];
   }
 
   /**
-   * Initialize the CodeMirror editor with dark theme
-   */
-  initEditor() {
-    this.editorView = new EditorView({
-      doc: this.getCurrentEditCode(),
-      parent: document.getElementById('editor'),
-      extensions: this.#createEditorExtensions(),
-    });
-
-    this.updateEditModeDisplay();
-  }
-
-  /**
-   * Get the current code based on edit mode
-   */
-  getCurrentEditCode() {
-    if (this.editorView) {
-      return this.editorView.state.doc.toString();
-    }
-
-    return this.editMode === 'sound' ? this.currentSoundCode : this.currentVisualCode;
-  }
-
-  /**
-   * Update the code for the current edit mode
-   */
-  updateCode(code) {
-    if (this.editMode === 'sound') {
-      this.currentSoundCode = code;
-    } else {
-      this.currentVisualCode = code;
-    }
-  }
-
-  /**
-   * Set code for a specific mode
-   */
-  setCode(mode, code) {
-    if (mode === 'sound') {
-      this.currentSoundCode = code;
-    } else {
-      this.currentVisualCode = code;
-    }
-
-    // If we're currently in this mode, update the editor
-    if (this.editMode === mode && this.editorView) {
-      this.editorView.dispatch({
-        changes: {
-          from: 0,
-          to: this.editorView.state.doc.length,
-          insert: code,
-        },
-      });
-    }
-  }
-
-  /**
-   * Update the edit mode display in the status line
-   */
-  updateEditModeDisplay() {
-    const editModeElement = document.getElementById('editMode');
-    if (editModeElement) {
-      editModeElement.textContent = this.editMode === 'sound' ? '[Sound]' : '[Visual]';
-      editModeElement.style.color = this.editMode === 'sound' ? '#51cf66' : '#ffd43b';
-    }
-  }
-
-  /**
-   * Switch between sound and visual edit modes
-   */
-  switchEditMode() {
-    const oldMode = this.editMode;
-
-    // Save current editor content to the current mode
-    if (this.editorView) {
-      const currentCode = this.editorView.state.doc.toString();
-      this.updateCode(currentCode);
-    }
-
-    // Switch mode
-    this.editMode = this.editMode === 'sound' ? 'visual' : 'sound';
-
-    // Load code for the new mode
-    if (this.editorView) {
-      const newCode = this.editMode === 'sound' ? this.currentSoundCode : this.currentVisualCode;
-      this.editorView.dispatch({
-        changes: {
-          from: 0,
-          to: this.editorView.state.doc.length,
-          insert: newCode,
-        },
-      });
-    }
-
-    this.updateEditModeDisplay();
-    this.onModeSwitch(oldMode, this.editMode);
-  }
-
-  /**
-   * Toggle editor visibility
-   */
-  toggleEditor() {
-    const editorContainer = document.querySelector('.editor-container');
-    if (!editorContainer) return;
-
-    this.isEditorVisible = !this.isEditorVisible;
-
-    if (this.isEditorVisible) {
-      editorContainer.classList.remove('hidden');
-    } else {
-      editorContainer.classList.add('hidden');
-    }
-
-    // Notify visibility change
-    this.onVisibilityToggle(this.isEditorVisible);
-  }
-
-  /**
-   * Get current editor state
-   */
-  getState() {
-    return {
-      editMode: this.editMode,
-      currentSoundCode: this.currentSoundCode,
-      currentVisualCode: this.currentVisualCode,
-      isEditorVisible: this.isEditorVisible,
-    };
-  }
-
-  /**
-   * Set editor state
-   */
-  setState(state) {
-    if (state.editMode) {
-      this.editMode = state.editMode;
-    }
-    if (state.currentSoundCode !== undefined) {
-      this.currentSoundCode = state.currentSoundCode;
-    }
-    if (state.currentVisualCode !== undefined) {
-      this.currentVisualCode = state.currentVisualCode;
-    }
-    if (state.isEditorVisible !== undefined) {
-      this.isEditorVisible = state.isEditorVisible;
-    }
-
-    this.updateEditModeDisplay();
-  }
-
-  /**
    * Destroy the editor instance
    */
   destroy() {
-    if (this.editorView) {
-      this.editorView.destroy();
-      this.editorView = null;
+    if (this.#editorView) {
+      this.#editorView.destroy();
+      this.#editorView = null;
     }
   }
 }

@@ -1,73 +1,75 @@
 /**
- * UIController - UI状態の管理とモーダル/ポップアップ制御
+ * UIController factory function
+ * Manages button states, slider popups, and help modal
  */
-export class UIController {
-  constructor(appState, editor, statusManager) {
-    this.appState = appState;
-    this.editor = editor;
-    this.statusManager = statusManager;
-    this.statusMessageTimer = null;
+
+import { EVENTS, UI } from '../utils/consts.js';
+
+/**
+ * @param {Object} deps
+ * @param {import('../state/PlaybackState.js').PlaybackState} deps.playbackState
+ * @param {import('../state/AudioSettings.js').AudioSettings} deps.audioSettings
+ * @param {import('../editor/Editor.js').Editor} deps.editor
+ * @param {import('../state/EventBus.js').EventBus} deps.eventBus
+ */
+export function createUIController({ playbackState, audioSettings, editor, eventBus }) {
+  // Subscribe to state changes for automatic UI updates
+  const unsubscribers = [
+    eventBus.on(EVENTS.PLAY_STATE_CHANGED, () => updatePlayButton()),
+    eventBus.on(EVENTS.EDITOR_MODE_CHANGED, () => updateModeButton()),
+    eventBus.on(EVENTS.EDITOR_VISIBILITY_CHANGED, () => updateEditorButton()),
+  ];
+
+  function updatePlayButton() {
+    const btn = document.getElementById('mobilePlayToggle');
+    if (!btn) return;
+
+    if (playbackState.isPlaying) {
+      btn.classList.add('active');
+      btn.textContent = '\u23F8';
+      btn.title = 'Pause';
+    } else {
+      btn.classList.remove('active');
+      btn.textContent = '\u25B6';
+      btn.title = 'Play';
+    }
   }
 
-  /**
-   * 再生ボタンの状態を更新
-   */
-  updatePlayButton() {
-    const playToggleBtn = document.getElementById('mobilePlayToggle');
-    if (playToggleBtn) {
-      if (this.appState.isPlaying) {
-        playToggleBtn.classList.add('active');
-        playToggleBtn.textContent = '⏸';
-        playToggleBtn.title = 'Pause';
-      } else {
-        playToggleBtn.classList.remove('active');
-        playToggleBtn.textContent = '▶';
-        playToggleBtn.title = 'Play';
-      }
+  function updateEditorButton() {
+    const btn = document.getElementById('mobileToggleEditor');
+    if (!btn) return;
+
+    if (editor.isVisible) {
+      btn.classList.add('active');
+      btn.textContent = '\uD83D\uDC41';
+      btn.title = 'Hide Editor';
+    } else {
+      btn.classList.remove('active');
+      btn.textContent = '\uD83D\uDCDD';
+      btn.title = 'Show Editor';
+    }
+  }
+
+  function updateModeButton() {
+    const btn = document.getElementById('mobileToggleMode');
+    if (!btn) return;
+
+    if (editor.mode === UI.EDITOR_MODES.SOUND) {
+      btn.textContent = '\uD83C\uDFB5';
+      btn.title = 'Switch to Visual Mode';
+    } else {
+      btn.textContent = '\uD83C\uDFA8';
+      btn.title = 'Switch to Sound Mode';
     }
   }
 
   /**
-   * エディタ表示ボタンの状態を更新
+   * Show a slider popup (BPM or Volume)
+   * @param {'bpm' | 'volume'} type
+   * @param {Event} event
    */
-  updateEditorButton() {
-    const toggleEditorBtn = document.getElementById('mobileToggleEditor');
-    if (toggleEditorBtn) {
-      if (this.editor.isEditorVisible) {
-        toggleEditorBtn.classList.add('active');
-        toggleEditorBtn.textContent = '👁';
-        toggleEditorBtn.title = 'Hide Editor';
-      } else {
-        toggleEditorBtn.classList.remove('active');
-        toggleEditorBtn.textContent = '📝';
-        toggleEditorBtn.title = 'Show Editor';
-      }
-    }
-  }
-
-  /**
-   * モード切替ボタンの状態を更新
-   */
-  updateModeButton() {
-    const toggleModeBtn = document.getElementById('mobileToggleMode');
-    if (toggleModeBtn) {
-      if (this.editor.editMode === 'sound') {
-        toggleModeBtn.textContent = '🎵';
-        toggleModeBtn.title = 'Switch to Visual Mode';
-      } else {
-        toggleModeBtn.textContent = '🎨';
-        toggleModeBtn.title = 'Switch to Sound Mode';
-      }
-    }
-  }
-
-  /**
-   * スライダーポップアップを表示
-   * @param {string} type - 'bpm' または 'volume'
-   * @param {Event} event - クリックイベント
-   */
-  showSliderPopup(type, event) {
-    this.hideAllSliderPopups();
+  function showSliderPopup(type, event) {
+    hideAllSliderPopups();
 
     const popup = document.getElementById(`${type}SliderPopup`);
     const slider = document.getElementById(`${type}Slider`);
@@ -76,11 +78,11 @@ export class UIController {
     if (!popup || !slider) return;
 
     if (type === 'bpm') {
-      slider.value = this.appState.bpm;
-      if (valueDisplay) valueDisplay.textContent = this.appState.bpm;
-    } else if (type === 'volume') {
-      slider.value = this.appState.volume;
-      if (valueDisplay) valueDisplay.textContent = this.appState.volume.toFixed(1);
+      slider.value = audioSettings.bpm;
+      if (valueDisplay) valueDisplay.textContent = audioSettings.bpm;
+    } else {
+      slider.value = audioSettings.volume;
+      if (valueDisplay) valueDisplay.textContent = audioSettings.volume.toFixed(1);
     }
 
     const rect = event.target.getBoundingClientRect();
@@ -89,65 +91,50 @@ export class UIController {
     popup.classList.add('visible');
   }
 
-  /**
-   * 全スライダーポップアップを非表示
-   */
-  hideAllSliderPopups() {
-    const popupIds = ['bpmSliderPopup', 'volumeSliderPopup'];
-
-    popupIds.forEach((id) => {
+  function hideAllSliderPopups() {
+    for (const id of ['bpmSliderPopup', 'volumeSliderPopup']) {
       const popup = document.getElementById(id);
-      if (popup) {
-        popup.classList.remove('visible');
-      }
-    });
+      if (popup) popup.classList.remove('visible');
+    }
   }
 
-  /**
-   * ヘルプモーダルを表示
-   */
-  showHelpModal() {
+  function showHelpModal() {
     const modal = document.getElementById('helpModal');
     if (modal) {
       modal.classList.add('visible');
-      const closeButton = document.getElementById('closeHelp');
-      if (closeButton) {
-        closeButton.focus();
-      }
+      document.getElementById('closeHelp')?.focus();
     }
   }
 
-  /**
-   * ヘルプモーダルを非表示
-   */
-  hideHelpModal() {
+  function hideHelpModal() {
     const modal = document.getElementById('helpModal');
-    if (modal) {
-      modal.classList.remove('visible');
-    }
+    if (modal) modal.classList.remove('visible');
   }
 
   /**
-   * 指定時間後にステータスメッセージをクリア
-   * @param {number} delay - 遅延時間 (ミリ秒)
+   * Initialize all button states
    */
-  clearStatusMessageAfter(delay) {
-    if (this.statusMessageTimer) {
-      clearTimeout(this.statusMessageTimer);
+  function initButtonStates() {
+    updatePlayButton();
+    updateEditorButton();
+    updateModeButton();
+  }
+
+  function destroy() {
+    for (const unsub of unsubscribers) {
+      unsub();
     }
-
-    this.statusMessageTimer = setTimeout(() => {
-      this.statusManager.updateStatusLine('Ready', 'ready');
-      this.statusMessageTimer = null;
-    }, delay);
   }
 
-  /**
-   * 全ボタン状態を初期化
-   */
-  initializeButtonStates() {
-    this.updatePlayButton();
-    this.updateEditorButton();
-    this.updateModeButton();
-  }
+  return {
+    updatePlayButton,
+    updateEditorButton,
+    updateModeButton,
+    showSliderPopup,
+    hideAllSliderPopups,
+    showHelpModal,
+    hideHelpModal,
+    initButtonStates,
+    destroy,
+  };
 }

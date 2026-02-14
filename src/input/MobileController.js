@@ -5,10 +5,10 @@
 
 /**
  * @param {Object} deps
- * @param {import('../controllers/PlaybackController-new.js')} deps.playbackController
- * @param {import('../controllers/ShaderController-new.js')} deps.shaderController
- * @param {import('../controllers/UIController-new.js')} deps.uiController
- * @param {import('../editor/Editor-new.js').Editor} deps.editor
+ * @param {import('../controllers/PlaybackController.js')} deps.playbackController
+ * @param {import('../controllers/ShaderController.js')} deps.shaderController
+ * @param {import('../controllers/UIController.js')} deps.uiController
+ * @param {import('../editor/Editor.js').Editor} deps.editor
  * @param {import('../state/AudioSettings.js').AudioSettings} deps.audioSettings
  * @param {import('../audio/AudioEngine.js').AudioEngine} deps.audioEngine
  */

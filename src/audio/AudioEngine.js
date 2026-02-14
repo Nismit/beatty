@@ -49,7 +49,7 @@ export class AudioEngine {
     try {
       this.#audioContext = new AudioContext();
 
-      await this.#audioContext.audioWorklet.addModule('./audio/audio-worklet-new.js');
+      await this.#audioContext.audioWorklet.addModule('./audio/audio-worklet.js');
 
       this.#workletNode = new AudioWorkletNode(this.#audioContext, 'glsl-audio-processor');
 

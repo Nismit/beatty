@@ -1,3 +1,7 @@
+/**
+ * AudioWorkletProcessor for GLSL-generated audio playback
+ * Handles double-buffering of audio data from the main thread
+ */
 class GLSLAudioProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
@@ -10,16 +14,21 @@ class GLSLAudioProcessor extends AudioWorkletProcessor {
     this.port.onmessage = (event) => {
       const { type, data } = event.data;
 
-      if (type === 'setCurrentBuffer') {
-        this.currentBuffer = data;
-        this.readPos = 0;
-      } else if (type === 'setNextBuffer') {
-        this.nextBuffer = data;
-        this.nextBufferReady = true;
-      } else if (type === 'setVolume') {
-        this.volume = data;
-      } else if (type === 'setReadPosition') {
-        this.readPos = data;
+      switch (type) {
+        case 'setCurrentBuffer':
+          this.currentBuffer = data;
+          this.readPos = 0;
+          break;
+        case 'setNextBuffer':
+          this.nextBuffer = data;
+          this.nextBufferReady = true;
+          break;
+        case 'setVolume':
+          this.volume = data;
+          break;
+        case 'setReadPosition':
+          this.readPos = data;
+          break;
       }
     };
   }
@@ -52,12 +61,8 @@ class GLSLAudioProcessor extends AudioWorkletProcessor {
         }
       }
 
-      const leftSample = this.currentBuffer[this.readPos * 2] * this.volume;
-      const rightSample = this.currentBuffer[this.readPos * 2 + 1] * this.volume;
-      
-      leftChannel[i] = leftSample;
-      rightChannel[i] = rightSample;
-      
+      leftChannel[i] = this.currentBuffer[this.readPos * 2] * this.volume;
+      rightChannel[i] = this.currentBuffer[this.readPos * 2 + 1] * this.volume;
       this.readPos++;
     }
 
