@@ -22,7 +22,7 @@ export function createKeyboardController({
       return;
     }
 
-    if (e.ctrlKey || e.metaKey) {
+    if (e.ctrlKey) {
       switch (e.key) {
         case 'p':
           e.preventDefault();
