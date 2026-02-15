@@ -6,15 +6,40 @@
 import { ShaderCompileError, WebGLError } from '../utils/errors.js';
 
 /**
+ * Parse line number from GLSL error message
+ * Typical format: "ERROR: 0:15: 'mainSound' : no matching overloaded function found"
+ * @param {string} errorMessage
+ * @returns {number | null}
+ */
+function parseErrorLineNumber(errorMessage) {
+  const match = errorMessage.match(/ERROR:\s*\d+:(\d+):/);
+  return match ? Number.parseInt(match[1], 10) : null;
+}
+
+/**
+ * Adjust error message line numbers by subtracting preamble lines
+ * @param {string} errorMessage
+ * @param {number} preambleLines
+ * @returns {string}
+ */
+function adjustErrorLineNumbers(errorMessage, preambleLines) {
+  return errorMessage.replace(/ERROR:\s*(\d+):(\d+):/g, (match, col, line) => {
+    const adjustedLine = Math.max(1, Number.parseInt(line, 10) - preambleLines);
+    return `ERROR: ${col}:${adjustedLine}:`;
+  });
+}
+
+/**
  * Create and compile a WebGL shader
  * @param {WebGL2RenderingContext} gl
  * @param {number} type - gl.VERTEX_SHADER or gl.FRAGMENT_SHADER
  * @param {string} source - GLSL source code
  * @param {'sound' | 'visual'} shaderType - Shader type for error reporting
+ * @param {number} [preambleLines=0] - Lines to subtract from error line numbers
  * @returns {WebGLShader}
  * @throws {ShaderCompileError}
  */
-export function compileShader(gl, type, source, shaderType) {
+export function compileShader(gl, type, source, shaderType, preambleLines = 0) {
   const shader = gl.createShader(type);
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
@@ -22,7 +47,13 @@ export function compileShader(gl, type, source, shaderType) {
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     const error = gl.getShaderInfoLog(shader);
     gl.deleteShader(shader);
-    throw new ShaderCompileError(error, shaderType);
+
+    const rawLineNumber = parseErrorLineNumber(error);
+    const userLineNumber =
+      rawLineNumber !== null ? Math.max(1, rawLineNumber - preambleLines) : null;
+    const adjustedError = preambleLines > 0 ? adjustErrorLineNumbers(error, preambleLines) : error;
+
+    throw new ShaderCompileError(adjustedError, shaderType, userLineNumber);
   }
 
   return shader;
@@ -35,6 +66,7 @@ export function compileShader(gl, type, source, shaderType) {
  * @param {string} fragmentSource
  * @param {'sound' | 'visual'} shaderType - For error reporting
  * @param {string[] | null} [transformFeedbackVaryings]
+ * @param {{ vertex?: number, fragment?: number }} [preambleLines] - Lines to subtract from errors
  * @returns {WebGLProgram}
  * @throws {WebGLError}
  */
@@ -44,9 +76,22 @@ export function createProgram(
   fragmentSource,
   shaderType,
   transformFeedbackVaryings = null,
+  preambleLines = {},
 ) {
-  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource, shaderType);
-  const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource, shaderType);
+  const vertexShader = compileShader(
+    gl,
+    gl.VERTEX_SHADER,
+    vertexSource,
+    shaderType,
+    preambleLines.vertex ?? 0,
+  );
+  const fragmentShader = compileShader(
+    gl,
+    gl.FRAGMENT_SHADER,
+    fragmentSource,
+    shaderType,
+    preambleLines.fragment ?? 0,
+  );
 
   const program = gl.createProgram();
   gl.attachShader(program, vertexShader);
