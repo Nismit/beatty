@@ -770,9 +770,9 @@ export const EVENTS = {
 
 ## 今後の改善項目
 
-### Phase 11: クリーンアップ（重複コード削除）
+### Phase 11: クリーンアップ（重複コード削除） ✅ 完了
 
-リファクタリングにより新規実装と旧実装が並存している。旧ファイルを削除して統合する。
+リファクタリングにより新規実装と旧実装が並存していた。旧ファイルを削除して統合完了。
 
 | 削除対象（旧） | 残す（新） | 理由 |
 |---------------|-----------|------|
@@ -784,13 +784,7 @@ export const EVENTS = {
 | `state/StatusManager.js` | `ui/StatusDisplay.js` | ui/ に移動済み |
 | `controllers/InputHandler.js` | `input/KeyboardController.js` + `input/MobileController.js` + `input/ModalController.js` | 機能分離済み |
 
-**推定削減**: 500+ 行
-
-**手順**:
-1. 旧ファイルが使われていないことを確認（main.js の import チェック）
-2. 旧ファイル削除
-3. index.js の re-export 更新
-4. テスト実行で動作確認
+**削減**: 1335 行
 
 ### Phase 12: 入力バリデーション追加
 
