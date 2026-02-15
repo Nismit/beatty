@@ -40,20 +40,34 @@ export function createAudioSettings(eventBus) {
   }
 
   function setBpm(newBpm) {
+    if (typeof newBpm !== 'number' || Number.isNaN(newBpm)) {
+      throw new TypeError('BPM must be a number');
+    }
+    const clamped = Math.max(20, Math.min(300, newBpm));
     const oldBpm = state.bpm;
-    state.bpm = newBpm;
-    eventBus.emit(EVENTS.BPM_CHANGED, { old: oldBpm, new: newBpm });
+    state.bpm = clamped;
+    eventBus.emit(EVENTS.BPM_CHANGED, { old: oldBpm, new: clamped });
     persist();
   }
 
   function setVolume(newVolume) {
+    if (typeof newVolume !== 'number' || Number.isNaN(newVolume)) {
+      throw new TypeError('Volume must be a number');
+    }
+    const clamped = Math.max(0, Math.min(1, newVolume));
     const oldVolume = state.volume;
-    state.volume = newVolume;
-    eventBus.emit(EVENTS.VOLUME_CHANGED, { old: oldVolume, new: newVolume });
+    state.volume = clamped;
+    eventBus.emit(EVENTS.VOLUME_CHANGED, { old: oldVolume, new: clamped });
     persist();
   }
 
   function setSampleRate(newSampleRate) {
+    if (typeof newSampleRate !== 'number' || Number.isNaN(newSampleRate)) {
+      throw new TypeError('Sample rate must be a number');
+    }
+    if (!Number.isInteger(newSampleRate) || newSampleRate <= 0) {
+      throw new RangeError('Sample rate must be a positive integer');
+    }
     state.sampleRate = newSampleRate;
   }
 

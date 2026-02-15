@@ -210,4 +210,64 @@ describe('AudioSettings', () => {
       expect(audioSettings.volume).toBe(AUDIO.DEFAULT_VOLUME);
     });
   });
+
+  describe('input validation', () => {
+    it('should throw TypeError for non-number BPM', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus);
+
+      expect(() => audioSettings.setBpm('120')).toThrow(TypeError);
+      expect(() => audioSettings.setBpm(null)).toThrow(TypeError);
+      expect(() => audioSettings.setBpm(undefined)).toThrow(TypeError);
+      expect(() => audioSettings.setBpm(NaN)).toThrow(TypeError);
+    });
+
+    it('should clamp BPM to valid range (20-300)', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus);
+
+      audioSettings.setBpm(10);
+      expect(audioSettings.bpm).toBe(20);
+
+      audioSettings.setBpm(500);
+      expect(audioSettings.bpm).toBe(300);
+    });
+
+    it('should throw TypeError for non-number volume', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus);
+
+      expect(() => audioSettings.setVolume('0.5')).toThrow(TypeError);
+      expect(() => audioSettings.setVolume(null)).toThrow(TypeError);
+      expect(() => audioSettings.setVolume(NaN)).toThrow(TypeError);
+    });
+
+    it('should clamp volume to valid range (0-1)', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus);
+
+      audioSettings.setVolume(-0.5);
+      expect(audioSettings.volume).toBe(0);
+
+      audioSettings.setVolume(1.5);
+      expect(audioSettings.volume).toBe(1);
+    });
+
+    it('should throw TypeError for non-number sample rate', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus);
+
+      expect(() => audioSettings.setSampleRate('48000')).toThrow(TypeError);
+      expect(() => audioSettings.setSampleRate(NaN)).toThrow(TypeError);
+    });
+
+    it('should throw RangeError for invalid sample rate', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus);
+
+      expect(() => audioSettings.setSampleRate(0)).toThrow(RangeError);
+      expect(() => audioSettings.setSampleRate(-1000)).toThrow(RangeError);
+      expect(() => audioSettings.setSampleRate(44100.5)).toThrow(RangeError);
+    });
+  });
 });

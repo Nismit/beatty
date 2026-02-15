@@ -46,10 +46,22 @@ export function createPlaybackState(eventBus) {
   }
 
   function advanceBlock(secondsPerBar) {
+    if (typeof secondsPerBar !== 'number' || Number.isNaN(secondsPerBar)) {
+      throw new TypeError('secondsPerBar must be a number');
+    }
+    if (secondsPerBar <= 0) {
+      throw new RangeError('secondsPerBar must be positive');
+    }
     state.blockOffset += secondsPerBar;
   }
 
   function recordStartTime(audioContextTime) {
+    if (typeof audioContextTime !== 'number' || Number.isNaN(audioContextTime)) {
+      throw new TypeError('audioContextTime must be a number');
+    }
+    if (audioContextTime < 0) {
+      throw new RangeError('audioContextTime must be non-negative');
+    }
     state.startTime = audioContextTime;
   }
 

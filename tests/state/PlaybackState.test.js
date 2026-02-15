@@ -189,4 +189,46 @@ describe('PlaybackState', () => {
       expect(playbackState.blockOffset).toBe(0);
     });
   });
+
+  describe('input validation', () => {
+    it('should throw TypeError for non-number advanceBlock', () => {
+      const eventBus = createMockEventBus();
+      const playbackState = createPlaybackState(eventBus);
+
+      expect(() => playbackState.advanceBlock('5')).toThrow(TypeError);
+      expect(() => playbackState.advanceBlock(null)).toThrow(TypeError);
+      expect(() => playbackState.advanceBlock(NaN)).toThrow(TypeError);
+    });
+
+    it('should throw RangeError for non-positive advanceBlock', () => {
+      const eventBus = createMockEventBus();
+      const playbackState = createPlaybackState(eventBus);
+
+      expect(() => playbackState.advanceBlock(0)).toThrow(RangeError);
+      expect(() => playbackState.advanceBlock(-1)).toThrow(RangeError);
+    });
+
+    it('should throw TypeError for non-number recordStartTime', () => {
+      const eventBus = createMockEventBus();
+      const playbackState = createPlaybackState(eventBus);
+
+      expect(() => playbackState.recordStartTime('10')).toThrow(TypeError);
+      expect(() => playbackState.recordStartTime(null)).toThrow(TypeError);
+      expect(() => playbackState.recordStartTime(NaN)).toThrow(TypeError);
+    });
+
+    it('should throw RangeError for negative recordStartTime', () => {
+      const eventBus = createMockEventBus();
+      const playbackState = createPlaybackState(eventBus);
+
+      expect(() => playbackState.recordStartTime(-1)).toThrow(RangeError);
+    });
+
+    it('should accept zero for recordStartTime', () => {
+      const eventBus = createMockEventBus();
+      const playbackState = createPlaybackState(eventBus);
+
+      expect(() => playbackState.recordStartTime(0)).not.toThrow();
+    });
+  });
 });
