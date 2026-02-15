@@ -7,6 +7,15 @@ import { WEBGL } from '../utils/consts.js';
 import { createProgram } from './gl-utils.js';
 
 /**
+ * Number of lines in shader preambles (before user code)
+ * Used to adjust error line numbers to match user code
+ */
+export const PREAMBLE_LINES = {
+  SOUND: 7,
+  VISUAL: 23,
+};
+
+/**
  * Build a sound vertex shader from user code
  * @param {string} userCode - User-provided GLSL mainSound function
  * @returns {string} Complete vertex shader source
@@ -103,6 +112,7 @@ export function compileSoundShader(gl, userCode) {
     fragmentSource,
     'sound',
     WEBGL.TRANSFORM_FEEDBACK_VARYINGS,
+    { vertex: PREAMBLE_LINES.SOUND },
   );
 }
 
@@ -116,5 +126,7 @@ export function compileSoundShader(gl, userCode) {
 export function compileVisualShader(gl, userCode) {
   const vertexSource = getFullscreenVertexShader();
   const fragmentSource = buildVisualShader(userCode);
-  return createProgram(gl, vertexSource, fragmentSource, 'visual');
+  return createProgram(gl, vertexSource, fragmentSource, 'visual', null, {
+    fragment: PREAMBLE_LINES.VISUAL,
+  });
 }
