@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beatty-v2.1.0';
+const CACHE_NAME = 'beatty-v0.0.1';
 const urlsToCache = [
   './',
   './index.html',

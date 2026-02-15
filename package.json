@@ -1,6 +1,6 @@
 {
   "name": "beatty",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Real-time audio generation and visualization using WebGL shaders",
   "private": true,
   "scripts": {
