@@ -114,11 +114,11 @@ body {
 }
 
 .status-line.sound {
-    background: #1a3d1a;
+    background: #18302c;
 }
 
 .status-line.visual {
-    background: #2f1a42;
+    background: #1e2234;
 }
 
 .status-left {
@@ -151,23 +151,28 @@ body {
 }
 
 .status-dot.ready {
-    background-color: #4ecdc4;
+    background-color: #5eead4;
+    box-shadow: 0 0 8px rgba(94, 234, 212, 0.6);
 }
 
 .status-dot.compiling {
-    background-color: #ffd43b;
+    background-color: #facc15;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
 }
 
 .status-dot.compiled {
-    background-color: #51cf66;
+    background-color: #4ade80;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
 }
 
 .status-dot.applied {
-    background-color: #ff9f43;
+    background-color: #fb923c;
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.6);
 }
 
 .status-dot.error {
-    background-color: #ff6b6b;
+    background-color: #f87171;
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
 }
 
 .error-bar {
@@ -494,11 +499,11 @@ code {
 }
 
 .indicator-sample.sound-bg {
-    background: #1a3d1a;
+    background: #18302c;
 }
 
 .indicator-sample.visual-bg {
-    background: #2f1a42;
+    background: #1e2234;
 }
 
 .indicator-dot {
@@ -508,23 +513,28 @@ code {
 }
 
 .indicator-dot.ready {
-    background-color: #4ecdc4;
+    background-color: #5eead4;
+    box-shadow: 0 0 8px rgba(94, 234, 212, 0.6);
 }
 
 .indicator-dot.compiling {
-    background-color: #ffd43b;
+    background-color: #facc15;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
 }
 
 .indicator-dot.compiled {
-    background-color: #51cf66;
+    background-color: #4ade80;
+    box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
 }
 
 .indicator-dot.applied {
-    background-color: #ff9f43;
+    background-color: #fb923c;
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.6);
 }
 
 .indicator-dot.error {
-    background-color: #ff6b6b;
+    background-color: #f87171;
+    box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
 }
 
 /* Mobile Modal Adjustments */
