@@ -85,6 +85,14 @@ src/
   import { AudioEngine } from './audio/index.js';
   ```
 
+- **npm scripts を使用**: lint/format/test は npx ではなく npm scripts を使うこと
+  ```bash
+  npm run lint        # Biome でチェック
+  npm run lint:fix    # 自動修正
+  npm run format      # フォーマット
+  npm run test        # テスト実行
+  ```
+
 ## 開発
 
 HTTPサーバー経由で `src/index.html` を開く (CORS制限のため)
