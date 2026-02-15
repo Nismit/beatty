@@ -114,11 +114,11 @@ body {
 }
 
 .status-line.sound {
-    background: #1a2a3a;
+    background: #1a3d1a;
 }
 
 .status-line.visual {
-    background: #2a1a3a;
+    background: #2f1a42;
 }
 
 .status-left {
@@ -163,7 +163,7 @@ body {
 }
 
 .status-dot.applied {
-    background-color: #4a9eff;
+    background-color: #ff9f43;
 }
 
 .status-dot.error {
@@ -494,11 +494,11 @@ code {
 }
 
 .indicator-sample.sound-bg {
-    background: #1a2a3a;
+    background: #1a3d1a;
 }
 
 .indicator-sample.visual-bg {
-    background: #2a1a3a;
+    background: #2f1a42;
 }
 
 .indicator-dot {
@@ -520,7 +520,7 @@ code {
 }
 
 .indicator-dot.applied {
-    background-color: #4a9eff;
+    background-color: #ff9f43;
 }
 
 .indicator-dot.error {
