@@ -46,39 +46,44 @@ src/
 ├── manifest.json           - PWAマニフェスト
 │
 ├── audio/                  - オーディオ関連
-│   ├── index.js            - re-export
 │   ├── Audio.js            - Web Audio API管理
 │   ├── AudioAnalyzer.js    - 周波数解析
 │   └── audio-worklet.js    - AudioWorkletProcessor
 │
 ├── gl/                     - WebGL/シェーダー関連
-│   ├── index.js
 │   ├── SoundGL.js          - サウンドシェーダー (Transform Feedback)
 │   ├── VisualGL.js         - ビジュアルシェーダー
 │   ├── shader-templates.js - デフォルトシェーダー
 │   └── utils.js            - WebGLユーティリティ
 │
 ├── controllers/            - コントローラー
-│   ├── index.js
 │   ├── PlaybackController.js
 │   ├── ShaderController.js
 │   ├── UIController.js
 │   └── InputHandler.js
 │
 ├── editor/                 - エディタ
-│   ├── index.js
 │   └── Editor.js           - CodeMirror 6 GLSLエディタ
 │
 ├── state/                  - 状態管理
-│   ├── index.js
 │   ├── AppState.js         - アプリ状態管理
 │   └── StatusManager.js    - ステータス表示
 │
 └── utils/                  - ユーティリティ
-    ├── index.js
     ├── consts.js           - 定数定義
     └── storage.js          - LocalStorage操作
 ```
+
+## コーディング規約
+
+- **直接インポート**: `index.js` による re-export パターンは使用しない。各ファイルから直接インポートすること（コードジャンプの利便性のため）
+  ```js
+  // Good
+  import { AudioEngine } from './audio/AudioEngine.js';
+
+  // Bad
+  import { AudioEngine } from './audio/index.js';
+  ```
 
 ## 開発
 
