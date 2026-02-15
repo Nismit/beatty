@@ -786,29 +786,20 @@ export const EVENTS = {
 
 **削減**: 1335 行
 
-### Phase 12: 入力バリデーション追加
+### Phase 12: 入力バリデーション追加 ✅ 完了
 
-現在、公開APIに入力検証がない。不正な値でクラッシュする可能性あり。
+公開APIに入力検証を追加。
 
-**対象モジュール**:
+**実装済み**:
 - `state/AudioSettings.js`
-  - `setBpm(bpm)`: 20-300 の範囲チェック
-  - `setVolume(volume)`: 0-1 にクランプ
-  - `setSampleRate(rate)`: 正の整数チェック
+  - `setBpm(bpm)`: 数値チェック + 20-300 にクランプ
+  - `setVolume(volume)`: 数値チェック + 0-1 にクランプ
+  - `setSampleRate(rate)`: 正の整数チェック（TypeError/RangeError）
 - `state/PlaybackState.js`
-  - `advanceBlock(seconds)`: 正の数チェック
-  - `recordStartTime(time)`: 非負チェック
+  - `advanceBlock(seconds)`: 正の数チェック（TypeError/RangeError）
+  - `recordStartTime(time)`: 非負チェック（TypeError/RangeError）
 
-**実装パターン**:
-```javascript
-function setBpm(newBpm) {
-  if (typeof newBpm !== 'number' || Number.isNaN(newBpm)) {
-    throw new TypeError('BPM must be a number');
-  }
-  const clamped = Math.max(20, Math.min(300, newBpm));
-  // ...
-}
-```
+**テスト**: +11件（70→81）
 
 ### Phase 13: シェーダーエラー改善
 
