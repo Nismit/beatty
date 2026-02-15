@@ -801,21 +801,17 @@ export const EVENTS = {
 
 **テスト**: +11件（70→81）
 
-### Phase 13: シェーダーエラー改善
+### Phase 13: シェーダーエラー改善 ✅ 完了
 
-GLSLコンパイルエラーの行番号がユーザーコードと一致しない問題。
+GLSLコンパイルエラーの行番号をユーザーコードに合わせて調整。
 
-**現状**:
-```
-ERROR: 0:15: 'mainSound' : no matching overloaded function found
-```
-→ 行番号15はプリアンブル込み。ユーザーコードでは行3など。
-
-**改善案**:
-1. ShaderCompiler でプリアンブル行数を記録
+**実装済み**:
+1. `PREAMBLE_LINES` 定数追加（sound: 7, visual: 23）
 2. エラーメッセージから行番号をパース (`/ERROR: \d+:(\d+):/`)
 3. プリアンブル行数を引いて実際の行番号を算出
-4. Editor にエラー行ハイライト機能追加
+4. `ShaderCompileError` に調整済み行番号を渡す
+
+**未実装**: Editor にエラー行ハイライト機能（将来対応）
 
 ### Phase 14: controllers/ テスト追加
 
