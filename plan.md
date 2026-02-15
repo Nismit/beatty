@@ -813,20 +813,16 @@ GLSLコンパイルエラーの行番号をユーザーコードに合わせて�
 
 **未実装**: Editor にエラー行ハイライト機能（将来対応）
 
-### Phase 14: controllers/ テスト追加
+### Phase 14: controllers/ テスト追加 ✅ 完了
 
 Phase 10 で未実装だった controllers のテストを追加。
 
-**対象**:
-- `controllers/PlaybackController.js`
-- `controllers/ShaderController.js`
-- `controllers/UIController.js`
+**実装済み**:
+- `PlaybackController.test.js` (12テスト): togglePlayback, resetPlayback, animation loop
+- `ShaderController.test.js` (9テスト): initShaders, compileShader, applyCompiledShader
+- `UIController.test.js` (18テスト): ボタン状態更新, スライダー, モーダル
 
-**テスト観点**:
-- 依存モジュールのモック
-- イベント発火の検証
-- エラーハンドリング
-- destroy() でのクリーンアップ
+**テスト**: +39件（81→120）
 
 ### Phase 15: パフォーマンス最適化
 
