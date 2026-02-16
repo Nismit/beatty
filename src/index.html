@@ -90,6 +90,7 @@
                         <li><kbd>Ctrl+T</kbd> Toggle Editor Visibility</li>
                         <li><kbd>Ctrl+E</kbd> Switch Sound/Visual Mode</li>
                         <li><kbd>Ctrl+G</kbd> Open Presets</li>
+                        <li><kbd>Ctrl+D</kbd> Toggle Debug Overlay</li>
                     </ul>
                 </div>
 
@@ -131,6 +132,12 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Debug Overlay -->
+    <div class="debug-overlay" id="debugOverlay">
+        <canvas id="debugCanvas" width="280" height="180"></canvas>
+        <div class="debug-mode-label" id="debugModeLabel">Waveform</div>
     </div>
 
     <!-- Preset Modal -->

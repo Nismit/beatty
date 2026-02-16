@@ -10,6 +10,7 @@
  * @param {import('../controllers/UIController.js')} deps.uiController
  * @param {import('../editor/Editor.js').Editor} deps.editor
  * @param {import('../ui/PresetModal.js')} deps.presetModal
+ * @param {import('../ui/DebugOverlay.js')} deps.debugOverlay
  */
 export function createKeyboardController({
   playbackController,
@@ -17,6 +18,7 @@ export function createKeyboardController({
   uiController,
   editor,
   presetModal,
+  debugOverlay,
 }) {
   function handleKeydown(e) {
     if (e.key === 'Escape') {
@@ -54,6 +56,10 @@ export function createKeyboardController({
         case 'g':
           e.preventDefault();
           presetModal.show();
+          break;
+        case 'd':
+          e.preventDefault();
+          debugOverlay.toggle();
           break;
       }
     }

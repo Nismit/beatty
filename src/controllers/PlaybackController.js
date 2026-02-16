@@ -13,6 +13,7 @@
  * @param {import('../gl/VisualRenderer.js').VisualRenderer} deps.visualRenderer
  * @param {import('../state/EventBus.js').EventBus} deps.eventBus
  * @param {function(Error): void} deps.errorHandler
+ * @param {import('../ui/DebugOverlay.js')|null} [deps.debugOverlay]
  */
 export function createPlaybackController({
   audioEngine,
@@ -23,6 +24,7 @@ export function createPlaybackController({
   visualRenderer,
   eventBus,
   errorHandler,
+  debugOverlay = null,
 }) {
   let animationFrameId = null;
 
@@ -82,6 +84,10 @@ export function createPlaybackController({
 
       const currentTime = playbackState.getCurrentTime(audioEngine.audioContext);
       visualRenderer.render(audioAnalyzer.getValues(), currentTime);
+
+      if (debugOverlay) {
+        debugOverlay.update();
+      }
 
       animationFrameId = requestAnimationFrame(animate);
     };

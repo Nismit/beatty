@@ -20,6 +20,7 @@ import { createModalController } from './input/ModalController.js';
 import { createAudioSettings } from './state/AudioSettings.js';
 import { createEventBus } from './state/EventBus.js';
 import { createPlaybackState } from './state/PlaybackState.js';
+import { createDebugOverlay } from './ui/DebugOverlay.js';
 import { createPresetModal } from './ui/PresetModal.js';
 import { createStatusDisplay } from './ui/StatusDisplay.js';
 import { EVENTS, UI } from './utils/consts.js';
@@ -50,6 +51,11 @@ async function init() {
 
   const errorHandler = createErrorHandler(statusDisplay);
 
+  const debugOverlay = createDebugOverlay({
+    audioEngine,
+    audioAnalyzer,
+  });
+
   // Layer 2: Audio scheduling (injects generateBuffer to decouple Audio↔GL)
   const audioScheduler = createAudioScheduler({
     generateBuffer: (blockOffset) =>
@@ -71,6 +77,7 @@ async function init() {
     visualRenderer,
     eventBus,
     errorHandler,
+    debugOverlay,
   });
 
   const shaderController = createShaderController({
@@ -109,6 +116,7 @@ async function init() {
     uiController,
     editor,
     presetModal,
+    debugOverlay,
   });
 
   const mobileController = createMobileController({
@@ -154,6 +162,7 @@ async function init() {
     mobileController.init();
     modalController.init();
     presetModal.init();
+    debugOverlay.init();
 
     // Resize handling
     window.addEventListener('resize', () => playbackController.handleResize());
@@ -172,6 +181,7 @@ async function init() {
     modalController.destroy();
     presetModal.destroy();
     presetController.destroy();
+    debugOverlay.destroy();
     statusDisplay.destroy();
     uiController.destroy();
     shaderController.destroy();
