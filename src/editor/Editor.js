@@ -300,7 +300,7 @@ export class Editor {
         '&': { color: '#f8f8f2', backgroundColor: 'rgb(0,0,0,.3)' },
         '.cm-content': {
           fontFamily: 'Monaco, Consolas, monospace',
-          fontSize: '14px',
+          fontSize: '13px',
           lineHeight: '1.5',
         },
         '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
