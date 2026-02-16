@@ -3,7 +3,11 @@
  * Provides pure functions for CRUD operations on presets
  */
 
-import { DEFAULT_SOUND_SHADER, DEFAULT_VISUAL_SHADER } from '../gl/shader-templates.js';
+import {
+  DEFAULT_SOUND_SHADER,
+  DEFAULT_VISUAL_SHADER,
+  DEMO_SOUND_SHADER,
+} from '../gl/shader-templates.js';
 import { PRESET, STORAGE_KEYS } from './consts.js';
 
 /**
@@ -64,27 +68,50 @@ export function savePresets(presets) {
 }
 
 /**
+ * Built-in presets definition
+ */
+const BUILT_IN_PRESETS = [
+  {
+    id: 'default',
+    name: 'Default',
+    soundCode: DEFAULT_SOUND_SHADER,
+    visualCode: DEFAULT_VISUAL_SHADER,
+    isBuiltIn: true,
+    createdAt: 0,
+  },
+  {
+    id: 'demo',
+    name: 'Demo',
+    soundCode: DEMO_SOUND_SHADER,
+    visualCode: DEFAULT_VISUAL_SHADER,
+    isBuiltIn: true,
+    createdAt: 0,
+  },
+];
+
+/**
  * Get the default preset (built-in shaders)
  * @returns {Object} Default preset object
  */
 export function getDefaultPreset() {
-  return {
-    id: 'default',
-    name: PRESET.DEFAULT_NAME,
-    soundCode: DEFAULT_SOUND_SHADER,
-    visualCode: DEFAULT_VISUAL_SHADER,
-    isDefault: true,
-    createdAt: 0,
-  };
+  return BUILT_IN_PRESETS[0];
 }
 
 /**
- * Get all presets including the default
- * @returns {Array<Object>} Array of all presets with default first
+ * Get all built-in presets
+ * @returns {Array<Object>} Array of built-in presets
+ */
+export function getBuiltInPresets() {
+  return BUILT_IN_PRESETS;
+}
+
+/**
+ * Get all presets including built-in presets
+ * @returns {Array<Object>} Array of all presets with built-in first
  */
 export function getAllPresets() {
   const userPresets = loadPresets();
-  return [getDefaultPreset(), ...userPresets];
+  return [...BUILT_IN_PRESETS, ...userPresets];
 }
 
 /**
@@ -100,8 +127,11 @@ export function createPreset(name, soundCode, visualCode) {
   }
 
   const trimmedName = name.trim();
-  if (trimmedName.toLowerCase() === PRESET.DEFAULT_NAME.toLowerCase()) {
-    return { success: false, error: 'Cannot use reserved name "Default"' };
+  const isReservedName = BUILT_IN_PRESETS.some(
+    (p) => p.name.toLowerCase() === trimmedName.toLowerCase(),
+  );
+  if (isReservedName) {
+    return { success: false, error: `Cannot use reserved name "${trimmedName}"` };
   }
 
   const presets = loadPresets();
@@ -129,13 +159,22 @@ export function createPreset(name, soundCode, visualCode) {
 }
 
 /**
+ * Check if a preset ID is a built-in preset
+ * @param {string} id - Preset ID
+ * @returns {boolean}
+ */
+export function isBuiltInPreset(id) {
+  return BUILT_IN_PRESETS.some((p) => p.id === id);
+}
+
+/**
  * Delete a preset by ID
  * @param {string} id - Preset ID
  * @returns {{ success: boolean, error?: string }}
  */
 export function deletePreset(id) {
-  if (id === 'default') {
-    return { success: false, error: 'Cannot delete default preset' };
+  if (isBuiltInPreset(id)) {
+    return { success: false, error: 'Cannot delete built-in preset' };
   }
 
   const presets = loadPresets();
@@ -161,8 +200,10 @@ export function deletePreset(id) {
  * @returns {Object | null} Preset object or null if not found
  */
 export function getPresetById(id) {
-  if (id === 'default') {
-    return getDefaultPreset();
+  // Check built-in presets first
+  const builtIn = BUILT_IN_PRESETS.find((p) => p.id === id);
+  if (builtIn) {
+    return builtIn;
   }
 
   const presets = loadPresets();

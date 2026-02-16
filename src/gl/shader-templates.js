@@ -3,16 +3,10 @@
  * Contains default GLSL code for sound and visual shaders
  */
 
-export const DEFAULT_SOUND_SHADER = `vec2 hash21(float p) {
-	vec3 p3 = fract(vec3(p) * vec3(.19615, .19901, .023118));
-	p3 += dot(p3, p3.yzx + 33.33);
-  return fract((p3.xx + p3.yz) * p3.zy);
-}
-
-float noise( float n ) {
-  return fract(sin(n)*43758.5453123);
-}
-
+// =============================================================================
+// DEFAULT: Simple sound shader for beginners
+// =============================================================================
+export const DEFAULT_SOUND_SHADER = `// Utility functions
 float timeToBeat(float time) {
   return time / 60.0 * u_bpm;
 }
@@ -21,180 +15,175 @@ float beatToTime(float beat) {
   return beat / u_bpm * 60.0;
 }
 
-float saw(float phase) {
-  return 2.0 * fract(phase) - 1.0;
-}
-
-float square(float phase) {
-  return fract(phase) < 0.5 ? -1.0 : 1.0;
-}
-
-float triangle(float phase) {
-  return 1.0 - 4.0 * abs(fract(phase) - 0.5);
-}
-
 float sine(float phase) {
   return sin(phase * 6.28318530718);
 }
 
-// https://www.graffathon.fi/2016/presentations/additive_slides.pdf
-float pitch(float p) {
-  return pow(1.059460646483, p) * 440.0;
-}
-
+// Simple kick drum
 float kick(float time) {
   float amp = exp(-5.0 * time);
   float phase = 50.0 * time - 10.0 * exp(-70.0 * time);
   return amp * sine(phase);
 }
 
-float kick2(float time) {
-  float amp = exp(-5.0 * time);
-  float attack = 30.0; // attack---feel [10.0 -- 100.0]
-  float pyuun = 5.0; // pyuun [10.0 --- 100.0]
-  float botu = -30.0; // kotu <--> botu [-100.0 -- -10.0]
-  float phase = attack * time - pyuun * exp(botu * time);
-  return amp * sine(phase);
+// Simple hihat (noise-based)
+float hihat(float time) {
+  float amp = exp(-50.0 * time);
+  float noise = fract(sin(time * 1000.0) * 43758.5453);
+  return amp * (noise * 2.0 - 1.0);
 }
 
-vec2 hihat( float time ) {
-  float amp = exp( -50.0 * time );
-  return amp * hash21(time * 100.0).xy;
-}
-
-vec2 hihat2( float time ) {
-  float amp = exp( -40.0 * time );
-  return amp * hash21(time * 300.0).xy;
-}
-
-float snare(float time) {
-  float amp = exp(-5.0 * time);
-  float noise = 2.0 * (fract(sin(time) * 43758.5453) - 0.5);
-  float frequency = 250.0;
-  float sineWave = sin(2.0 * 3.14159 * frequency * time);
-  float envelope = smoothstep(0.0, 1.0, 1.0 - time * 10.0);
-
-  float snareSound = amp * envelope * (0.5 * noise + 0.5 * sineWave);
-
-  float highPassCutoff = 100.0;
-  snareSound *= smoothstep(highPassCutoff - 50.0, highPassCutoff + 50.0, frequency);
-
-  return snareSound;
-}
-
-float chord( float n ) {
-  return (
-      n < 1.0 ? 55.0 :
-      n < 2.0 ? 58.0 :
-      n < 3.0 ? 62.0 :
-                65.0
-  );
-}
-
-float noteToFreq( float n ) {
-  return 440.0 * pow( 2.0, ( n - 69.0 ) / 12.0 );
-}
-
-vec2 bass( float note, float time ) {
-  float freq = noteToFreq( note );
-  return vec2( square( freq * time ) + sine( freq * time ) ) / 2.0;
-}
-
-vec2 pad( float note, float time ) {
-  float freq = noteToFreq( note );
-  float vib = 0.2 * sine( 3.0 * time );
-  return vec2(
-      saw( freq * 0.99 * time + vib ),
-      saw( freq * 1.01 * time + vib )
-  );
-}
-
-vec2 arp( float note, float time ) {
-  float freq = noteToFreq( note );
-  float fmamp = 0.1 * exp( -50.0 * time );
-  float fm = fmamp * sine( time * freq * 7.0 );
-  float amp = exp( -20.0 * time );
-  return amp * vec2(
-      sine( freq * 0.99 * time + fm ),
-      sine( freq * 1.01 * time + fm )
-  );
-}
-
-vec2 arp2( float note, float time ) {
-  float freq = noteToFreq( note );
-  float fmamp = 0.3 * exp( -25.0 * time );
-  float fm = fmamp * sine( time * freq * 5.0 );
-  float amp = exp( -10.0 * time );
-  return amp * vec2(
-      sine( freq * 0.99 * time + fm ),
-      sine( freq * 1.01 * time + fm )
-  );
+// Simple bass
+float bass(float time, float freq) {
+  float amp = exp(-3.0 * time);
+  return amp * sine(freq * time);
 }
 
 vec2 mainSound(float time) {
-  vec2 res;
+  vec2 out2 = vec2(0.0);
 
   float beat = timeToBeat(time);
-  float kickTime = beatToTime( mod( beat, 1.0 ) );
-  float hihatTime = beatToTime( mod( beat + 0.5, 1.0 ) );
-  float hihatTime2 = beatToTime( mod( beat + 0.7, 1.0 ) );
-  float snareTime = beatToTime( mod( beat, 2.0 ) );
 
-  float sidechain = smoothstep( 0.0, 0.3, kickTime );
+  // Kick: every beat
+  float kickTime = beatToTime(mod(beat, 1.0));
+  out2 += vec2(kick(kickTime)) * 0.7;
 
-  float freq = mod(beat, 4.0) >= 1.0 ? 440.0 : 880.0;
+  // Hihat: offbeat (8th notes)
+  float hihatTime = beatToTime(mod(beat + 0.5, 1.0));
+  out2 += vec2(hihat(hihatTime)) * 0.3;
 
-  float fmamp = 0.1 * exp( -3.0 * time );
-  float fm = fmamp * sine( time * freq * 7.0 );
-  float amp = exp( -1.0 * time );
+  // Bass: 2 bar pattern
+  float bassTime = beatToTime(mod(beat, 2.0));
+  float bassFreq = mod(beat, 8.0) < 4.0 ? 55.0 : 73.42; // A1 or D2
+  out2 += vec2(bass(bassTime, bassFreq)) * 0.4;
 
-  float arpTime = beatToTime( mod( beat, 0.25 ) );
-  float arpSeed = floor( beat / 0.25 );
-  float arpDice = fract( noise( arpSeed ) * 100.0 );
-
-  float bassNote = chord( 0.0 ) - 12.0;
-
-  if ( 0.0 < beat && beat < 64.0 ) {
-    res += vec2(kick(kickTime));
-    res += vec2(kick2(kickTime));
-  }
-
-  if ( 16.0 < beat && beat < 64.0 ) {
-    res += vec2(hihat(hihatTime));
-  }
-
-  if ( 32.0 < beat && beat < 64.0 ) {
-    float arpNote = chord( floor( 2.91 * arpDice ) );
-    arpNote += 0.615 * floor( 1.0 * arpDice );
-    res += sidechain * vec2 (arp2( arpNote, arpTime )) / 4.;
-  }
-
-  if ( 64.0 < beat && beat < 128.0 ) {
-    hihatTime = beatToTime( mod( beat, 0.5 ) );
-    res += vec2(kick(kickTime));
-    res += vec2(hihat(hihatTime));
-    res += vec2(hihat(hihatTime2));
-
-    float arpNote = chord( floor( 2.0 * arpDice ) );
-    arpNote += 12.0 * floor( 3.0 * arpDice );
-    res += sidechain * vec2 (arp( arpNote, arpTime )) / 2.;
-
-  }
-
-  if ( 128.0 < beat && beat < 152.0 ) {
-    hihatTime = beatToTime( mod( beat, 0.5 ) );
-    res += vec2(kick(kickTime));
-    res += vec2(kick2(kickTime));
-    res += vec2(hihat(hihatTime2));
-
-    float arpNote = chord( floor( 2.5 * arpDice ) );
-    arpNote += 3.2 * floor( 8.0 * arpDice );
-    res += sidechain * vec2 (arp( arpNote, arpTime )) / 3.;
-  }
-
-  return res;
+  return out2;
 }`;
 
+// =============================================================================
+// DEMO: Minimal Techno - 125 BPM recommended
+// =============================================================================
+export const DEMO_SOUND_SHADER = `// Utility functions
+float timeToBeat(float time) {
+  return time / 60.0 * u_bpm;
+}
+
+float beatToTime(float beat) {
+  return beat / u_bpm * 60.0;
+}
+
+float sine(float phase) {
+  return sin(phase * 6.28318530718);
+}
+
+float saw(float phase) {
+  return 2.0 * fract(phase) - 1.0;
+}
+
+float noise(float n) {
+  return fract(sin(n) * 43758.5453);
+}
+
+// Minimal kick - deep and clean
+float kick(float time) {
+  float amp = exp(-4.0 * time);
+  float pitch = 50.0 - 30.0 * exp(-60.0 * time);
+  return amp * sine(pitch * time);
+}
+
+// Closed hi-hat - tight
+float hihat(float time) {
+  float amp = exp(-80.0 * time);
+  return amp * (noise(time * 20000.0) * 2.0 - 1.0);
+}
+
+// Rim shot / click
+float rim(float time) {
+  float click = exp(-200.0 * time) * sine(1200.0 * time);
+  float body = exp(-80.0 * time) * sine(400.0 * time);
+  return click * 0.6 + body * 0.4;
+}
+
+// Filtered saw bass with cutoff modulation
+float bass(float time, float freq, float cutoff) {
+  float osc = saw(freq * time);
+  // Simple lowpass approximation
+  float filtered = osc * cutoff;
+  return filtered;
+}
+
+// Percussive blip
+float blip(float time, float freq) {
+  float amp = exp(-30.0 * time);
+  return amp * sine(freq * time);
+}
+
+vec2 mainSound(float time) {
+  vec2 out2 = vec2(0.0);
+
+  float beat = timeToBeat(time);
+  float bar = floor(beat / 4.0);
+  float beatInBar = mod(beat, 4.0);
+
+  // Kick: four on the floor
+  float kickTime = beatToTime(mod(beat, 1.0));
+  out2 += vec2(kick(kickTime)) * 0.8;
+
+  // Sidechain envelope
+  float sidechain = smoothstep(0.0, 0.3, kickTime);
+
+  // Hi-hat: offbeat 8ths with subtle variation
+  float hatTime = beatToTime(mod(beat + 0.5, 1.0));
+  float hatVel = 0.2 + 0.1 * sine(beat * 0.5);
+  out2 += vec2(hihat(hatTime)) * hatVel * sidechain;
+
+  // Rim: sparse pattern, every 2 bars with variation
+  float rimPattern = mod(bar, 2.0);
+  if (rimPattern < 1.0 && (beatInBar == 1.5 || beatInBar == 3.0)) {
+    float rimTime = beatToTime(mod(beat, 0.5));
+    out2 += vec2(rim(rimTime)) * 0.3 * sidechain;
+  }
+
+  // Bass: 2 bar loop, filter opens slowly over 8 bars
+  float bassTime = beatToTime(mod(beat, 0.5));
+  float bassFreq = 55.0; // A1
+  float filterMod = 0.3 + 0.4 * (mod(bar, 8.0) / 8.0);
+  filterMod *= sidechain;
+  float bassEnv = exp(-8.0 * bassTime);
+  out2 += vec2(bass(time, bassFreq, filterMod)) * bassEnv * 0.4;
+
+  // Subtle variation: extra 16th note bass hits
+  if (mod(bar, 4.0) >= 2.0) {
+    float bassTime2 = beatToTime(mod(beat + 0.25, 0.5));
+    float bassEnv2 = exp(-12.0 * bassTime2);
+    out2 += vec2(bass(time, bassFreq * 2.0, filterMod * 0.5)) * bassEnv2 * 0.15;
+  }
+
+  // Blip melody: appears every 4 bars, simple pattern
+  if (mod(bar, 4.0) >= 2.0) {
+    float blipBeat = mod(beat, 2.0);
+    float blipStep = floor(blipBeat * 2.0);
+    float blipTime = beatToTime(mod(blipBeat, 0.5));
+
+    // Simple 4-note pattern
+    float blipFreq = blipStep == 0.0 ? 440.0 :
+                     blipStep == 1.0 ? 392.0 :
+                     blipStep == 2.0 ? 349.2 : 330.0;
+
+    float blipAmp = 0.15 * sidechain;
+    // Stereo width
+    out2 += vec2(
+      blip(blipTime, blipFreq * 0.995),
+      blip(blipTime, blipFreq * 1.005)
+    ) * blipAmp;
+  }
+
+  return out2;
+}`;
+
+// =============================================================================
+// VISUAL: Default visual shader
+// =============================================================================
 export const DEFAULT_VISUAL_SHADER = `// Audio uniforms:
 // Smoothed: u_kick, u_hihat, u_bass (0-1)
 // Peak: u_kickPeak, u_hihatPeak, u_bassPeak (decay付き)

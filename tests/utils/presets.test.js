@@ -67,7 +67,7 @@ describe('presets', () => {
 
       expect(preset.id).toBe('default');
       expect(preset.name).toBe(PRESET.DEFAULT_NAME);
-      expect(preset.isDefault).toBe(true);
+      expect(preset.isBuiltIn).toBe(true);
       expect(preset.soundCode).toBeDefined();
       expect(preset.visualCode).toBeDefined();
     });
@@ -81,14 +81,15 @@ describe('presets', () => {
       expect(presets[0].id).toBe('default');
     });
 
-    it('should include user presets after default', () => {
+    it('should include user presets after built-in presets', () => {
       const userPreset = { id: '1', name: 'User Preset' };
       savePresets([userPreset]);
 
       const presets = getAllPresets();
 
-      expect(presets.length).toBe(2);
-      expect(presets[1]).toEqual(userPreset);
+      // 2 built-in (default, demo) + 1 user preset
+      expect(presets.length).toBe(3);
+      expect(presets[2]).toEqual(userPreset);
     });
   });
 
@@ -149,11 +150,11 @@ describe('presets', () => {
       expect(loadPresets()).toEqual([]);
     });
 
-    it('should fail when deleting default preset', () => {
+    it('should fail when deleting built-in preset', () => {
       const result = deletePreset('default');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Cannot delete default preset');
+      expect(result.error).toBe('Cannot delete built-in preset');
     });
 
     it('should fail when preset not found', () => {
@@ -169,7 +170,7 @@ describe('presets', () => {
       const preset = getPresetById('default');
 
       expect(preset.id).toBe('default');
-      expect(preset.isDefault).toBe(true);
+      expect(preset.isBuiltIn).toBe(true);
     });
 
     it('should return user preset by id', () => {
