@@ -33,6 +33,7 @@
         <div class="mobile-btn-separator"></div>
         <button id="mobileToggleEditor" class="mobile-btn" title="Toggle Editor (⌘T)">📝</button>
         <button id="mobileToggleMode" class="mobile-btn" title="Switch Mode (⌘E)">🔄</button>
+        <button id="mobilePresets" class="mobile-btn" title="Presets (Ctrl+G)">💾</button>
         <button id="mobileHelp" class="mobile-btn" title="Help">?</button>
     </div>
     
@@ -88,6 +89,7 @@
                         <li><kbd>Ctrl+R</kbd> Apply Compiled Shader</li>
                         <li><kbd>Ctrl+T</kbd> Toggle Editor Visibility</li>
                         <li><kbd>Ctrl+E</kbd> Switch Sound/Visual Mode</li>
+                        <li><kbd>Ctrl+G</kbd> Open Presets</li>
                     </ul>
                 </div>
 
@@ -127,6 +129,23 @@
                         <li><code>float u_bass</code> - Mid-low frequency band (100-300 Hz) - bass range</li>
                     </ul>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preset Modal -->
+    <div class="modal-overlay" id="presetModal">
+        <div class="modal-content preset-modal-content">
+            <div class="modal-header">
+                <h2>Presets</h2>
+                <button class="modal-close" id="closePreset">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="preset-actions-bar">
+                    <button id="presetSaveBtn" class="preset-action-btn">Save Current</button>
+                    <button id="presetImportBtn" class="preset-action-btn">Import</button>
+                </div>
+                <div class="preset-list" id="presetList"></div>
             </div>
         </div>
     </div>

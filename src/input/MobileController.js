@@ -14,6 +14,7 @@ import { EVENTS } from '../utils/consts.js';
  * @param {import('../state/AudioSettings.js').AudioSettings} deps.audioSettings
  * @param {import('../audio/AudioEngine.js').AudioEngine} deps.audioEngine
  * @param {import('../state/EventBus.js').EventBus} deps.eventBus
+ * @param {import('../ui/PresetModal.js')} deps.presetModal
  */
 export function createMobileController({
   playbackController,
@@ -23,6 +24,7 @@ export function createMobileController({
   audioSettings,
   audioEngine,
   eventBus,
+  presetModal,
 }) {
   const cleanups = [];
   let isCompiled = false;
@@ -98,6 +100,11 @@ export function createMobileController({
     bindClick('mobileHelp', (e) => {
       e.preventDefault();
       uiController.showHelpModal();
+    });
+
+    bindClick('mobilePresets', (e) => {
+      e.preventDefault();
+      presetModal.show();
     });
 
     // Sliders

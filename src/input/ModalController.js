@@ -1,13 +1,14 @@
 /**
  * ModalController factory function
- * Manages help modal, slider popups, and document click-to-dismiss behavior
+ * Manages help modal, preset modal, slider popups, and document click-to-dismiss behavior
  */
 
 /**
  * @param {Object} deps
  * @param {import('../controllers/UIController.js')} deps.uiController
+ * @param {import('../ui/PresetModal.js')} deps.presetModal
  */
-export function createModalController({ uiController }) {
+export function createModalController({ uiController, presetModal }) {
   const cleanups = [];
 
   function init() {
@@ -42,6 +43,9 @@ export function createModalController({ uiController }) {
         !e.target.closest('#mobileHelp')
       ) {
         uiController.hideHelpModal();
+      }
+      if (!e.target.closest('.modal-content') && !e.target.closest('#mobilePresets')) {
+        presetModal.hide();
       }
     };
 
