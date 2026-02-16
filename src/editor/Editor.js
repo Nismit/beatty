@@ -60,6 +60,21 @@ export class Editor {
   }
 
   /**
+   * Get both sound and visual codes
+   * Saves current editor content before returning
+   * @returns {{ soundCode: string, visualCode: string }}
+   */
+  getAllCodes() {
+    if (this.#editorView) {
+      this.#saveCurrentCode();
+    }
+    return {
+      soundCode: this.#soundCode,
+      visualCode: this.#visualCode,
+    };
+  }
+
+  /**
    * Set code for a specific mode
    * @param {'sound' | 'visual'} mode
    * @param {string} code

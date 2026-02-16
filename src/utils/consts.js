@@ -65,6 +65,13 @@ export const STORAGE_KEYS = {
   SOUND_SHADER: 'beatty_sound_shader',
   VISUAL_SHADER: 'beatty_visual_shader',
   SETTINGS: 'beatty_settings',
+  PRESETS: 'beatty_presets',
+};
+
+export const PRESET = {
+  MAX_COUNT: 20,
+  DEFAULT_NAME: 'Default',
+  STORAGE_VERSION: 1,
 };
 
 export const EVENTS = {
@@ -92,4 +99,10 @@ export const EVENTS = {
 
   // UI
   STATUS_UPDATE: 'ui:statusUpdate',
+
+  // Presets
+  PRESET_SAVED: 'preset:saved',
+  PRESET_LOADED: 'preset:loaded',
+  PRESET_DELETED: 'preset:deleted',
+  PRESET_IMPORTED: 'preset:imported',
 };

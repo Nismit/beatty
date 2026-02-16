@@ -7,6 +7,7 @@ import { AudioAnalyzer } from './audio/AudioAnalyzer.js';
 import { AudioEngine } from './audio/AudioEngine.js';
 import { createAudioScheduler } from './audio/AudioScheduler.js';
 import { createPlaybackController } from './controllers/PlaybackController.js';
+import { createPresetController } from './controllers/PresetController.js';
 import { createShaderController } from './controllers/ShaderController.js';
 import { createUIController } from './controllers/UIController.js';
 import { Editor } from './editor/Editor.js';
@@ -19,6 +20,7 @@ import { createModalController } from './input/ModalController.js';
 import { createAudioSettings } from './state/AudioSettings.js';
 import { createEventBus } from './state/EventBus.js';
 import { createPlaybackState } from './state/PlaybackState.js';
+import { createPresetModal } from './ui/PresetModal.js';
 import { createStatusDisplay } from './ui/StatusDisplay.js';
 import { EVENTS, UI } from './utils/consts.js';
 import { createErrorHandler } from './utils/errors.js';
@@ -87,12 +89,26 @@ async function init() {
     eventBus,
   });
 
+  // Layer 3: Preset management
+  const presetController = createPresetController({
+    editor,
+    initShaders: shaderController.initShaders,
+    eventBus,
+  });
+
+  const presetModal = createPresetModal({
+    eventBus,
+    editor,
+    onLoad: (presetId) => presetController.loadPreset(presetId),
+  });
+
   // Layer 3: Input
   const keyboardController = createKeyboardController({
     playbackController,
     shaderController,
     uiController,
     editor,
+    presetModal,
   });
 
   const mobileController = createMobileController({
@@ -103,9 +119,10 @@ async function init() {
     audioSettings,
     audioEngine,
     eventBus,
+    presetModal,
   });
 
-  const modalController = createModalController({ uiController });
+  const modalController = createModalController({ uiController, presetModal });
 
   // Volume sync via EventBus
   eventBus.on(EVENTS.VOLUME_CHANGED, ({ new: newVolume }) => {
@@ -136,6 +153,7 @@ async function init() {
     keyboardController.init();
     mobileController.init();
     modalController.init();
+    presetModal.init();
 
     // Resize handling
     window.addEventListener('resize', () => playbackController.handleResize());
@@ -152,6 +170,8 @@ async function init() {
     keyboardController.destroy();
     mobileController.destroy();
     modalController.destroy();
+    presetModal.destroy();
+    presetController.destroy();
     statusDisplay.destroy();
     uiController.destroy();
     shaderController.destroy();

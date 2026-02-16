@@ -9,16 +9,19 @@
  * @param {import('../controllers/ShaderController.js')} deps.shaderController
  * @param {import('../controllers/UIController.js')} deps.uiController
  * @param {import('../editor/Editor.js').Editor} deps.editor
+ * @param {import('../ui/PresetModal.js')} deps.presetModal
  */
 export function createKeyboardController({
   playbackController,
   shaderController,
   uiController,
   editor,
+  presetModal,
 }) {
   function handleKeydown(e) {
     if (e.key === 'Escape') {
       uiController.hideHelpModal();
+      presetModal.hide();
       return;
     }
 
@@ -47,6 +50,10 @@ export function createKeyboardController({
         case 'i':
           e.preventDefault();
           playbackController.resetPlayback();
+          break;
+        case 'g':
+          e.preventDefault();
+          presetModal.show();
           break;
       }
     }
