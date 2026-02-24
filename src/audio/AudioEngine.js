@@ -54,8 +54,11 @@ export class AudioEngine {
       this.#workletNode = new AudioWorkletNode(this.#audioContext, 'glsl-audio-processor');
 
       this.#workletNode.port.onmessage = (event) => {
-        if (event.data.type === 'requestNextBuffer') {
+        const { type, count } = event.data;
+        if (type === 'requestNextBuffer') {
           this.#handleNextBufferRequest();
+        } else if (type === 'bufferUnderrun') {
+          console.warn(`[AudioEngine] Buffer underrun detected (count: ${count})`);
         }
       };
 

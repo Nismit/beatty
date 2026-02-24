@@ -8,8 +8,10 @@ class GLSLAudioProcessor extends AudioWorkletProcessor {
     this.currentBuffer = null;
     this.nextBuffer = null;
     this.nextBufferReady = false;
+    this.nextBufferRequested = false;
     this.readPos = 0;
     this.volume = 0.3;
+    this.underrunCount = 0;
 
     this.port.onmessage = (event) => {
       const { type, data } = event.data;
@@ -18,10 +20,13 @@ class GLSLAudioProcessor extends AudioWorkletProcessor {
         case 'setCurrentBuffer':
           this.currentBuffer = data;
           this.readPos = 0;
+          this.nextBufferRequested = false;
+          this.underrunCount = 0;
           break;
         case 'setNextBuffer':
           this.nextBuffer = data;
           this.nextBufferReady = true;
+          this.nextBufferRequested = false;
           break;
         case 'setVolume':
           this.volume = data;
@@ -46,15 +51,38 @@ class GLSLAudioProcessor extends AudioWorkletProcessor {
       return true;
     }
 
+    // Calculate samples count (stereo: buffer.length / 2)
+    const totalSamples = this.currentBuffer.length / 2;
+    const halfwayPoint = totalSamples / 2;
+
     for (let i = 0; i < leftChannel.length; i++) {
-      if (this.readPos * 2 + 1 >= this.currentBuffer.length) {
+      // Request next buffer at 50% point (early prefetch)
+      if (
+        !this.nextBufferReady &&
+        !this.nextBufferRequested &&
+        this.readPos > halfwayPoint
+      ) {
+        this.nextBufferRequested = true;
+        this.port.postMessage({ type: 'requestNextBuffer' });
+      }
+
+      // Check if we need to swap buffers
+      if (this.readPos >= totalSamples) {
         if (this.nextBufferReady) {
           this.currentBuffer = this.nextBuffer;
           this.nextBuffer = null;
           this.nextBufferReady = false;
+          this.nextBufferRequested = false;
           this.readPos = 0;
-          this.port.postMessage({ type: 'requestNextBuffer' });
         } else {
+          // Buffer underrun - next buffer not ready
+          this.underrunCount++;
+          if (this.underrunCount === 1 || this.underrunCount % 1000 === 0) {
+            this.port.postMessage({
+              type: 'bufferUnderrun',
+              count: this.underrunCount,
+            });
+          }
           leftChannel[i] = 0.0;
           rightChannel[i] = 0.0;
           continue;
