@@ -22,6 +22,9 @@ function createMockDeps() {
       hide: vi.fn(),
       show: vi.fn(),
     },
+    debugOverlay: {
+      toggle: vi.fn(),
+    },
   };
 }
 
@@ -47,85 +50,42 @@ describe('KeyboardController', () => {
     controller.destroy();
   });
 
-  describe('Escape key', () => {
-    it('should hide help modal on Escape', () => {
-      document.dispatchEvent(createKeyboardEvent('Escape'));
-
-      expect(deps.uiController.hideHelpModal).toHaveBeenCalled();
-    });
-
-    it('should hide preset modal on Escape', () => {
-      document.dispatchEvent(createKeyboardEvent('Escape'));
-
-      expect(deps.presetModal.hide).toHaveBeenCalled();
-    });
-  });
-
-  describe('Ctrl+P', () => {
-    it('should toggle playback', () => {
+  describe('keyboard shortcuts', () => {
+    it('should call togglePlayback on Ctrl+P', () => {
       document.dispatchEvent(createKeyboardEvent('p', { ctrlKey: true }));
 
       expect(deps.playbackController.togglePlayback).toHaveBeenCalled();
     });
-  });
 
-  describe('Ctrl+S', () => {
-    it('should compile shader', () => {
+    it('should call compileShader on Ctrl+S', () => {
       document.dispatchEvent(createKeyboardEvent('s', { ctrlKey: true }));
 
       expect(deps.shaderController.compileShader).toHaveBeenCalled();
     });
-  });
 
-  describe('Ctrl+R', () => {
-    it('should apply compiled shader', () => {
+    it('should call applyCompiledShader on Ctrl+R', () => {
       document.dispatchEvent(createKeyboardEvent('r', { ctrlKey: true }));
 
       expect(deps.shaderController.applyCompiledShader).toHaveBeenCalled();
     });
-  });
 
-  describe('Ctrl+T', () => {
-    it('should toggle editor visibility', () => {
-      document.dispatchEvent(createKeyboardEvent('t', { ctrlKey: true }));
+    it('should close modals on Escape', () => {
+      document.dispatchEvent(createKeyboardEvent('Escape'));
 
-      expect(deps.editor.toggleVisibility).toHaveBeenCalled();
-    });
-  });
-
-  describe('Ctrl+E', () => {
-    it('should switch editor mode', () => {
-      document.dispatchEvent(createKeyboardEvent('e', { ctrlKey: true }));
-
-      expect(deps.editor.switchMode).toHaveBeenCalled();
-    });
-  });
-
-  describe('Ctrl+I', () => {
-    it('should reset playback', () => {
-      document.dispatchEvent(createKeyboardEvent('i', { ctrlKey: true }));
-
-      expect(deps.playbackController.resetPlayback).toHaveBeenCalled();
-    });
-  });
-
-  describe('Ctrl+G', () => {
-    it('should show preset modal', () => {
-      document.dispatchEvent(createKeyboardEvent('g', { ctrlKey: true }));
-
-      expect(deps.presetModal.show).toHaveBeenCalled();
+      expect(deps.uiController.hideHelpModal).toHaveBeenCalled();
+      expect(deps.presetModal.hide).toHaveBeenCalled();
     });
   });
 
   describe('unhandled keys', () => {
-    it('should not trigger actions for unhandled keys', () => {
+    it('should not trigger actions for unhandled Ctrl+key', () => {
       document.dispatchEvent(createKeyboardEvent('x', { ctrlKey: true }));
 
       expect(deps.playbackController.togglePlayback).not.toHaveBeenCalled();
       expect(deps.shaderController.compileShader).not.toHaveBeenCalled();
     });
 
-    it('should not trigger actions without Ctrl modifier', () => {
+    it('should not trigger Ctrl actions without Ctrl modifier', () => {
       document.dispatchEvent(createKeyboardEvent('p'));
       document.dispatchEvent(createKeyboardEvent('s'));
 

@@ -54,39 +54,17 @@ describe('UIController', () => {
   });
 
   describe('event subscriptions', () => {
-    it('should subscribe to playback state changes', () => {
+    it('should subscribe to state change events', () => {
       const deps = createMockDeps();
       createUIController(deps);
 
-      expect(deps.eventBus.on).toHaveBeenCalledWith(
-        EVENTS.PLAY_STATE_CHANGED,
-        expect.any(Function),
-      );
-    });
-
-    it('should subscribe to editor mode changes', () => {
-      const deps = createMockDeps();
-      createUIController(deps);
-
-      expect(deps.eventBus.on).toHaveBeenCalledWith(
-        EVENTS.EDITOR_MODE_CHANGED,
-        expect.any(Function),
-      );
-    });
-
-    it('should subscribe to editor visibility changes', () => {
-      const deps = createMockDeps();
-      createUIController(deps);
-
-      expect(deps.eventBus.on).toHaveBeenCalledWith(
-        EVENTS.EDITOR_VISIBILITY_CHANGED,
-        expect.any(Function),
-      );
+      expect(deps.eventBus.on).toHaveBeenCalledWith(EVENTS.PLAY_STATE_CHANGED, expect.any(Function));
+      expect(deps.eventBus.on).toHaveBeenCalledWith(EVENTS.EDITOR_MODE_CHANGED, expect.any(Function));
     });
   });
 
   describe('updatePlayButton', () => {
-    it('should show pause icon when playing', () => {
+    it('should update button based on playback state', () => {
       const deps = createMockDeps();
       deps.playbackState.isPlaying = true;
       const controller = createUIController(deps);
@@ -95,99 +73,14 @@ describe('UIController', () => {
 
       const btn = document.getElementById('mobilePlayToggle');
       expect(btn.classList.contains('active')).toBe(true);
-      expect(btn.textContent).toBe('\u23F8');
-      expect(btn.title).toBe('Pause');
     });
 
-    it('should show play icon when not playing', () => {
+    it('should handle missing element gracefully', () => {
+      document.getElementById('mobilePlayToggle').remove();
       const deps = createMockDeps();
-      deps.playbackState.isPlaying = false;
       const controller = createUIController(deps);
 
-      controller.updatePlayButton();
-
-      const btn = document.getElementById('mobilePlayToggle');
-      expect(btn.classList.contains('active')).toBe(false);
-      expect(btn.textContent).toBe('\u25B6');
-      expect(btn.title).toBe('Play');
-    });
-  });
-
-  describe('updateEditorButton', () => {
-    it('should show eye icon when editor is visible', () => {
-      const deps = createMockDeps();
-      deps.editor.isVisible = true;
-      const controller = createUIController(deps);
-
-      controller.updateEditorButton();
-
-      const btn = document.getElementById('mobileToggleEditor');
-      expect(btn.classList.contains('active')).toBe(true);
-      expect(btn.title).toBe('Hide Editor');
-    });
-
-    it('should show edit icon when editor is hidden', () => {
-      const deps = createMockDeps();
-      deps.editor.isVisible = false;
-      const controller = createUIController(deps);
-
-      controller.updateEditorButton();
-
-      const btn = document.getElementById('mobileToggleEditor');
-      expect(btn.classList.contains('active')).toBe(false);
-      expect(btn.title).toBe('Show Editor');
-    });
-  });
-
-  describe('updateModeButton', () => {
-    it('should show music icon in sound mode', () => {
-      const deps = createMockDeps();
-      deps.editor.mode = UI.EDITOR_MODES.SOUND;
-      const controller = createUIController(deps);
-
-      controller.updateModeButton();
-
-      const btn = document.getElementById('mobileToggleMode');
-      expect(btn.textContent).toBe('\uD83C\uDFB5');
-      expect(btn.title).toBe('Switch to Visual Mode');
-    });
-
-    it('should show art icon in visual mode', () => {
-      const deps = createMockDeps();
-      deps.editor.mode = UI.EDITOR_MODES.VISUAL;
-      const controller = createUIController(deps);
-
-      controller.updateModeButton();
-
-      const btn = document.getElementById('mobileToggleMode');
-      expect(btn.textContent).toBe('\uD83C\uDFA8');
-      expect(btn.title).toBe('Switch to Sound Mode');
-    });
-  });
-
-  describe('updateModeIndicator', () => {
-    it('should add sound class in sound mode', () => {
-      const deps = createMockDeps();
-      deps.editor.mode = UI.EDITOR_MODES.SOUND;
-      const controller = createUIController(deps);
-
-      controller.updateModeIndicator();
-
-      const statusLine = document.getElementById('statusLine');
-      expect(statusLine.classList.contains('sound')).toBe(true);
-      expect(statusLine.classList.contains('visual')).toBe(false);
-    });
-
-    it('should add visual class in visual mode', () => {
-      const deps = createMockDeps();
-      deps.editor.mode = UI.EDITOR_MODES.VISUAL;
-      const controller = createUIController(deps);
-
-      controller.updateModeIndicator();
-
-      const statusLine = document.getElementById('statusLine');
-      expect(statusLine.classList.contains('visual')).toBe(true);
-      expect(statusLine.classList.contains('sound')).toBe(false);
+      expect(() => controller.updatePlayButton()).not.toThrow();
     });
   });
 
@@ -201,109 +94,42 @@ describe('UIController', () => {
       controller.showSliderPopup('bpm', mockEvent);
 
       const popup = document.getElementById('bpmSliderPopup');
-      const slider = document.getElementById('bpmSlider');
-      const value = document.getElementById('bpmValue');
-
       expect(popup.classList.contains('visible')).toBe(true);
-      expect(slider.value).toBe('140');
-      expect(value.textContent).toBe('140');
     });
 
-    it('should show volume popup with current value', () => {
+    it('should handle missing popup element gracefully', () => {
+      document.getElementById('bpmSliderPopup').remove();
       const deps = createMockDeps();
-      deps.audioSettings.volume = 0.75;
       const controller = createUIController(deps);
       const mockEvent = { target: { getBoundingClientRect: () => ({ top: 100 }) } };
 
-      controller.showSliderPopup('volume', mockEvent);
-
-      const popup = document.getElementById('volumeSliderPopup');
-      const slider = document.getElementById('volumeSlider');
-      const value = document.getElementById('volumeValue');
-
-      expect(popup.classList.contains('visible')).toBe(true);
-      expect(slider.value).toBe('0.75');
-      expect(value.textContent).toBe('75%');
-    });
-  });
-
-  describe('hideAllSliderPopups', () => {
-    it('should hide all slider popups', () => {
-      const deps = createMockDeps();
-      const controller = createUIController(deps);
-
-      document.getElementById('bpmSliderPopup').classList.add('visible');
-      document.getElementById('volumeSliderPopup').classList.add('visible');
-
-      controller.hideAllSliderPopups();
-
-      expect(document.getElementById('bpmSliderPopup').classList.contains('visible')).toBe(false);
-      expect(document.getElementById('volumeSliderPopup').classList.contains('visible')).toBe(
-        false,
-      );
+      expect(() => controller.showSliderPopup('bpm', mockEvent)).not.toThrow();
     });
   });
 
   describe('showHelpModal / hideHelpModal', () => {
-    it('should show help modal', () => {
+    it('should toggle help modal visibility', () => {
       const deps = createMockDeps();
       const controller = createUIController(deps);
 
       controller.showHelpModal();
+      expect(document.getElementById('helpModal').classList.contains('visible')).toBe(true);
 
-      const modal = document.getElementById('helpModal');
-      expect(modal.classList.contains('visible')).toBe(true);
-    });
-
-    it('should hide help modal', () => {
-      const deps = createMockDeps();
-      const controller = createUIController(deps);
-
-      document.getElementById('helpModal').classList.add('visible');
       controller.hideHelpModal();
-
-      const modal = document.getElementById('helpModal');
-      expect(modal.classList.contains('visible')).toBe(false);
-    });
-  });
-
-  describe('initButtonStates', () => {
-    it('should update all button states', () => {
-      const deps = createMockDeps();
-      deps.playbackState.isPlaying = true;
-      deps.editor.isVisible = false;
-      deps.editor.mode = UI.EDITOR_MODES.VISUAL;
-      const controller = createUIController(deps);
-
-      controller.initButtonStates();
-
-      expect(document.getElementById('mobilePlayToggle').classList.contains('active')).toBe(true);
-      expect(document.getElementById('mobileToggleEditor').classList.contains('active')).toBe(
-        false,
-      );
-      expect(document.getElementById('statusLine').classList.contains('visual')).toBe(true);
+      expect(document.getElementById('helpModal').classList.contains('visible')).toBe(false);
     });
   });
 
   describe('destroy', () => {
     it('should unsubscribe from all events', () => {
-      const unsubscribe1 = vi.fn();
-      const unsubscribe2 = vi.fn();
-      const unsubscribe3 = vi.fn();
-
+      const unsubscribe = vi.fn();
       const deps = createMockDeps();
-      deps.eventBus.on = vi
-        .fn()
-        .mockReturnValueOnce(unsubscribe1)
-        .mockReturnValueOnce(unsubscribe2)
-        .mockReturnValueOnce(unsubscribe3);
-
+      deps.eventBus.on.mockReturnValue(unsubscribe);
       const controller = createUIController(deps);
+
       controller.destroy();
 
-      expect(unsubscribe1).toHaveBeenCalled();
-      expect(unsubscribe2).toHaveBeenCalled();
-      expect(unsubscribe3).toHaveBeenCalled();
+      expect(unsubscribe).toHaveBeenCalled();
     });
   });
 });

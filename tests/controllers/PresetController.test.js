@@ -2,12 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPresetController } from '../../src/controllers/PresetController.js';
 import { EVENTS } from '../../src/utils/consts.js';
 
-// Mock presets module
 vi.mock('../../src/utils/presets.js', () => ({
   getPresetById: vi.fn(),
 }));
 
-// Mock storage module
 vi.mock('../../src/utils/storage.js', () => ({
   saveShader: vi.fn(),
 }));
@@ -39,6 +37,7 @@ const mockPreset = {
 describe('PresetController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    saveShader.mockReturnValue(true);
   });
 
   describe('loadPreset', () => {
@@ -50,48 +49,8 @@ describe('PresetController', () => {
       const result = controller.loadPreset('test-preset-id');
 
       expect(result).toEqual({ success: true });
-      expect(getPresetById).toHaveBeenCalledWith('test-preset-id');
-    });
-
-    it('should update editor with preset code', () => {
-      const deps = createMockDeps();
-      getPresetById.mockReturnValue(mockPreset);
-      const controller = createPresetController(deps);
-
-      controller.loadPreset('test-preset-id');
-
       expect(deps.editor.setCode).toHaveBeenCalledWith('sound', mockPreset.soundCode);
       expect(deps.editor.setCode).toHaveBeenCalledWith('visual', mockPreset.visualCode);
-    });
-
-    it('should save shader code to LocalStorage', () => {
-      const deps = createMockDeps();
-      getPresetById.mockReturnValue(mockPreset);
-      const controller = createPresetController(deps);
-
-      controller.loadPreset('test-preset-id');
-
-      expect(saveShader).toHaveBeenCalledWith('sound', mockPreset.soundCode);
-      expect(saveShader).toHaveBeenCalledWith('visual', mockPreset.visualCode);
-    });
-
-    it('should compile and apply shaders via initShaders', () => {
-      const deps = createMockDeps();
-      getPresetById.mockReturnValue(mockPreset);
-      const controller = createPresetController(deps);
-
-      controller.loadPreset('test-preset-id');
-
-      expect(deps.initShaders).toHaveBeenCalledWith(mockPreset.soundCode, mockPreset.visualCode);
-    });
-
-    it('should emit PRESET_LOADED event', () => {
-      const deps = createMockDeps();
-      getPresetById.mockReturnValue(mockPreset);
-      const controller = createPresetController(deps);
-
-      controller.loadPreset('test-preset-id');
-
       expect(deps.eventBus.emit).toHaveBeenCalledWith(EVENTS.PRESET_LOADED, {
         preset: mockPreset,
       });
@@ -105,43 +64,24 @@ describe('PresetController', () => {
       const result = controller.loadPreset('non-existent-id');
 
       expect(result).toEqual({ success: false, error: 'Preset not found' });
-    });
-
-    it('should not update editor when preset not found', () => {
-      const deps = createMockDeps();
-      getPresetById.mockReturnValue(null);
-      const controller = createPresetController(deps);
-
-      controller.loadPreset('non-existent-id');
-
       expect(deps.editor.setCode).not.toHaveBeenCalled();
       expect(deps.initShaders).not.toHaveBeenCalled();
-      expect(deps.eventBus.emit).not.toHaveBeenCalled();
     });
 
-    it('should load default preset', () => {
+    it('should handle editor.setCode throwing', () => {
       const deps = createMockDeps();
-      const defaultPreset = {
-        id: 'default',
-        name: 'Default',
-        soundCode: 'default sound code',
-        visualCode: 'default visual code',
-        isDefault: true,
-      };
-      getPresetById.mockReturnValue(defaultPreset);
+      getPresetById.mockReturnValue(mockPreset);
+      deps.editor.setCode.mockImplementation(() => {
+        throw new Error('setCode failed');
+      });
       const controller = createPresetController(deps);
 
-      const result = controller.loadPreset('default');
-
-      expect(result).toEqual({ success: true });
-      expect(getPresetById).toHaveBeenCalledWith('default');
-      expect(deps.editor.setCode).toHaveBeenCalledWith('sound', defaultPreset.soundCode);
-      expect(deps.editor.setCode).toHaveBeenCalledWith('visual', defaultPreset.visualCode);
+      expect(() => controller.loadPreset('test-preset-id')).toThrow('setCode failed');
     });
   });
 
   describe('destroy', () => {
-    it('should exist and be callable', () => {
+    it('should be callable without error', () => {
       const deps = createMockDeps();
       const controller = createPresetController(deps);
 

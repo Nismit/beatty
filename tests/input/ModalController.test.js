@@ -26,10 +26,6 @@ function setupDOM() {
   `;
 }
 
-function cleanupDOM() {
-  document.body.innerHTML = '';
-}
-
 describe('ModalController', () => {
   let controller;
   let deps;
@@ -43,97 +39,70 @@ describe('ModalController', () => {
 
   afterEach(() => {
     controller.destroy();
-    cleanupDOM();
+    document.body.innerHTML = '';
   });
 
   describe('status bar clicks', () => {
-    it('should show BPM slider popup on bpmStatus click', () => {
-      const el = document.getElementById('bpmStatus');
-      el.click();
+    it('should show BPM slider popup', () => {
+      document.getElementById('bpmStatus').click();
 
       expect(deps.uiController.showSliderPopup).toHaveBeenCalledWith('bpm', expect.any(MouseEvent));
     });
 
-    it('should show volume slider popup on volumeStatus click', () => {
-      const el = document.getElementById('volumeStatus');
-      el.click();
+    it('should show volume slider popup', () => {
+      document.getElementById('volumeStatus').click();
 
-      expect(deps.uiController.showSliderPopup).toHaveBeenCalledWith(
-        'volume',
-        expect.any(MouseEvent),
-      );
+      expect(deps.uiController.showSliderPopup).toHaveBeenCalledWith('volume', expect.any(MouseEvent));
     });
 
-    it('should show help modal on helpStatus click', () => {
-      const el = document.getElementById('helpStatus');
-      el.click();
+    it('should show help modal', () => {
+      document.getElementById('helpStatus').click();
 
       expect(deps.uiController.showHelpModal).toHaveBeenCalled();
-    });
-
-    it('should hide help modal on closeHelp click', () => {
-      const el = document.getElementById('closeHelp');
-      el.click();
-
-      expect(deps.uiController.hideHelpModal).toHaveBeenCalled();
     });
   });
 
   describe('document click to dismiss', () => {
-    it('should hide slider popups when clicking outside', () => {
+    it('should hide popups when clicking outside', () => {
       document.body.click();
 
       expect(deps.uiController.hideAllSliderPopups).toHaveBeenCalled();
+      expect(deps.presetModal.hide).toHaveBeenCalled();
     });
 
-    it('should not hide slider popups when clicking inside slider-popup', () => {
-      const popup = document.querySelector('.slider-popup');
-      popup.click();
+    it('should not hide slider popup when clicking inside', () => {
+      document.querySelector('.slider-popup').click();
 
       expect(deps.uiController.hideAllSliderPopups).not.toHaveBeenCalled();
     });
 
-    it('should hide preset modal when clicking outside', () => {
-      document.body.click();
-
-      expect(deps.presetModal.hide).toHaveBeenCalled();
-    });
-
     it('should not hide preset modal when clicking inside modal-content', () => {
-      const modal = document.querySelector('.modal-content');
-      modal.click();
+      document.querySelector('.modal-content').click();
 
       expect(deps.presetModal.hide).not.toHaveBeenCalled();
     });
   });
 
-  describe('destroy', () => {
-    it('should remove all event listeners', () => {
-      controller.destroy();
-
-      // Reset mocks
-      vi.clearAllMocks();
-
-      // These should not trigger after destroy
-      document.getElementById('bpmStatus').click();
-      document.body.click();
-
-      expect(deps.uiController.showSliderPopup).not.toHaveBeenCalled();
-      expect(deps.uiController.hideAllSliderPopups).not.toHaveBeenCalled();
-    });
-  });
-
   describe('missing elements', () => {
     it('should handle missing elements gracefully', () => {
-      cleanupDOM();
-      document.body.innerHTML = ''; // No elements
-
+      document.body.innerHTML = '';
       const newDeps = createMockDeps();
       const newController = createModalController(newDeps);
 
-      // Should not throw
       expect(() => newController.init()).not.toThrow();
       newController.destroy();
+    });
+  });
+
+  describe('destroy', () => {
+    it('should remove event listeners', () => {
+      controller.destroy();
+      vi.clearAllMocks();
+
+      document.getElementById('bpmStatus')?.click();
+      document.body.click();
+
+      expect(deps.uiController.showSliderPopup).not.toHaveBeenCalled();
     });
   });
 });

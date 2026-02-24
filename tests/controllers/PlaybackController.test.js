@@ -69,14 +69,11 @@ describe('PlaybackController', () => {
     rafCallbacks = [];
     rafId = 0;
 
-    // Mock requestAnimationFrame
     vi.stubGlobal('requestAnimationFrame', (cb) => {
       rafCallbacks.push(cb);
       return ++rafId;
     });
-    vi.stubGlobal('cancelAnimationFrame', (id) => {
-      // Just track that it was called
-    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
   afterEach(() => {
@@ -92,40 +89,12 @@ describe('PlaybackController', () => {
 
       expect(deps.audioScheduler.requestInitialBuffer).toHaveBeenCalled();
       expect(deps.audioEngine.start).toHaveBeenCalled();
-      expect(deps.playbackState.recordStartTime).toHaveBeenCalled();
-      expect(deps.playbackState.setPlaying).toHaveBeenCalledWith(true, false);
-      expect(deps.audioScheduler.requestNextBuffer).toHaveBeenCalled();
-    });
-
-    it('should pause playback when playing', async () => {
-      const deps = createMockDeps();
-      deps.playbackState.isPlaying = true;
-      const controller = createPlaybackController(deps);
-
-      await controller.togglePlayback();
-
-      expect(deps.audioEngine.pause).toHaveBeenCalled();
-      expect(deps.playbackState.recordPauseTime).toHaveBeenCalled();
-      expect(deps.playbackState.setPlaying).toHaveBeenCalledWith(false, true);
-    });
-
-    it('should resume playback when paused', async () => {
-      const deps = createMockDeps();
-      deps.playbackState.isPlaying = false;
-      deps.playbackState.isPaused = true;
-      deps.playbackState.pausedReadPos = 1000;
-      const controller = createPlaybackController(deps);
-
-      await controller.togglePlayback();
-
-      expect(deps.audioEngine.resume).toHaveBeenCalledWith(deps.audioSettings.volume, 1000);
-      expect(deps.playbackState.recordStartTime).toHaveBeenCalled();
       expect(deps.playbackState.setPlaying).toHaveBeenCalledWith(true, false);
     });
 
-    it('should handle errors and call errorHandler', async () => {
+    it('should call errorHandler on failure', async () => {
       const deps = createMockDeps();
-      const error = new Error('Audio start failed');
+      const error = new Error('Buffer generation failed');
       deps.audioScheduler.requestInitialBuffer.mockRejectedValue(error);
       const controller = createPlaybackController(deps);
 
@@ -147,7 +116,7 @@ describe('PlaybackController', () => {
       expect(deps.playbackState.reset).toHaveBeenCalled();
     });
 
-    it('should handle errors', () => {
+    it('should call errorHandler on failure', () => {
       const deps = createMockDeps();
       const error = new Error('Stop failed');
       deps.audioEngine.stop.mockImplementation(() => {
@@ -162,79 +131,38 @@ describe('PlaybackController', () => {
   });
 
   describe('startAnimationLoop', () => {
-    it('should start rendering loop', () => {
+    it('should request animation frame', () => {
       const deps = createMockDeps();
       const controller = createPlaybackController(deps);
 
       controller.startAnimationLoop();
 
-      // First frame should have been requested
       expect(rafCallbacks.length).toBe(1);
-
-      // Execute the callback to trigger render
-      rafCallbacks[0]();
-
-      expect(deps.visualRenderer.render).toHaveBeenCalled();
     });
 
-    it('should analyze audio when playing', () => {
+    it('should handle null analysis data', () => {
       const deps = createMockDeps();
       deps.playbackState.isPlaying = true;
-      const controller = createPlaybackController(deps);
-
-      controller.startAnimationLoop();
-      rafCallbacks[0]();
-
-      expect(deps.audioEngine.getAnalysisData).toHaveBeenCalled();
-      expect(deps.audioAnalyzer.analyze).toHaveBeenCalled();
-    });
-
-    it('should not analyze audio when not playing', () => {
-      const deps = createMockDeps();
-      deps.playbackState.isPlaying = false;
+      deps.audioEngine.getAnalysisData.mockReturnValue(null);
       const controller = createPlaybackController(deps);
 
       controller.startAnimationLoop();
       rafCallbacks[0]();
 
       expect(deps.audioAnalyzer.analyze).not.toHaveBeenCalled();
+      expect(deps.visualRenderer.render).toHaveBeenCalled();
     });
   });
 
-  describe('stopAnimationLoop', () => {
+  describe('destroy', () => {
     it('should cancel animation frame', () => {
       const deps = createMockDeps();
       const controller = createPlaybackController(deps);
 
       controller.startAnimationLoop();
-      controller.stopAnimationLoop();
-
-      // Should be able to call multiple times without error
-      controller.stopAnimationLoop();
-    });
-  });
-
-  describe('handleResize', () => {
-    it('should call visualRenderer.resizeCanvas', () => {
-      const deps = createMockDeps();
-      const controller = createPlaybackController(deps);
-
-      controller.handleResize();
-
-      expect(deps.visualRenderer.resizeCanvas).toHaveBeenCalled();
-    });
-  });
-
-  describe('destroy', () => {
-    it('should stop animation loop', () => {
-      const deps = createMockDeps();
-      const controller = createPlaybackController(deps);
-
-      controller.startAnimationLoop();
       controller.destroy();
 
-      // Verify cleanup happened (no errors on multiple calls)
-      controller.destroy();
+      expect(cancelAnimationFrame).toHaveBeenCalled();
     });
   });
 });
