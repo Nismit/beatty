@@ -318,6 +318,11 @@ body {
         display: flex;
     }
 
+    .editor-container {
+        padding: 0 8px 8px;
+        box-sizing: border-box;
+    }
+
     .status-line {
         font-size: 11px;
         padding: 0 8px;
