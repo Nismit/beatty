@@ -66,10 +66,72 @@ body {
     overflow: hidden;
 }
 
+.toolbar {
+    height: 24px;
+    background: #2a2a2a;
+    color: #f8f8f2;
+    font-family: monospace;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid #444;
+    flex-shrink: 0;
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toolbar-select {
+    background: #1a1a1a;
+    color: #f8f8f2;
+    border: 1px solid #555;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+}
+
+.toolbar-select:hover {
+    border-color: #777;
+}
+
+.toolbar-select:focus {
+    border-color: #4ecdc4;
+}
+
+.toolbar-btn {
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 2px;
+    transition: background-color 0.2s;
+    user-select: none;
+}
+
+.toolbar-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.toolbar-btn:active {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
 .editor-content {
     flex: 1;
     margin-bottom: 0;
-    height: calc(100% - 24px);
+    height: calc(100% - 48px);
     overflow: hidden;
     min-width: 0;
 }
@@ -334,7 +396,21 @@ body {
     }
 
     .editor-content {
-        height: calc(100dvh - 24px - env(safe-area-inset-bottom, 0));
+        height: calc(100dvh - 48px - env(safe-area-inset-bottom, 0));
+    }
+
+    .toolbar {
+        font-size: 11px;
+        padding: 0 8px;
+    }
+
+    .toolbar-right {
+        gap: 8px;
+    }
+
+    .toolbar-select {
+        font-size: 10px;
+        padding: 2px 4px;
     }
 
     .ͼ1 .cm-scroller {

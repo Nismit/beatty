@@ -23,6 +23,7 @@ import { createPlaybackState } from './state/PlaybackState.js';
 import { createDebugOverlay } from './ui/DebugOverlay.js';
 import { createPresetModal } from './ui/PresetModal.js';
 import { createStatusDisplay } from './ui/StatusDisplay.js';
+import { createToolbarController } from './ui/ToolbarController.js';
 import { EVENTS, UI } from './utils/consts.js';
 import { createErrorHandler } from './utils/errors.js';
 import { loadShader } from './utils/storage.js';
@@ -109,6 +110,13 @@ async function init() {
     onLoad: (presetId) => presetController.loadPreset(presetId),
   });
 
+  const toolbarController = createToolbarController({
+    editor,
+    presetController,
+    uiController,
+    eventBus,
+  });
+
   // Layer 3: Input
   const keyboardController = createKeyboardController({
     playbackController,
@@ -162,6 +170,7 @@ async function init() {
     mobileController.init();
     modalController.init();
     presetModal.init();
+    toolbarController.init();
     debugOverlay.init();
 
     // Resize handling
@@ -180,6 +189,7 @@ async function init() {
     mobileController.destroy();
     modalController.destroy();
     presetModal.destroy();
+    toolbarController.destroy();
     presetController.destroy();
     debugOverlay.destroy();
     statusDisplay.destroy();

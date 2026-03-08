@@ -92,6 +92,7 @@ export const EVENTS = {
   SHADER_COMPILE_SUCCESS: 'shader:compileSuccess',
   SHADER_COMPILE_ERROR: 'shader:compileError',
   SHADER_APPLIED: 'shader:applied',
+  SHADER_IMPORTED: 'shader:imported',
 
   // Editor
   EDITOR_MODE_CHANGED: 'editor:modeChanged',

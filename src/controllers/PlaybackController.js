@@ -50,8 +50,8 @@ export function createPlaybackController({
         playbackState.recordStartTime(audioEngine.audioContext.currentTime);
         playbackState.setPlaying(true, false);
 
-        // Pre-generate next buffer
-        audioScheduler.requestNextBuffer();
+        // Pre-generate next buffer (await to ensure it's ready)
+        await audioScheduler.requestNextBuffer();
       }
     } catch (error) {
       errorHandler(error);

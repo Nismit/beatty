@@ -39,6 +39,20 @@
     
     <div class="editor-layer">
         <div class="editor-container">
+            <div class="toolbar" id="toolbar">
+                <div class="toolbar-left">
+                    <select id="presetSelect" class="toolbar-select">
+                        <option value="default">Default</option>
+                        <option value="demo">Demo</option>
+                    </select>
+                </div>
+                <div class="toolbar-right">
+                    <span class="toolbar-btn" id="toolbarLoad">LOAD</span>
+                    <span class="toolbar-btn" id="toolbarExport">EXPORT</span>
+                    <span class="toolbar-btn" id="toolbarSettings">SETTINGS</span>
+                    <span class="toolbar-btn" id="toolbarHelp">HELP</span>
+                </div>
+            </div>
             <div class="editor-content">
                 <div id="editor"></div>
             </div>
@@ -53,8 +67,6 @@
                     <span class="status-clickable" id="bpmStatus"><span id="statusBpm">120</span>bpm</span>
                     <span class="status-separator">|</span>
                     <span class="status-clickable" id="volumeStatus"><span id="statusVolume">30</span>%</span>
-                    <span class="status-separator">|</span>
-                    <span class="status-clickable" id="helpStatus">HELP</span>
                 </div>
             </div>
         </div>

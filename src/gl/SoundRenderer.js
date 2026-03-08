@@ -161,7 +161,7 @@ export class SoundRenderer {
     if (status === gl.ALREADY_SIGNALED || status === gl.CONDITION_SATISFIED) {
       this.#completePending(sync);
     } else if (status === gl.TIMEOUT_EXPIRED) {
-      requestAnimationFrame(() => this.#pollFence(sync));
+      setTimeout(() => this.#pollFence(sync), 0);
     } else {
       const pending = this.#pendingBuffers.get(sync);
       if (pending) {

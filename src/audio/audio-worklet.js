@@ -53,14 +53,14 @@ class GLSLAudioProcessor extends AudioWorkletProcessor {
 
     // Calculate samples count (stereo: buffer.length / 2)
     const totalSamples = this.currentBuffer.length / 2;
-    const halfwayPoint = totalSamples / 2;
+    const prefetchPoint = totalSamples * 0.25;
 
     for (let i = 0; i < leftChannel.length; i++) {
-      // Request next buffer at 50% point (early prefetch)
+      // Request next buffer at 25% point (early prefetch)
       if (
         !this.nextBufferReady &&
         !this.nextBufferRequested &&
-        this.readPos > halfwayPoint
+        this.readPos > prefetchPoint
       ) {
         this.nextBufferRequested = true;
         this.port.postMessage({ type: 'requestNextBuffer' });

@@ -40,7 +40,8 @@ export function createModalController({ uiController, presetModal }) {
       if (
         !e.target.closest('.modal-content') &&
         !e.target.closest('#helpStatus') &&
-        !e.target.closest('#mobileHelp')
+        !e.target.closest('#mobileHelp') &&
+        !e.target.closest('#toolbarHelp')
       ) {
         uiController.hideHelpModal();
       }
