@@ -318,7 +318,7 @@ body {
 /* Mobile Controls */
 .mobile-controls {
     position: fixed;
-    top: 10px;
+    top: 33px;
     right: 10px;
     z-index: 100;
     display: none; /* Hidden by default, shown only on mobile */
@@ -381,7 +381,7 @@ body {
     }
 
     .editor-container {
-        padding: 0 8px 8px;
+        padding: 0 0 8px;
         box-sizing: border-box;
     }
 
