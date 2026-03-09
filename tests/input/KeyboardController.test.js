@@ -18,7 +18,7 @@ function createMockDeps() {
       toggleVisibility: vi.fn(),
       switchMode: vi.fn(),
     },
-    presetModal: {
+    settingsModal: {
       hide: vi.fn(),
       show: vi.fn(),
     },
@@ -32,9 +32,13 @@ function createKeyboardEvent(key, options = {}) {
   return new KeyboardEvent('keydown', {
     key,
     ctrlKey: options.ctrlKey || false,
+    shiftKey: options.shiftKey || false,
     bubbles: true,
   });
 }
+
+// Test environment is not Mac, so shortcuts require Ctrl+Shift
+const shortcutModifiers = { ctrlKey: true, shiftKey: true };
 
 describe('KeyboardController', () => {
   let controller;
@@ -51,41 +55,61 @@ describe('KeyboardController', () => {
   });
 
   describe('keyboard shortcuts', () => {
-    it('should call togglePlayback on Ctrl+P', () => {
-      document.dispatchEvent(createKeyboardEvent('p', { ctrlKey: true }));
+    it('should call togglePlayback on Ctrl+Shift+P', () => {
+      document.dispatchEvent(createKeyboardEvent('P', shortcutModifiers));
 
       expect(deps.playbackController.togglePlayback).toHaveBeenCalled();
     });
 
-    it('should call compileShader on Ctrl+S', () => {
-      document.dispatchEvent(createKeyboardEvent('s', { ctrlKey: true }));
+    it('should call compileShader on Ctrl+Shift+C', () => {
+      document.dispatchEvent(createKeyboardEvent('C', shortcutModifiers));
 
       expect(deps.shaderController.compileShader).toHaveBeenCalled();
     });
 
-    it('should call applyCompiledShader on Ctrl+R', () => {
-      document.dispatchEvent(createKeyboardEvent('r', { ctrlKey: true }));
+    it('should call applyCompiledShader on Ctrl+Shift+A', () => {
+      document.dispatchEvent(createKeyboardEvent('A', shortcutModifiers));
 
       expect(deps.shaderController.applyCompiledShader).toHaveBeenCalled();
+    });
+
+    it('should call toggleVisibility on Ctrl+Shift+V', () => {
+      document.dispatchEvent(createKeyboardEvent('V', shortcutModifiers));
+
+      expect(deps.editor.toggleVisibility).toHaveBeenCalled();
+    });
+
+    it('should call switchMode on Ctrl+Shift+M', () => {
+      document.dispatchEvent(createKeyboardEvent('M', shortcutModifiers));
+
+      expect(deps.editor.switchMode).toHaveBeenCalled();
+    });
+
+    it('should not trigger shortcuts with only Ctrl (no Shift) on non-Mac', () => {
+      document.dispatchEvent(createKeyboardEvent('p', { ctrlKey: true }));
+      document.dispatchEvent(createKeyboardEvent('s', { ctrlKey: true }));
+
+      expect(deps.playbackController.togglePlayback).not.toHaveBeenCalled();
+      expect(deps.shaderController.compileShader).not.toHaveBeenCalled();
     });
 
     it('should close modals on Escape', () => {
       document.dispatchEvent(createKeyboardEvent('Escape'));
 
       expect(deps.uiController.hideHelpModal).toHaveBeenCalled();
-      expect(deps.presetModal.hide).toHaveBeenCalled();
+      expect(deps.settingsModal.hide).toHaveBeenCalled();
     });
   });
 
   describe('unhandled keys', () => {
-    it('should not trigger actions for unhandled Ctrl+key', () => {
-      document.dispatchEvent(createKeyboardEvent('x', { ctrlKey: true }));
+    it('should not trigger actions for unhandled Ctrl+Shift+key', () => {
+      document.dispatchEvent(createKeyboardEvent('X', shortcutModifiers));
 
       expect(deps.playbackController.togglePlayback).not.toHaveBeenCalled();
       expect(deps.shaderController.compileShader).not.toHaveBeenCalled();
     });
 
-    it('should not trigger Ctrl actions without Ctrl modifier', () => {
+    it('should not trigger actions without any modifiers', () => {
       document.dispatchEvent(createKeyboardEvent('p'));
       document.dispatchEvent(createKeyboardEvent('s'));
 
@@ -98,7 +122,7 @@ describe('KeyboardController', () => {
     it('should remove event listener', () => {
       controller.destroy();
 
-      document.dispatchEvent(createKeyboardEvent('p', { ctrlKey: true }));
+      document.dispatchEvent(createKeyboardEvent('P', shortcutModifiers));
 
       expect(deps.playbackController.togglePlayback).not.toHaveBeenCalled();
     });

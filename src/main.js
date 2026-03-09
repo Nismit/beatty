@@ -21,7 +21,7 @@ import { createAudioSettings } from './state/AudioSettings.js';
 import { createEventBus } from './state/EventBus.js';
 import { createPlaybackState } from './state/PlaybackState.js';
 import { createDebugOverlay } from './ui/DebugOverlay.js';
-import { createPresetModal } from './ui/PresetModal.js';
+import { createSettingsModal } from './ui/SettingsModal.js';
 import { createStatusDisplay } from './ui/StatusDisplay.js';
 import { createToolbarController } from './ui/ToolbarController.js';
 import { EVENTS, UI } from './utils/consts.js';
@@ -104,7 +104,7 @@ async function init() {
     eventBus,
   });
 
-  const presetModal = createPresetModal({
+  const settingsModal = createSettingsModal({
     eventBus,
     editor,
     onLoad: (presetId) => presetController.loadPreset(presetId),
@@ -114,6 +114,7 @@ async function init() {
     editor,
     presetController,
     uiController,
+    settingsModal,
     eventBus,
   });
 
@@ -123,7 +124,7 @@ async function init() {
     shaderController,
     uiController,
     editor,
-    presetModal,
+    settingsModal,
     debugOverlay,
   });
 
@@ -135,10 +136,10 @@ async function init() {
     audioSettings,
     audioEngine,
     eventBus,
-    presetModal,
+    settingsModal,
   });
 
-  const modalController = createModalController({ uiController, presetModal });
+  const modalController = createModalController({ uiController, settingsModal });
 
   // Volume sync via EventBus
   eventBus.on(EVENTS.VOLUME_CHANGED, ({ new: newVolume }) => {
@@ -169,7 +170,7 @@ async function init() {
     keyboardController.init();
     mobileController.init();
     modalController.init();
-    presetModal.init();
+    settingsModal.init();
     toolbarController.init();
     debugOverlay.init();
 
@@ -188,7 +189,7 @@ async function init() {
     keyboardController.destroy();
     mobileController.destroy();
     modalController.destroy();
-    presetModal.destroy();
+    settingsModal.destroy();
     toolbarController.destroy();
     presetController.destroy();
     debugOverlay.destroy();

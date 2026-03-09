@@ -11,9 +11,16 @@ import { getAllPresets } from '../utils/presets.js';
  * @param {import('../editor/Editor.js').Editor} deps.editor
  * @param {import('../controllers/PresetController.js').PresetController} deps.presetController
  * @param {import('../controllers/UIController.js').UIController} deps.uiController
+ * @param {import('./SettingsModal.js')} deps.settingsModal
  * @param {import('../state/EventBus.js').EventBus} deps.eventBus
  */
-export function createToolbarController({ editor, presetController, uiController, eventBus }) {
+export function createToolbarController({
+  editor,
+  presetController,
+  uiController,
+  settingsModal,
+  eventBus,
+}) {
   let presetSelect = null;
 
   function init() {
@@ -130,8 +137,7 @@ export function createToolbarController({ editor, presetController, uiController
   }
 
   function handleSettings() {
-    // TODO: Settings modal (placeholder for now)
-    console.log('[Toolbar] Settings button clicked');
+    settingsModal.show();
   }
 
   function handleHelp() {

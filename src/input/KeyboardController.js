@@ -3,13 +3,15 @@
  * Manages keyboard shortcuts for playback, shader, and editor controls
  */
 
+const isMac = navigator.userAgent.includes('Mac');
+
 /**
  * @param {Object} deps
  * @param {import('../controllers/PlaybackController.js')} deps.playbackController
  * @param {import('../controllers/ShaderController.js')} deps.shaderController
  * @param {import('../controllers/UIController.js')} deps.uiController
  * @param {import('../editor/Editor.js').Editor} deps.editor
- * @param {import('../ui/PresetModal.js')} deps.presetModal
+ * @param {import('../ui/SettingsModal.js')} deps.settingsModal
  * @param {import('../ui/DebugOverlay.js')} deps.debugOverlay
  */
 export function createKeyboardController({
@@ -17,45 +19,43 @@ export function createKeyboardController({
   shaderController,
   uiController,
   editor,
-  presetModal,
+  settingsModal,
   debugOverlay,
 }) {
   function handleKeydown(e) {
     if (e.key === 'Escape') {
       uiController.hideHelpModal();
-      presetModal.hide();
+      settingsModal.hide();
       return;
     }
 
-    if (e.ctrlKey) {
-      switch (e.key) {
+    const modifierPressed = isMac ? e.ctrlKey : e.ctrlKey && e.shiftKey;
+
+    if (modifierPressed) {
+      switch (e.key.toLowerCase()) {
         case 'p':
           e.preventDefault();
           playbackController.togglePlayback();
           break;
-        case 's':
+        case 'c':
           e.preventDefault();
           shaderController.compileShader();
           break;
-        case 'r':
+        case 'a':
           e.preventDefault();
           shaderController.applyCompiledShader();
           break;
-        case 't':
+        case 'v':
           e.preventDefault();
           editor.toggleVisibility();
           break;
-        case 'e':
+        case 'm':
           e.preventDefault();
           editor.switchMode();
           break;
         case 'i':
           e.preventDefault();
           playbackController.resetPlayback();
-          break;
-        case 'g':
-          e.preventDefault();
-          presetModal.show();
           break;
         case 'd':
           e.preventDefault();

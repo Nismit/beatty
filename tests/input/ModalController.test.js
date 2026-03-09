@@ -9,7 +9,7 @@ function createMockDeps() {
       hideHelpModal: vi.fn(),
       hideAllSliderPopups: vi.fn(),
     },
-    presetModal: {
+    settingsModal: {
       hide: vi.fn(),
     },
   };
@@ -67,7 +67,7 @@ describe('ModalController', () => {
       document.body.click();
 
       expect(deps.uiController.hideAllSliderPopups).toHaveBeenCalled();
-      expect(deps.presetModal.hide).toHaveBeenCalled();
+      expect(deps.settingsModal.hide).toHaveBeenCalled();
     });
 
     it('should not hide slider popup when clicking inside', () => {
@@ -79,7 +79,7 @@ describe('ModalController', () => {
     it('should not hide preset modal when clicking inside modal-content', () => {
       document.querySelector('.modal-content').click();
 
-      expect(deps.presetModal.hide).not.toHaveBeenCalled();
+      expect(deps.settingsModal.hide).not.toHaveBeenCalled();
     });
   });
 

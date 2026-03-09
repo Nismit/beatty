@@ -94,15 +94,15 @@
             <div class="modal-body">
                 <div class="help-section">
                     <h3>Keyboard Shortcuts</h3>
+                    <p class="help-description shortcut-note">Mac: <kbd>Ctrl</kbd> / Windows: <kbd>Ctrl+Shift</kbd></p>
                     <ul class="shortcut-list">
-                        <li><kbd>Ctrl+P</kbd> Play/Pause</li>
-                        <li><kbd>Ctrl+I</kbd> Reset</li>
-                        <li><kbd>Ctrl+S</kbd> Compile Shader</li>
-                        <li><kbd>Ctrl+R</kbd> Apply Compiled Shader</li>
-                        <li><kbd>Ctrl+T</kbd> Toggle Editor Visibility</li>
-                        <li><kbd>Ctrl+E</kbd> Switch Sound/Visual Mode</li>
-                        <li><kbd>Ctrl+G</kbd> Open Presets</li>
-                        <li><kbd>Ctrl+D</kbd> Toggle Debug Overlay</li>
+                        <li><kbd>P</kbd> <strong>P</strong>lay / Pause</li>
+                        <li><kbd>I</kbd> Reset (<strong>I</strong>nitialize)</li>
+                        <li><kbd>C</kbd> <strong>C</strong>ompile Shader</li>
+                        <li><kbd>A</kbd> <strong>A</strong>pply Compiled Shader</li>
+                        <li><kbd>V</kbd> Editor <strong>V</strong>isibility</li>
+                        <li><kbd>M</kbd> <strong>M</strong>ode Switch (Sound/Visual)</li>
+                        <li><kbd>D</kbd> <strong>D</strong>ebug Overlay</li>
                     </ul>
                 </div>
 
@@ -152,19 +152,40 @@
         <div class="debug-mode-label" id="debugModeLabel">Waveform</div>
     </div>
 
-    <!-- Preset Modal -->
-    <div class="modal-overlay" id="presetModal">
-        <div class="modal-content preset-modal-content">
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content settings-modal-content">
             <div class="modal-header">
-                <h2>Presets</h2>
-                <button class="modal-close" id="closePreset">&times;</button>
+                <h2>Settings</h2>
+                <button class="modal-close" id="closeSettings">&times;</button>
+            </div>
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="presets">Presets</button>
+                <button class="settings-tab" data-tab="audio">Audio</button>
             </div>
             <div class="modal-body">
-                <div class="preset-actions-bar">
-                    <button id="presetSaveBtn" class="preset-action-btn">Save Current</button>
-                    <button id="presetImportBtn" class="preset-action-btn">Import</button>
+                <!-- Presets Tab -->
+                <div class="settings-tab-content active" id="tab-presets">
+                    <div class="preset-actions-bar">
+                        <button id="presetSaveBtn" class="preset-action-btn">Save Current</button>
+                        <button id="presetImportBtn" class="preset-action-btn">Import</button>
+                    </div>
+                    <div class="preset-list" id="presetList"></div>
                 </div>
-                <div class="preset-list" id="presetList"></div>
+                <!-- Audio Tab -->
+                <div class="settings-tab-content" id="tab-audio">
+                    <div class="settings-section">
+                        <label class="settings-label">
+                            Buffer Size
+                            <select id="bufferSizeSelect" class="settings-select">
+                                <option value="1024">1024 (Low latency)</option>
+                                <option value="2048">2048 (Balanced)</option>
+                                <option value="4096">4096 (Stable)</option>
+                                <option value="8192">8192 (High stability)</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

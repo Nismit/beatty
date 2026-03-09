@@ -1,6 +1,6 @@
 /**
- * PresetModal factory function
- * Manages the preset modal UI for saving, loading, importing, and exporting presets
+ * SettingsModal factory function
+ * Manages the settings modal UI with tabs for presets and audio settings
  */
 
 import { EVENTS, PRESET } from '../utils/consts.js';
@@ -19,11 +19,11 @@ import {
  * @param {import('../editor/Editor.js').Editor} deps.editor
  * @param {function(string): void} deps.onLoad - Callback when preset is loaded
  */
-export function createPresetModal({ eventBus, editor, onLoad }) {
+export function createSettingsModal({ eventBus, editor, onLoad }) {
   const cleanups = [];
 
   function getModal() {
-    return document.getElementById('presetModal');
+    return document.getElementById('settingsModal');
   }
 
   function show() {
@@ -44,6 +44,19 @@ export function createPresetModal({ eventBus, editor, onLoad }) {
   function isVisible() {
     const modal = getModal();
     return modal?.classList.contains('visible') ?? false;
+  }
+
+  function switchTab(tabName) {
+    const tabs = document.querySelectorAll('.settings-tab');
+    const contents = document.querySelectorAll('.settings-tab-content');
+
+    for (const tab of tabs) {
+      tab.classList.toggle('active', tab.dataset.tab === tabName);
+    }
+
+    for (const content of contents) {
+      content.classList.toggle('active', content.id === `tab-${tabName}`);
+    }
   }
 
   function renderPresetList() {
@@ -99,7 +112,6 @@ export function createPresetModal({ eventBus, editor, onLoad }) {
       listEl.appendChild(item);
     }
 
-    // Update save button state
     updateSaveButtonState();
   }
 
@@ -203,7 +215,21 @@ export function createPresetModal({ eventBus, editor, onLoad }) {
     input.click();
   }
 
+  function handleTabClick(e) {
+    const tab = e.target.closest('.settings-tab');
+    if (tab) {
+      switchTab(tab.dataset.tab);
+    }
+  }
+
   function init() {
+    // Tab switching
+    const tabContainer = document.querySelector('.settings-tabs');
+    if (tabContainer) {
+      tabContainer.addEventListener('click', handleTabClick);
+      cleanups.push(() => tabContainer.removeEventListener('click', handleTabClick));
+    }
+
     // Save button
     const saveBtn = document.getElementById('presetSaveBtn');
     if (saveBtn) {
@@ -219,7 +245,7 @@ export function createPresetModal({ eventBus, editor, onLoad }) {
     }
 
     // Close button
-    const closeBtn = document.getElementById('closePreset');
+    const closeBtn = document.getElementById('closeSettings');
     if (closeBtn) {
       closeBtn.addEventListener('click', hide);
       cleanups.push(() => closeBtn.removeEventListener('click', hide));

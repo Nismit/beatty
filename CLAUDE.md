@@ -137,12 +137,15 @@ npx serve src
 
 ## キーボードショートカット
 
-- `Ctrl + P` - 再生/一時停止
-- `Ctrl + I` - リセット
-- `Ctrl + S` - シェーダーコンパイル
-- `Ctrl + R` - コンパイル済みシェーダー適用
-- `Ctrl + T` - エディタ表示切替
-- `Ctrl + E` - Sound/Visualモード切替
+Mac: `Ctrl + (key)` / Windows: `Ctrl + Shift + (key)`
+
+- `P` - **P**lay/Pause (再生/一時停止)
+- `I` - **I**nitialize (リセット)
+- `C` - **C**ompile (シェーダーコンパイル)
+- `A` - **A**pply (コンパイル済みシェーダー適用)
+- `V` - **V**isibility (エディタ表示切替)
+- `M` - **M**ode (Sound/Visualモード切替)
+- `D` - **D**ebug (デバッグオーバーレイ)
 
 ## 主要クラス
 
