@@ -1,39 +1,23 @@
 /**
  * ToolbarController factory function
- * Manages toolbar interactions (preset select, load, export, mode, help)
+ * Manages toolbar interactions (load, export, settings, help)
  */
 
 import { EVENTS } from '../utils/consts.js';
-import { getAllPresets } from '../utils/presets.js';
 
 /**
  * @param {Object} deps
  * @param {import('../editor/Editor.js').Editor} deps.editor
- * @param {import('../controllers/PresetController.js').PresetController} deps.presetController
  * @param {import('../controllers/UIController.js').UIController} deps.uiController
  * @param {import('./SettingsModal.js')} deps.settingsModal
  * @param {import('../state/EventBus.js').EventBus} deps.eventBus
  */
-export function createToolbarController({
-  editor,
-  presetController,
-  uiController,
-  settingsModal,
-  eventBus,
-}) {
-  let presetSelect = null;
-
+export function createToolbarController({ editor, uiController, settingsModal, eventBus }) {
   function init() {
-    presetSelect = document.getElementById('presetSelect');
     const loadBtn = document.getElementById('toolbarLoad');
     const exportBtn = document.getElementById('toolbarExport');
     const settingsBtn = document.getElementById('toolbarSettings');
     const helpBtn = document.getElementById('toolbarHelp');
-
-    if (presetSelect) {
-      populatePresetSelect();
-      presetSelect.addEventListener('change', handlePresetChange);
-    }
 
     if (loadBtn) {
       loadBtn.addEventListener('click', handleLoad);
@@ -50,37 +34,6 @@ export function createToolbarController({
     if (helpBtn) {
       helpBtn.addEventListener('click', handleHelp);
     }
-
-    // Listen for preset loaded events to update select
-    eventBus.on(EVENTS.PRESET_LOADED, updatePresetSelect);
-  }
-
-  function populatePresetSelect() {
-    if (!presetSelect) return;
-
-    const presets = getAllPresets();
-    presetSelect.innerHTML = '';
-
-    for (const preset of presets) {
-      const option = document.createElement('option');
-      option.value = preset.id;
-      option.textContent = preset.name;
-      if (preset.isBuiltIn) {
-        option.classList.add('preset-builtin');
-      }
-      presetSelect.appendChild(option);
-    }
-  }
-
-  function updatePresetSelect({ preset }) {
-    if (presetSelect && preset) {
-      presetSelect.value = preset.id;
-    }
-  }
-
-  function handlePresetChange(e) {
-    const presetId = e.target.value;
-    presetController.loadPreset(presetId);
   }
 
   function handleLoad() {
@@ -145,10 +98,8 @@ export function createToolbarController({
   }
 
   function destroy() {
-    if (presetSelect) {
-      presetSelect.removeEventListener('change', handlePresetChange);
-    }
+    // Cleanup if needed
   }
 
-  return { init, populatePresetSelect, destroy };
+  return { init, destroy };
 }

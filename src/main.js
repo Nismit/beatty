@@ -112,7 +112,6 @@ async function init() {
 
   const toolbarController = createToolbarController({
     editor,
-    presetController,
     uiController,
     settingsModal,
     eventBus,
