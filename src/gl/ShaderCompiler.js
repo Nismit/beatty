@@ -11,8 +11,8 @@ import { createProgram } from './gl-utils.js';
  * Used to adjust error line numbers to match user code
  */
 export const PREAMBLE_LINES = {
-  SOUND: 7,
-  VISUAL: 23,
+  SOUND: 11,
+  VISUAL: 27,
 };
 
 /**
@@ -27,6 +27,10 @@ uniform float u_sampleRate;
 uniform float u_bpm;
 uniform float u_blockOffset;
 out vec2 v_audioSample;
+
+// Constants
+#define PI 3.14159265359
+#define TAU 6.28318530718
 
 ${userCode}
 
@@ -64,6 +68,10 @@ uniform float u_bassOnset;
 
 in vec2 v_uv;
 out vec4 fragColor;
+
+// Constants
+#define PI 3.14159265359
+#define TAU 6.28318530718
 
 ${userCode}
 

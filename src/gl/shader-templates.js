@@ -15,47 +15,99 @@ float beatToTime(float beat) {
   return beat / u_bpm * 60.0;
 }
 
+// Basic waveforms
+float saw(float phase) {
+  return 2.0 * fract(phase) - 1.0;
+}
+
+float square(float phase) {
+  return fract(phase) < 0.5 ? -1.0 : 1.0;
+}
+
+float triangle(float phase) {
+  return 1.0 - 4.0 * abs(fract(phase) - 0.5);
+}
+
 float sine(float phase) {
-  return sin(phase * 6.28318530718);
+  return sin(TAU * phase);
 }
 
-// Simple kick drum
+// Hash functions (uint-based, high quality)
+const uint UINT_MAX = 0xffffffffu;
+const uvec3 k = uvec3(0x456789abu, 0x6789ab45u, 0x89ab4567u);
+const uvec3 u = uvec3(1, 2, 3);
+
+uvec2 uhash22(uvec2 n) {
+  n ^= (n.yx << u.xy);
+  n ^= (n.yx >> u.xy);
+  n *= k.xy;
+  n ^= (n.yx << u.xy);
+  return n * k.xy;
+}
+
+float hash21(vec2 p) {
+  uvec2 n = floatBitsToUint(p);
+  return float(uhash22(n).x) / float(UINT_MAX);
+}
+
+vec2 hash22(vec2 p) {
+  uvec2 n = floatBitsToUint(p);
+  return vec2(uhash22(n)) / vec2(UINT_MAX);
+}
+
+// Kick drum - pitch and amplitude decay
 float kick(float time) {
-  float amp = exp(-5.0 * time);
-  float phase = 50.0 * time - 10.0 * exp(-70.0 * time);
-  return amp * sine(phase);
+  float amp = exp(-4.0 * time);
+  float pitch = 50.0 + 150.0 * exp(-60.0 * time);
+  return amp * sine(pitch * time);
 }
 
-// Simple hihat (noise-based)
+// Hihat - noise-based, fast decay
 float hihat(float time) {
   float amp = exp(-50.0 * time);
-  float noise = fract(sin(time * 1000.0) * 43758.5453);
-  return amp * (noise * 2.0 - 1.0);
+  float noise = hash21(vec2(time * 1000.0, 0.0)) * 2.0 - 1.0;
+  return amp * noise;
 }
 
-// Simple bass
+// Snare 808 - tonal with pitch envelope
+float snare(float time) {
+  float pitch = 180.0 + 80.0 * exp(-40.0 * time);
+  float body = sine(pitch * time) * exp(-8.0 * time);
+  float noise = (hash21(vec2(time * 1000.0, 1.0)) * 2.0 - 1.0) * exp(-12.0 * time);
+  return body * 0.6 + noise * 0.3;
+}
+
+// Bass - saw + sine mix with amplitude envelope
 float bass(float time, float freq) {
   float amp = exp(-3.0 * time);
-  return amp * sine(freq * time);
+  float sawOsc = saw(freq * time);
+  float sineOsc = sine(freq * time);
+  return mix(sineOsc, sawOsc, 0.3) * amp; // 70% sine, 30% saw
 }
 
 vec2 mainSound(float time) {
-  vec2 out2 = vec2(0.0);
-
   float beat = timeToBeat(time);
+  vec2 out2 = vec2(0.0);
 
   // Kick: every beat
   float kickTime = beatToTime(mod(beat, 1.0));
   out2 += vec2(kick(kickTime)) * 0.7;
 
+  // Sidechain envelope (duck when kick hits)
+  float sidechain = smoothstep(0.0, 0.1, kickTime);
+
   // Hihat: offbeat (8th notes)
   float hihatTime = beatToTime(mod(beat + 0.5, 1.0));
   out2 += vec2(hihat(hihatTime)) * 0.3;
 
-  // Bass: 2 bar pattern
-  float bassTime = beatToTime(mod(beat, 2.0));
+  // Snare: beats 2 and 4
+  float snareTime = beatToTime(mod(beat + 1.0, 2.0));
+  out2 += vec2(snare(snareTime)) * 0.6;
+
+  // Bass: every beat, alternating notes (with sidechain)
+  float bassTime = beatToTime(mod(beat, 1.0));
   float bassFreq = mod(beat, 8.0) < 4.0 ? 55.0 : 73.42; // A1 or D2
-  out2 += vec2(bass(bassTime, bassFreq)) * 0.4;
+  out2 += vec2(bass(bassTime, bassFreq)) * 0.4 * sidechain;
 
   return out2;
 }`;
