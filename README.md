@@ -19,15 +19,17 @@ Beatty is a browser-based audio synthesizer and visualizer. It uses GLSL shaders
 
 ## Keyboard Shortcuts
 
+Mac: `Ctrl + (key)` / Windows: `Ctrl + Shift + (key)`
+
 | Key | Action |
 |-----|--------|
-| `Ctrl + P` | Play / Pause |
-| `Ctrl + I` | Reset playback |
-| `Ctrl + S` | Compile shader |
-| `Ctrl + R` | Apply compiled shader |
-| `Ctrl + T` | Toggle editor visibility |
-| `Ctrl + E` | Switch Sound / Visual mode |
-| `Ctrl + G` | Open preset manager |
+| `P` | **P**lay / Pause |
+| `I` | **I**nitialize (Reset playback) |
+| `C` | **C**ompile shader |
+| `A` | **A**pply compiled shader |
+| `V` | **V**isibility (Toggle editor) |
+| `M` | **M**ode (Switch Sound / Visual) |
+| `D` | **D**ebug overlay |
 | `Escape` | Close modal |
 
 ## Mobile Controls
@@ -49,17 +51,21 @@ Implement `vec2 mainSound(float time)` returning stereo audio samples:
 ```glsl
 vec2 mainSound(float time) {
     float beat = timeToBeat(time);
+    vec2 o = vec2(0.0);
 
-    // Kick drum
-    float kick = exp(-fract(beat) * 8.0) * sin(beat * 6.28);
+    // Kick: every beat
+    float kickTime = beatToTime(mod(beat, 1.0));
+    o += vec2(kick(kickTime)) * 0.7;
 
-    // Hi-hat
-    float hihat = exp(-fract(beat * 4.0) * 12.0) * noise(beat * 1000.0);
+    // Hihat: offbeat
+    float hihatTime = beatToTime(mod(beat + 0.5, 1.0));
+    o += vec2(hihat(hihatTime)) * 0.3;
 
-    // Bass
-    float bass = sin(beat * 3.14159) * 0.3;
+    // Snare: beats 2 and 4
+    float snareTime = beatToTime(mod(beat + 1.0, 2.0));
+    o += vec2(snare(snareTime)) * 0.6;
 
-    return vec2(kick + hihat + bass);
+    return o;
 }
 ```
 
@@ -68,20 +74,49 @@ vec2 mainSound(float time) {
 - `u_sampleRate` - Sample rate
 - `u_blockOffset` - Current block offset
 
+**Built-in Constants:**
+- `PI` - 3.14159265359
+- `TAU` - 6.28318530718
+
+**Built-in Utility Functions:**
+- `timeToBeat(time)` / `beatToTime(beat)` - Time/beat conversion
+- `mtof(note)` - MIDI note to frequency (A4 = 69 = 440Hz)
+- `quantize(beat, division)` - Quantize beat to grid
+- `adsr(time, a, d, s, r, duration)` - ADSR envelope
+- `lfo(time, rate)` - Low frequency oscillator
+
+**Built-in Waveforms:**
+- `sine(phase)`, `saw(phase)`, `square(phase)`, `triangle(phase)`
+- `hash21(vec2)`, `hash22(vec2)` - High quality hash functions
+
+**Built-in Instruments:**
+- `kick(time)`, `hihat(time)`, `openHihat(time)`, `snare(time)`
+- `clap(time)`, `rim(time)`, `tom(time, freq)`
+- `bass(time, freq, cutoff)`, `subBass(time, freq)`
+- `lead(time, freq)`, `pad(time, freq, duration)`
+- `filteredSaw(phase, cutoff)` - Saw with cutoff control
+
+**Built-in Effects:**
+- `distort(x, drive)` - Soft clipping
+- `lowpass(osc, cutoff)` - Simple lowpass filter
+- `bitcrush(x, bits)` - Lo-fi effect
+- `chorus(phase, depth, rate, time)` - Thicken sound
+
 ### Visual Shader
 
 Implement `vec3 visualMain(vec2 uv, vec2 resolution)` returning RGB color:
 
 ```glsl
 vec3 visualMain(vec2 uv, vec2 resolution) {
-    vec2 p = (uv - 0.5 * resolution) / resolution.y;
+    vec2 pos = (uv - 0.5) * 2.0;
+    pos.x *= resolution.x / resolution.y;
 
-    // Use audio data for visual effects
-    float kick = u_kick;
-    float bass = u_bass;
+    // Circle with kick reaction
+    float d = length(pos) - 0.3 - u_kickPeak * 0.1;
+    float circle = smoothstep(0.02, 0.0, abs(d));
 
-    vec3 color = vec3(p, 0.5 + 0.5 * sin(u_time));
-    color *= 1.0 + kick * 2.0;
+    vec3 color = hsv2rgb(vec3(u_time * 0.1, 0.8, circle));
+    color += vec3(0.5, 0.7, 1.0) * u_kickOnset * 0.3;
 
     return color;
 }
@@ -102,6 +137,15 @@ vec3 visualMain(vec2 uv, vec2 resolution) {
 | `u_kickOnset` | Kick onset detection (1.0 or 0.0) |
 | `u_hihatOnset` | Hihat onset detection (1.0 or 0.0) |
 | `u_bassOnset` | Bass onset detection (1.0 or 0.0) |
+
+**Built-in Constants:**
+- `PI`, `TAU`
+
+**Built-in Utility Functions:**
+- `hsv2rgb(vec3 c)` - HSV to RGB conversion
+- `rot2d(vec2 p, float a)` - 2D rotation
+- `sdCircle(vec2 p, float r)` - Circle SDF
+- `sdPolygon(vec2 p, float r, float n)` - N-sided polygon SDF
 
 ## Browser Requirements
 
