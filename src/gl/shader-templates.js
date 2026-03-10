@@ -15,6 +15,31 @@ float beatToTime(float beat) {
   return beat / u_bpm * 60.0;
 }
 
+// MIDI note to frequency (A4 = 69 = 440Hz)
+float mtof(float note) {
+  return 440.0 * pow(2.0, (note - 69.0) / 12.0);
+}
+
+// Quantize beat to grid division (e.g., 0.25 = 16th notes)
+float quantize(float beat, float division) {
+  return floor(beat / division) * division;
+}
+
+// ADSR envelope
+float adsr(float time, float a, float d, float s, float r, float duration) {
+  if (time < 0.0) return 0.0;
+  if (time < a) return time / a;
+  if (time < a + d) return 1.0 - (1.0 - s) * (time - a) / d;
+  if (time < duration - r) return s;
+  if (time < duration) return s * (duration - time) / r;
+  return 0.0;
+}
+
+// LFO (low frequency oscillator)
+float lfo(float time, float rate) {
+  return sin(TAU * rate * time);
+}
+
 // Basic waveforms
 float saw(float phase) {
   return 2.0 * fract(phase) - 1.0;
@@ -84,6 +109,31 @@ float snare(float time) {
   return body * 0.6 + noise * 0.3;
 }
 
+// Clap - layered noise bursts
+float clap(float time) {
+  float amp = exp(-25.0 * time);
+  // Multiple short bursts for clap texture
+  float burst1 = exp(-200.0 * time);
+  float burst2 = exp(-150.0 * mod(time - 0.01, 1.0)) * step(0.01, time);
+  float burst3 = exp(-100.0 * mod(time - 0.02, 1.0)) * step(0.02, time);
+  float noise = hash21(vec2(time * 2000.0, 3.0)) * 2.0 - 1.0;
+  return noise * amp * (burst1 + burst2 * 0.7 + burst3 * 0.5);
+}
+
+// Rim shot / Click - short percussive hit
+float rim(float time) {
+  float click = exp(-200.0 * time) * sine(1200.0 * time);
+  float body = exp(-80.0 * time) * sine(400.0 * time);
+  return click * 0.6 + body * 0.4;
+}
+
+// Tom - pitched drum
+float tom(float time, float freq) {
+  float amp = exp(-6.0 * time);
+  float pitch = freq + freq * 0.5 * exp(-30.0 * time);
+  return amp * sine(pitch * time);
+}
+
 // Filtered saw - saw wave with cutoff control (0-1)
 float filteredSaw(float phase, float cutoff) {
   float harmonics = 1.0 + cutoff * 7.0; // 1-8 harmonics
@@ -139,6 +189,19 @@ float distort(float x, float drive) {
 float lowpass(float osc, float cutoff) {
   // Simple approximation: reduce high frequency content
   return mix(osc, sine(osc * 0.5), 1.0 - cutoff);
+}
+
+// Bitcrush - reduce bit depth for lo-fi effect
+float bitcrush(float x, float bits) {
+  float steps = pow(2.0, bits);
+  return floor(x * steps) / steps;
+}
+
+// Chorus - thicken sound with detuned copies
+float chorus(float phase, float depth, float rate, float time) {
+  float mod1 = sine(phase + depth * lfo(time, rate));
+  float mod2 = sine(phase + depth * lfo(time, rate * 1.1));
+  return (sine(phase) + mod1 + mod2) / 3.0;
 }
 
 vec2 mainSound(float time) {
@@ -197,7 +260,37 @@ vec2 mainSound(float time) {
     pad(padTime, padFreq * 1.25, padDuration)     // major 3rd (stereo)
   ) * 0.1 * sidechain;
 
-  // Apply soft distortion to final mix (optional)
+  // --- Optional: uncomment to try ---
+
+  // Clap: layered with snare on beats 2 and 4
+  // o += vec2(clap(snareTime)) * 0.3;
+
+  // Rim: 16th note accents
+  // float rimTime = beatToTime(mod(beat, 0.25));
+  // o += vec2(rim(rimTime)) * 0.2;
+
+  // Tom: fill every 4 bars
+  // float tomTime = beatToTime(mod(beat, 16.0));
+  // o += vec2(tom(tomTime, mtof(48.0))) * 0.4; // C3
+
+  // Using mtof for lead (MIDI notes instead of Hz)
+  // float leadFreq = mtof(69.0 + leadStep * 2.0); // A4, B4, C#5, D#5
+
+  // ADSR envelope example
+  // float env = adsr(leadTime, 0.01, 0.1, 0.5, 0.2, beatToTime(0.25));
+  // o += vec2(sine(440.0 * time) * env) * 0.2;
+
+  // LFO modulation on filter
+  // float lfoMod = lfo(time, 0.5) * 0.5 + 0.5; // 0-1 range
+  // bassCutoff *= lfoMod;
+
+  // Bitcrush effect
+  // o = vec2(bitcrush(o.x, 8.0), bitcrush(o.y, 8.0));
+
+  // Chorus on pad
+  // o += vec2(chorus(padFreq * time, 0.02, 0.5, time)) * 0.1;
+
+  // Distortion on final mix
   // o = vec2(distort(o.x, 1.5), distort(o.y, 1.5));
 
   return o;
@@ -338,72 +431,113 @@ vec3 hsv2rgb(vec3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+// Polygon SDF - n sides
+float sdPolygon(vec2 p, float r, float n) {
+    float a = atan(p.x, p.y) + PI;
+    float s = TAU / n;
+    return cos(floor(0.5 + a / s) * s - a) * length(p) - r;
+}
+
+// Rotate 2D
+vec2 rot2d(vec2 p, float a) {
+    float c = cos(a), s = sin(a);
+    return vec2(p.x * c - p.y * s, p.x * s + p.y * c);
+}
+
+// Circle SDF
 float sdCircle(vec2 p, float r) {
     return length(p) - r;
 }
 
-float sdRing(vec2 p, float r, float thickness) {
-    return abs(length(p) - r) - thickness;
+// Scene function for chromatic aberration
+vec3 scene(vec2 pos) {
+    vec3 color = vec3(0.01, 0.02, 0.06);
+
+    // === Central morphing shape ===
+    // Switch shape every 2 seconds (instant change)
+    float shapeIndex = floor(mod(u_time * 0.5, 5.0));
+    float sides = shapeIndex == 0.0 ? 3.0   // triangle
+                : shapeIndex == 1.0 ? 4.0   // square
+                : shapeIndex == 2.0 ? 5.0   // pentagon
+                : shapeIndex == 3.0 ? 6.0   // hexagon
+                : 32.0;                      // circle (many sides)
+
+    float polySize = 0.25 + u_kickPeak * 0.15;
+
+    // Rotate with time
+    vec2 polyPos = rot2d(pos, u_time * 0.5);
+    float shape = sdPolygon(polyPos, polySize, sides);
+
+    // Glow - purple, intensity on kick
+    vec3 polyColor = hsv2rgb(vec3(0.75 + u_kickOnset * 0.1, 0.8, 0.9));
+    float polyGlow = exp(-shape * 4.0) * (0.5 + u_kickPeak * 0.5);
+    color += polyColor * polyGlow;
+
+    // Edge line
+    float polyEdge = smoothstep(0.02, 0.0, abs(shape));
+    color += polyColor * polyEdge * 0.8;
+
+    // === Outer rotating polygons ===
+    for (float i = 0.0; i < 3.0; i++) {
+        float offset = i * TAU / 3.0;
+        float dist = 0.6 + i * 0.15 + u_bassPeak * 0.1;
+
+        // Position around center
+        vec2 ringPos = pos - vec2(cos(u_time + offset), sin(u_time + offset)) * dist * 0.3;
+
+        // Switch shape every 1.5 seconds (offset per polygon)
+        float outerIndex = floor(mod(u_time * 0.67 + i * 1.5, 4.0));
+        float outerSides = outerIndex == 0.0 ? 3.0
+                         : outerIndex == 1.0 ? 4.0
+                         : outerIndex == 2.0 ? 6.0
+                         : 32.0;
+        float outerSize = 0.08 + u_hihatPeak * 0.04;
+
+        vec2 outerRotPos = rot2d(ringPos, -u_time * 2.0 + i);
+        float outerPoly = sdPolygon(outerRotPos, outerSize, outerSides);
+
+        // Cyan to blue colors
+        float hue = 0.5 + i * 0.08;
+        vec3 outerColor = hsv2rgb(vec3(hue, 0.7, 0.8));
+
+        float outerGlow = exp(-outerPoly * 8.0) * (0.3 + u_hihat * 0.4);
+        color += outerColor * outerGlow;
+    }
+
+    // === Background geometric pattern ===
+    vec2 gridPos = rot2d(pos, u_time * 0.2);
+    float gridScale = 4.0 + u_bass * 2.0;
+    vec2 gridUV = fract(gridPos * gridScale) - 0.5;
+
+    // Tiny polygons in grid
+    float gridSides = 4.0 + u_bass * 2.0;
+    float gridPoly = sdPolygon(gridUV, 0.2, gridSides);
+    float gridLine = smoothstep(0.03, 0.0, abs(gridPoly));
+
+    // Green/teal grid
+    vec3 gridColor = hsv2rgb(vec3(0.4, 0.6, 0.4));
+    color += gridColor * gridLine * u_bass * 0.3;
+
+    // === Onset flash ===
+    float totalOnset = max(max(u_kickOnset, u_hihatOnset), u_bassOnset);
+    color += vec3(0.6, 0.7, 1.0) * totalOnset * 0.2;
+
+    // === Vignette ===
+    float vignette = 1.0 - length(pos) * 0.35;
+    color *= clamp(vignette, 0.0, 1.0);
+
+    return clamp(color, 0.0, 1.0);
 }
 
 vec3 visualMain(vec2 uv, vec2 resolution) {
-    // Center and aspect correct
-    vec2 pos = (uv - 0.5) * 2.0;
+    // === Zoom pulse - kick pushes camera in ===
+    vec2 center = vec2(0.5);
+    float zoom = 1.0 - u_kickPeak * 0.08;
+    vec2 zoomedUV = center + (uv - center) * zoom;
+
+    // Convert to pos coordinates
+    vec2 pos = (zoomedUV - 0.5) * 2.0;
     pos.x *= resolution.x / resolution.y;
 
-    // Background
-    vec3 bgColor = vec3(0.02, 0.02, 0.04);
-    vec3 color = bgColor;
-
-    // === Kick: Center circle with pulse ===
-    float kickScale = 0.3 + u_kickPeak * 0.4;
-    float kickCircle = sdCircle(pos, kickScale);
-
-    // Flash on onset
-    float kickFlash = u_kickOnset * 0.8;
-    vec3 kickColor = hsv2rgb(vec3(0.0, 0.8, 0.9 + kickFlash));
-
-    // Glow effect
-    float kickGlow = exp(-kickCircle * 3.0) * (u_kick + kickFlash);
-    color += kickColor * kickGlow;
-
-    // === Hihat: Rotating rings ===
-    float angle = u_time * 2.0 + u_hihatPeak * 3.14159;
-    mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-    vec2 rotPos = rot * pos;
-
-    // Multiple rings
-    for (float i = 0.0; i < 3.0; i++) {
-        float ringRadius = 0.5 + i * 0.2 + u_hihatPeak * 0.1;
-        float ring = sdRing(rotPos, ringRadius, 0.01 + u_hihat * 0.02);
-
-        // Color shift on onset
-        float hue = 0.55 + i * 0.1 + u_hihatOnset * 0.3;
-        vec3 ringColor = hsv2rgb(vec3(hue, 0.7, 0.8));
-
-        float ringGlow = exp(-abs(ring) * 20.0) * (u_hihat * 0.5 + u_hihatOnset * 0.5);
-        color += ringColor * ringGlow;
-    }
-
-    // === Bass: Background pulse and distortion ===
-    float bassWave = sin(length(pos) * 10.0 - u_time * 3.0 - u_bassPeak * 5.0);
-    bassWave = bassWave * 0.5 + 0.5;
-
-    vec3 bassColor = hsv2rgb(vec3(0.7 + u_bassOnset * 0.2, 0.6, 0.3));
-    color += bassColor * bassWave * u_bass * 0.3;
-
-    // Vignette that pulses with bass
-    float vignette = 1.0 - length(pos) * (0.4 - u_bassPeak * 0.1);
-    vignette = clamp(vignette, 0.0, 1.0);
-    color *= vignette;
-
-    // === Combined onset flash (white flash on any strong beat) ===
-    float totalOnset = max(max(u_kickOnset, u_hihatOnset), u_bassOnset);
-    color += vec3(1.0) * totalOnset * 0.15;
-
-    // === Subtle noise for texture ===
-    float noise = fract(sin(dot(uv * u_time, vec2(12.9898, 78.233))) * 43758.5453);
-    color += vec3(noise * 0.02);
-
-    return clamp(color, 0.0, 1.0);
+    return scene(pos);
 }`;
