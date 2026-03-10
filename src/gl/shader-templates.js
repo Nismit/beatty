@@ -62,10 +62,17 @@ float kick(float time) {
   return amp * sine(pitch * time);
 }
 
-// Hihat - noise-based, fast decay
+// Hihat (closed) - noise-based, fast decay
 float hihat(float time) {
   float amp = exp(-50.0 * time);
   float noise = hash21(vec2(time * 1000.0, 0.0)) * 2.0 - 1.0;
+  return amp * noise;
+}
+
+// Open hihat - noise-based, slower decay
+float openHihat(float time) {
+  float amp = exp(-8.0 * time);
+  float noise = hash21(vec2(time * 1000.0, 2.0)) * 2.0 - 1.0;
   return amp * noise;
 }
 
@@ -77,39 +84,123 @@ float snare(float time) {
   return body * 0.6 + noise * 0.3;
 }
 
-// Bass - saw + sine mix with amplitude envelope
-float bass(float time, float freq) {
+// Filtered saw - saw wave with cutoff control (0-1)
+float filteredSaw(float phase, float cutoff) {
+  float harmonics = 1.0 + cutoff * 7.0; // 1-8 harmonics
+  float o = 0.0;
+  for (float i = 1.0; i <= 8.0; i++) {
+    if (i > harmonics) break;
+    float amp = 1.0 / i;
+    o += sine(phase * i) * amp;
+  }
+  return o * 0.5;
+}
+
+// Bass - filtered saw with envelope
+float bass(float time, float freq, float cutoff) {
   float amp = exp(-3.0 * time);
-  float sawOsc = saw(freq * time);
-  float sineOsc = sine(freq * time);
-  return mix(sineOsc, sawOsc, 0.3) * amp; // 70% sine, 30% saw
+  float osc = filteredSaw(freq * time, cutoff);
+  return osc * amp;
+}
+
+// Sub bass - pure sine, synced with kick
+float subBass(float time, float freq) {
+  float amp = exp(-5.0 * time);
+  return sine(freq * time) * amp;
+}
+
+// Lead / Blip - percussive melodic element
+float lead(float time, float freq) {
+  float amp = exp(-12.0 * time);
+  float osc = sine(freq * time) + sine(freq * 2.0 * time) * 0.3; // fundamental + octave
+  return osc * amp;
+}
+
+// Pad - sustained chord with slow attack
+float pad(float time, float freq, float duration) {
+  float attack = smoothstep(0.0, 0.3, time);
+  float release = smoothstep(duration, duration - 0.3, time);
+  float amp = attack * release;
+  // Detuned oscillators for thickness
+  float osc = sine(freq * time) * 0.5
+            + sine(freq * 1.005 * time) * 0.25
+            + sine(freq * 0.995 * time) * 0.25;
+  return osc * amp;
+}
+
+// --- Effects ---
+
+// Distortion - soft clipping using tanh
+float distort(float x, float drive) {
+  return tanh(x * drive);
+}
+
+// Filter (lowpass approximation) - blend between raw and filtered
+float lowpass(float osc, float cutoff) {
+  // Simple approximation: reduce high frequency content
+  return mix(osc, sine(osc * 0.5), 1.0 - cutoff);
 }
 
 vec2 mainSound(float time) {
   float beat = timeToBeat(time);
-  vec2 out2 = vec2(0.0);
+  vec2 o = vec2(0.0);
 
   // Kick: every beat
   float kickTime = beatToTime(mod(beat, 1.0));
-  out2 += vec2(kick(kickTime)) * 0.7;
+  o += vec2(kick(kickTime)) * 0.7;
+
+  // Sub bass: synced with kick
+  o += vec2(subBass(kickTime, 40.0)) * 0.5;
 
   // Sidechain envelope (duck when kick hits)
   float sidechain = smoothstep(0.0, 0.1, kickTime);
 
   // Hihat: offbeat (8th notes)
   float hihatTime = beatToTime(mod(beat + 0.5, 1.0));
-  out2 += vec2(hihat(hihatTime)) * 0.3;
+  o += vec2(hihat(hihatTime)) * 0.3;
+
+  // Open hihat: every 2 bars, beat 4 offbeat
+  float ohTime = beatToTime(mod(beat + 0.5, 8.0));
+  o += vec2(openHihat(ohTime)) * 0.2;
 
   // Snare: beats 2 and 4
   float snareTime = beatToTime(mod(beat + 1.0, 2.0));
-  out2 += vec2(snare(snareTime)) * 0.6;
+  o += vec2(snare(snareTime)) * 0.6;
 
-  // Bass: every beat, alternating notes (with sidechain)
+  // Bass: every beat with filter sweep (cutoff opens over 4 bars)
   float bassTime = beatToTime(mod(beat, 1.0));
   float bassFreq = mod(beat, 8.0) < 4.0 ? 55.0 : 73.42; // A1 or D2
-  out2 += vec2(bass(bassTime, bassFreq)) * 0.4 * sidechain;
+  float bassCutoff = mod(beat, 16.0) / 16.0; // filter sweep over 4 bars
+  o += vec2(bass(bassTime, bassFreq, bassCutoff)) * 0.25 * sidechain;
 
-  return out2;
+  // Lead: 16th note arpeggio pattern with delay
+  float leadBeat = mod(beat, 0.25);
+  float leadTime = beatToTime(leadBeat);
+  float leadStep = floor(mod(beat * 4.0, 4.0));
+  float leadFreq = leadStep == 0.0 ? 440.0   // A4
+                 : leadStep == 1.0 ? 523.25  // C5
+                 : leadStep == 2.0 ? 659.25  // E5
+                 : 783.99;                   // G5
+  float leadDry = lead(leadTime, leadFreq);
+  // Delay: 8th note delay with feedback simulation
+  float delayTime = beatToTime(0.5);
+  float leadDelay1 = lead(leadTime + delayTime, leadFreq) * 0.4;
+  float leadDelay2 = lead(leadTime + delayTime * 2.0, leadFreq) * 0.2;
+  o += vec2(leadDry + leadDelay1, leadDry + leadDelay2) * 0.12 * sidechain;
+
+  // Pad: sustained chord, 4 bar loop
+  float padTime = beatToTime(mod(beat, 16.0));
+  float padDuration = beatToTime(16.0);
+  float padFreq = 220.0; // A3
+  o += vec2(
+    pad(padTime, padFreq, padDuration),           // root
+    pad(padTime, padFreq * 1.25, padDuration)     // major 3rd (stereo)
+  ) * 0.1 * sidechain;
+
+  // Apply soft distortion to final mix (optional)
+  // o = vec2(distort(o.x, 1.5), distort(o.y, 1.5));
+
+  return o;
 }`;
 
 // =============================================================================
@@ -171,7 +262,7 @@ float blip(float time, float freq) {
 }
 
 vec2 mainSound(float time) {
-  vec2 out2 = vec2(0.0);
+  vec2 o = vec2(0.0);
 
   float beat = timeToBeat(time);
   float bar = floor(beat / 4.0);
@@ -179,7 +270,7 @@ vec2 mainSound(float time) {
 
   // Kick: four on the floor
   float kickTime = beatToTime(mod(beat, 1.0));
-  out2 += vec2(kick(kickTime)) * 0.8;
+  o += vec2(kick(kickTime)) * 0.8;
 
   // Sidechain envelope
   float sidechain = smoothstep(0.0, 0.3, kickTime);
@@ -187,13 +278,13 @@ vec2 mainSound(float time) {
   // Hi-hat: offbeat 8ths with subtle variation
   float hatTime = beatToTime(mod(beat + 0.5, 1.0));
   float hatVel = 0.2 + 0.1 * sine(beat * 0.5);
-  out2 += vec2(hihat(hatTime)) * hatVel * sidechain;
+  o += vec2(hihat(hatTime)) * hatVel * sidechain;
 
   // Rim: sparse pattern, every 2 bars with variation
   float rimPattern = mod(bar, 2.0);
   if (rimPattern < 1.0 && (beatInBar == 1.5 || beatInBar == 3.0)) {
     float rimTime = beatToTime(mod(beat, 0.5));
-    out2 += vec2(rim(rimTime)) * 0.3 * sidechain;
+    o += vec2(rim(rimTime)) * 0.3 * sidechain;
   }
 
   // Bass: 2 bar loop, filter opens slowly over 8 bars
@@ -202,13 +293,13 @@ vec2 mainSound(float time) {
   float filterMod = 0.3 + 0.4 * (mod(bar, 8.0) / 8.0);
   filterMod *= sidechain;
   float bassEnv = exp(-8.0 * bassTime);
-  out2 += vec2(bass(time, bassFreq, filterMod)) * bassEnv * 0.4;
+  o += vec2(bass(time, bassFreq, filterMod)) * bassEnv * 0.4;
 
   // Subtle variation: extra 16th note bass hits
   if (mod(bar, 4.0) >= 2.0) {
     float bassTime2 = beatToTime(mod(beat + 0.25, 0.5));
     float bassEnv2 = exp(-12.0 * bassTime2);
-    out2 += vec2(bass(time, bassFreq * 2.0, filterMod * 0.5)) * bassEnv2 * 0.15;
+    o += vec2(bass(time, bassFreq * 2.0, filterMod * 0.5)) * bassEnv2 * 0.15;
   }
 
   // Blip melody: appears every 4 bars, simple pattern
@@ -224,13 +315,13 @@ vec2 mainSound(float time) {
 
     float blipAmp = 0.15 * sidechain;
     // Stereo width
-    out2 += vec2(
+    o += vec2(
       blip(blipTime, blipFreq * 0.995),
       blip(blipTime, blipFreq * 1.005)
     ) * blipAmp;
   }
 
-  return out2;
+  return o;
 }`;
 
 // =============================================================================
