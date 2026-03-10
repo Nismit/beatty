@@ -11,8 +11,8 @@ import { createProgram } from './gl-utils.js';
  * Used to adjust error line numbers to match user code
  */
 export const PREAMBLE_LINES = {
-  SOUND: 11,
-  VISUAL: 27,
+  SOUND: 13,
+  VISUAL: 29,
 };
 
 /**
@@ -31,6 +31,8 @@ out vec2 v_audioSample;
 // Constants
 #define PI 3.14159265359
 #define TAU 6.28318530718
+#define SEMITONE 1.05946309436
+#define saturate(x) clamp((x), 0.0, 1.0)
 
 ${userCode}
 
@@ -72,6 +74,8 @@ out vec4 fragColor;
 // Constants
 #define PI 3.14159265359
 #define TAU 6.28318530718
+#define SEMITONE 1.05946309436
+#define saturate(x) clamp((x), 0.0, 1.0)
 
 ${userCode}
 

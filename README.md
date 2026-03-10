@@ -77,6 +77,8 @@ vec2 mainSound(float time) {
 **Built-in Constants:**
 - `PI` - 3.14159265359
 - `TAU` - 6.28318530718
+- `SEMITONE` - 1.05946309436 (frequency ratio for one semitone)
+- `saturate(x)` - clamp(x, 0.0, 1.0)
 
 **Built-in Utility Functions:**
 - `timeToBeat(time)` / `beatToTime(beat)` - Time/beat conversion
@@ -139,7 +141,7 @@ vec3 visualMain(vec2 uv, vec2 resolution) {
 | `u_bassOnset` | Bass onset detection (1.0 or 0.0) |
 
 **Built-in Constants:**
-- `PI`, `TAU`
+- `PI`, `TAU`, `SEMITONE`, `saturate(x)`
 
 **Built-in Utility Functions:**
 - `hsv2rgb(vec3 c)` - HSV to RGB conversion

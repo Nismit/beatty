@@ -146,7 +146,7 @@ npx serve src
 - `u_sampleRate` - サンプルレート
 - `u_blockOffset` - 現在のブロックオフセット
 
-**定数:** `PI`, `TAU`
+**定数:** `PI`, `TAU`, `SEMITONE`, `saturate(x)`
 
 **組み込みユーティリティ:**
 - `timeToBeat(time)` / `beatToTime(beat)` - 時間/ビート変換
@@ -193,7 +193,7 @@ npx serve src
 **オンセット検出 (ビート検出、1.0 or 0.0):**
 - `u_kickOnset`, `u_hihatOnset`, `u_bassOnset`
 
-**定数:** `PI`, `TAU`
+**定数:** `PI`, `TAU`, `SEMITONE`, `saturate(x)`
 
 **組み込みユーティリティ:**
 - `hsv2rgb(vec3 c)` - HSV→RGB変換

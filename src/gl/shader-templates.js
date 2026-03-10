@@ -17,7 +17,7 @@ float beatToTime(float beat) {
 
 // MIDI note to frequency (A4 = 69 = 440Hz)
 float mtof(float note) {
-  return 440.0 * pow(2.0, (note - 69.0) / 12.0);
+  return 440.0 * pow(SEMITONE, note - 69.0);
 }
 
 // Quantize beat to grid division (e.g., 0.25 = 16th notes)
@@ -524,9 +524,9 @@ vec3 scene(vec2 pos) {
 
     // === Vignette ===
     float vignette = 1.0 - length(pos) * 0.35;
-    color *= clamp(vignette, 0.0, 1.0);
+    color *= saturate(vignette);
 
-    return clamp(color, 0.0, 1.0);
+    return saturate(color);
 }
 
 vec3 visualMain(vec2 uv, vec2 resolution) {
