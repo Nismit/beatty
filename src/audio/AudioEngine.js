@@ -10,6 +10,7 @@ import { AudioContextError } from '../utils/errors.js';
 export class AudioEngine {
   #audioContext;
   #workletNode;
+  #limiterNode;
   #analyserNode;
   #frequencyData;
   #timeData;
@@ -19,6 +20,7 @@ export class AudioEngine {
   constructor() {
     this.#audioContext = null;
     this.#workletNode = null;
+    this.#limiterNode = null;
     this.#analyserNode = null;
     this.#frequencyData = null;
     this.#timeData = null;
@@ -49,9 +51,14 @@ export class AudioEngine {
     try {
       this.#audioContext = new AudioContext();
 
-      await this.#audioContext.audioWorklet.addModule('./audio/audio-worklet.js');
+      // Load both audio worklets
+      await Promise.all([
+        this.#audioContext.audioWorklet.addModule('./audio/audio-worklet.js'),
+        this.#audioContext.audioWorklet.addModule('./audio/lookahead-limiter-worklet.js'),
+      ]);
 
       this.#workletNode = new AudioWorkletNode(this.#audioContext, 'glsl-audio-processor');
+      this.#limiterNode = new AudioWorkletNode(this.#audioContext, 'lookahead-limiter-processor');
 
       this.#workletNode.port.onmessage = (event) => {
         const { type, count } = event.data;
@@ -90,7 +97,9 @@ export class AudioEngine {
       this.#postToWorklet('setVolume', volume);
       this.#postToWorklet('setReadPosition', 0);
 
-      this.#workletNode.connect(this.#analyserNode);
+      // Chain: worklet → limiter → analyser → destination
+      this.#workletNode.connect(this.#limiterNode);
+      this.#limiterNode.connect(this.#analyserNode);
       this.#analyserNode.connect(this.#audioContext.destination);
     } catch (error) {
       throw new AudioContextError('Failed to start audio', error);
@@ -111,7 +120,9 @@ export class AudioEngine {
       this.#postToWorklet('setReadPosition', readPos);
       this.#postToWorklet('setVolume', volume);
 
-      this.#workletNode.connect(this.#analyserNode);
+      // Chain: worklet → limiter → analyser → destination
+      this.#workletNode.connect(this.#limiterNode);
+      this.#limiterNode.connect(this.#analyserNode);
       this.#analyserNode.connect(this.#audioContext.destination);
     } catch (error) {
       throw new AudioContextError('Failed to resume audio', error);
@@ -124,6 +135,7 @@ export class AudioEngine {
   pause() {
     try {
       this.#workletNode.disconnect();
+      this.#limiterNode.disconnect();
       this.#analyserNode.disconnect();
     } catch (error) {
       throw new AudioContextError('Failed to pause audio', error);
@@ -136,6 +148,7 @@ export class AudioEngine {
   stop() {
     try {
       this.#workletNode.disconnect();
+      this.#limiterNode.disconnect();
       this.#analyserNode.disconnect();
     } catch (error) {
       throw new AudioContextError('Failed to stop audio', error);
@@ -209,6 +222,7 @@ export class AudioEngine {
   destroy() {
     try {
       this.#workletNode?.disconnect();
+      this.#limiterNode?.disconnect();
       this.#analyserNode?.disconnect();
       this.#audioContext?.close();
     } catch (error) {
@@ -217,6 +231,7 @@ export class AudioEngine {
 
     this.#audioContext = null;
     this.#workletNode = null;
+    this.#limiterNode = null;
     this.#analyserNode = null;
     this.#frequencyData = null;
     this.#timeData = null;

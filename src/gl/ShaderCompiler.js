@@ -38,7 +38,14 @@ ${userCode}
 
 void main() {
   float time = u_blockOffset + float(gl_VertexID) / u_sampleRate;
-  v_audioSample = mainSound(time);
+  vec2 out2 = mainSound(time);
+
+  // Sanitize NaN/Inf values to prevent audio glitches
+  if (any(isnan(out2)) || any(isinf(out2))) {
+    out2 = vec2(0.0);
+  }
+
+  v_audioSample = out2;
 }`;
 }
 
