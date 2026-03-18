@@ -139,8 +139,8 @@ async function init() {
 
   const modalController = createModalController({ uiController, settingsModal });
 
-  // Volume sync via EventBus
-  eventBus.on(EVENTS.VOLUME_CHANGED, ({ new: newVolume }) => {
+  // Volume sync via EventBus (store unsubscriber for cleanup)
+  const unsubscribeVolumeChanged = eventBus.on(EVENTS.VOLUME_CHANGED, ({ new: newVolume }) => {
     audioEngine.setVolume(newVolume);
   });
 
@@ -183,6 +183,7 @@ async function init() {
 
   // Cleanup on page unload
   window.addEventListener('beforeunload', () => {
+    unsubscribeVolumeChanged();
     playbackController.destroy();
     keyboardController.destroy();
     mobileController.destroy();

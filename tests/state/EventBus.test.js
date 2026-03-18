@@ -169,5 +169,155 @@ describe('EventBus', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it('should handle error in once listener and still auto-unsubscribe', () => {
+      const eventBus = createEventBus();
+      const errorCallback = vi.fn(() => {
+        throw new Error('Once error');
+      });
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      eventBus.once('test', errorCallback);
+      eventBus.emit('test', {});
+      eventBus.emit('test', {}); // second emit
+
+      expect(errorCallback).toHaveBeenCalledTimes(1);
+      expect(eventBus.listenerCount('test')).toBe(0);
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should allow same callback to be registered multiple times', () => {
+      const eventBus = createEventBus();
+      const callback = vi.fn();
+
+      // Set uses reference equality, so same function registered twice = 1 entry
+      eventBus.on('test', callback);
+      eventBus.on('test', callback);
+      eventBus.emit('test', {});
+
+      // Set deduplicates, so callback should only be called once
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(eventBus.listenerCount('test')).toBe(1);
+    });
+
+    it('should handle emit to non-existent event gracefully', () => {
+      const eventBus = createEventBus();
+
+      expect(() => eventBus.emit('nonexistent', { data: 'test' })).not.toThrow();
+    });
+
+    it('should handle operations after destroy gracefully', () => {
+      const eventBus = createEventBus();
+      const callback = vi.fn();
+
+      eventBus.on('test', callback);
+      eventBus.destroy();
+
+      // All operations should be safe after destroy
+      expect(() => eventBus.emit('test', {})).not.toThrow();
+      expect(() => eventBus.on('test', callback)).not.toThrow();
+      expect(() => eventBus.off('test', callback)).not.toThrow();
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should handle unsubscribe called multiple times', () => {
+      const eventBus = createEventBus();
+      const callback = vi.fn();
+
+      const unsubscribe = eventBus.on('test', callback);
+      unsubscribe();
+      unsubscribe(); // second call should be safe
+      unsubscribe(); // third call should be safe
+
+      expect(() => eventBus.emit('test', {})).not.toThrow();
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('should handle listener removing itself during emit', () => {
+      const eventBus = createEventBus();
+      const results = [];
+
+      const selfRemovingCallback = () => {
+        results.push('self-removing');
+        eventBus.off('test', selfRemovingCallback);
+      };
+      const normalCallback = () => {
+        results.push('normal');
+      };
+
+      eventBus.on('test', selfRemovingCallback);
+      eventBus.on('test', normalCallback);
+      eventBus.emit('test', {});
+
+      // Both should have been called during first emit
+      expect(results).toContain('self-removing');
+      expect(results).toContain('normal');
+
+      // Second emit: only normal should be called
+      results.length = 0;
+      eventBus.emit('test', {});
+      expect(results).toEqual(['normal']);
+    });
+
+    it('should handle recursive emit from within listener', () => {
+      const eventBus = createEventBus();
+      let emitCount = 0;
+      const maxEmits = 3;
+
+      const recursiveCallback = vi.fn(() => {
+        emitCount++;
+        if (emitCount < maxEmits) {
+          eventBus.emit('test', { count: emitCount });
+        }
+      });
+
+      eventBus.on('test', recursiveCallback);
+      eventBus.emit('test', { count: 0 });
+
+      expect(recursiveCallback).toHaveBeenCalledTimes(maxEmits);
+    });
+
+    it('should clean up empty listener sets after off', () => {
+      const eventBus = createEventBus();
+      const callback = vi.fn();
+
+      eventBus.on('test', callback);
+      expect(eventBus.listenerCount('test')).toBe(1);
+
+      eventBus.off('test', callback);
+      expect(eventBus.listenerCount('test')).toBe(0);
+
+      // Internal map should be cleaned up (no dangling empty sets)
+      // Adding new listener should work correctly
+      eventBus.on('test', callback);
+      expect(eventBus.listenerCount('test')).toBe(1);
+    });
+
+    it('should handle listener adding new listener during emit', () => {
+      const eventBus = createEventBus();
+      const results = [];
+
+      const addingCallback = () => {
+        results.push('adding');
+        eventBus.on('test', () => results.push('newly-added'));
+      };
+
+      eventBus.on('test', addingCallback);
+      eventBus.emit('test', {});
+
+      // First emit: only 'adding' should be called (new listener added after iteration started)
+      // Behavior depends on Set iteration - new entries may or may not be visited
+      expect(results).toContain('adding');
+
+      // Second emit: both should definitely be called
+      results.length = 0;
+      eventBus.emit('test', {});
+      expect(results).toContain('adding');
+      expect(results).toContain('newly-added');
+    });
   });
 });
