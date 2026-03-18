@@ -135,7 +135,6 @@ async function init() {
     audioSettings,
     audioEngine,
     eventBus,
-    settingsModal,
   });
 
   const modalController = createModalController({ uiController, settingsModal });

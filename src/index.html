@@ -33,8 +33,6 @@
         <div class="mobile-btn-separator"></div>
         <button id="mobileToggleEditor" class="mobile-btn" title="Toggle Editor (⌘T)">📝</button>
         <button id="mobileToggleMode" class="mobile-btn" title="Switch Mode (⌘E)">🔄</button>
-        <button id="mobilePresets" class="mobile-btn" title="Presets (Ctrl+G)">💾</button>
-        <button id="mobileHelp" class="mobile-btn" title="Help">?</button>
     </div>
     
     <div class="editor-layer">
@@ -86,7 +84,8 @@
                 <button class="modal-close" id="closeHelp">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="help-section">
+                <!-- Desktop: Keyboard Shortcuts -->
+                <div class="help-section help-desktop-only">
                     <h3>Keyboard Shortcuts</h3>
                     <p class="help-description shortcut-note">Mac: <kbd>Ctrl</kbd> / Windows: <kbd>Ctrl+Shift</kbd></p>
                     <ul class="shortcut-list">
@@ -97,6 +96,21 @@
                         <li><kbd>V</kbd> Editor <strong>V</strong>isibility</li>
                         <li><kbd>M</kbd> <strong>M</strong>ode Switch (Sound/Visual)</li>
                         <li><kbd>D</kbd> <strong>D</strong>ebug Overlay</li>
+                    </ul>
+                </div>
+
+                <!-- Mobile: Control Buttons -->
+                <div class="help-section help-mobile-only">
+                    <h3>Control Buttons</h3>
+                    <p class="help-description">Tap buttons on the right sidebar:</p>
+                    <ul class="mobile-controls-list">
+                        <li><span class="mobile-icon">▶</span> Play / Pause</li>
+                        <li><span class="mobile-icon">↺</span> Reset</li>
+                        <li><span class="mobile-icon">⚙</span> Compile Shader</li>
+                        <li><span class="mobile-icon">✓</span> Apply Compiled Shader</li>
+                        <li><span class="mobile-icon">📝</span> Show / Hide Editor</li>
+                        <li><span class="mobile-icon">🎵</span> Sound Mode</li>
+                        <li><span class="mobile-icon">🎨</span> Visual Mode</li>
                     </ul>
                 </div>
 
