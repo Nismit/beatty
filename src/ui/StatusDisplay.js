@@ -33,6 +33,7 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
   const unsubscribers = [
     eventBus.on(EVENTS.BPM_CHANGED, ({ new: newBpm }) => updateBpmDisplay(newBpm)),
     eventBus.on(EVENTS.VOLUME_CHANGED, ({ new: newVolume }) => updateVolumeDisplay(newVolume)),
+    eventBus.on(EVENTS.BPM_CHANGE_BLOCKED, () => handleBpmChangeBlocked()),
   ];
 
   function updateBpmDisplay(bpm) {
@@ -41,6 +42,14 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
 
     const slider = document.getElementById('bpmSlider');
     if (slider) slider.value = bpm;
+  }
+
+  function handleBpmChangeBlocked() {
+    // Revert slider to current BPM value
+    updateBpmDisplay(audioSettings.bpm);
+    // Show brief warning
+    showError('Stop playback to change BPM');
+    setTimeout(clearError, 2000);
   }
 
   function updateVolumeDisplay(volume) {
