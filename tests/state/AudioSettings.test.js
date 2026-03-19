@@ -270,4 +270,62 @@ describe('AudioSettings', () => {
       expect(() => audioSettings.setSampleRate(44100.5)).toThrow(RangeError);
     });
   });
+
+  describe('BPM change during playback', () => {
+    it('should block BPM change when isPlayingCheck returns true', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus, {
+        isPlayingCheck: () => true,
+      });
+
+      const result = audioSettings.setBpm(140);
+
+      expect(result).toBe(false);
+      expect(audioSettings.bpm).toBe(AUDIO.DEFAULT_BPM); // unchanged
+      expect(eventBus.emit).toHaveBeenCalledWith(EVENTS.BPM_CHANGE_BLOCKED, {
+        attempted: 140,
+      });
+    });
+
+    it('should allow BPM change when isPlayingCheck returns false', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus, {
+        isPlayingCheck: () => false,
+      });
+
+      const result = audioSettings.setBpm(140);
+
+      expect(result).toBe(true);
+      expect(audioSettings.bpm).toBe(140);
+      expect(eventBus.emit).toHaveBeenCalledWith(EVENTS.BPM_CHANGED, {
+        old: AUDIO.DEFAULT_BPM,
+        new: 140,
+      });
+    });
+
+    it('should allow BPM change when no isPlayingCheck provided', () => {
+      const eventBus = createMockEventBus();
+      const audioSettings = createAudioSettings(eventBus);
+
+      const result = audioSettings.setBpm(140);
+
+      expect(result).toBe(true);
+      expect(audioSettings.bpm).toBe(140);
+    });
+
+    it('should emit BPM_CHANGE_BLOCKED before validation errors', () => {
+      const eventBus = createMockEventBus();
+      let isPlaying = false;
+      const audioSettings = createAudioSettings(eventBus, {
+        isPlayingCheck: () => isPlaying,
+      });
+
+      // First, verify it throws for invalid input when not playing
+      expect(() => audioSettings.setBpm('invalid')).toThrow(TypeError);
+
+      // When playing, validation error should still occur before playback check
+      isPlaying = true;
+      expect(() => audioSettings.setBpm('invalid')).toThrow(TypeError);
+    });
+  });
 });

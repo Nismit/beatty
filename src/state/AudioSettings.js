@@ -3,6 +3,8 @@
  * Manages BPM, volume, and sample rate with persistence via LocalStorage
  *
  * @param {import('./EventBus.js').EventBus} eventBus - EventBus instance
+ * @param {Object} [options] - Optional configuration
+ * @param {function(): boolean} [options.isPlayingCheck] - Function to check if audio is playing
  * @returns {AudioSettings}
  */
 
@@ -14,7 +16,7 @@ import { loadSettings, saveSettings } from '../utils/storage.js';
  * @property {number} bpm - Current BPM
  * @property {number} volume - Current volume (0-1)
  * @property {number} sampleRate - Audio sample rate
- * @property {function(number): void} setBpm - Set BPM
+ * @property {function(number): boolean} setBpm - Set BPM, returns false if blocked
  * @property {function(number): void} setVolume - Set volume
  * @property {function(number): void} setSampleRate - Set sample rate
  * @property {function(): number} getSamplesPerBar - Get samples per bar
@@ -24,9 +26,12 @@ import { loadSettings, saveSettings } from '../utils/storage.js';
 /**
  * Creates a new AudioSettings instance
  * @param {import('./EventBus.js').EventBus} eventBus
+ * @param {Object} [options]
+ * @param {function(): boolean} [options.isPlayingCheck]
  * @returns {AudioSettings}
  */
-export function createAudioSettings(eventBus) {
+export function createAudioSettings(eventBus, options = {}) {
+  const { isPlayingCheck = () => false } = options;
   const saved = loadSettings();
 
   const state = {
@@ -43,11 +48,19 @@ export function createAudioSettings(eventBus) {
     if (typeof newBpm !== 'number' || Number.isNaN(newBpm)) {
       throw new TypeError('BPM must be a number');
     }
+
+    // Block BPM changes during playback to prevent timing issues
+    if (isPlayingCheck()) {
+      eventBus.emit(EVENTS.BPM_CHANGE_BLOCKED, { attempted: newBpm });
+      return false;
+    }
+
     const clamped = Math.max(20, Math.min(300, newBpm));
     const oldBpm = state.bpm;
     state.bpm = clamped;
     eventBus.emit(EVENTS.BPM_CHANGED, { old: oldBpm, new: clamped });
     persist();
+    return true;
   }
 
   function setVolume(newVolume) {

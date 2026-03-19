@@ -19,7 +19,7 @@ import { EVENTS } from '../utils/consts.js';
  * @property {function(): void} reset - Reset all timing state
  * @property {function(number): void} advanceBlock - Advance block offset
  * @property {function(number): void} recordStartTime - Record playback start time
- * @property {function(number, number): void} recordPauseTime - Record pause time
+ * @property {function(number, number, number): void} recordPauseTime - Record pause time
  * @property {function(AudioContext | null): number} getCurrentTime - Get current playback time
  * @property {function(): void} destroy - Clean up
  */
@@ -65,12 +65,12 @@ export function createPlaybackState(eventBus) {
     state.startTime = audioContextTime;
   }
 
-  function recordPauseTime(audioContextTime, samplesPerBar) {
+  function recordPauseTime(audioContextTime, samplesPerBar, sampleRate) {
     if (state.startTime) {
       state.totalElapsedTime += audioContextTime - state.startTime;
     }
 
-    const elapsedSamples = Math.floor(state.totalElapsedTime * 48000);
+    const elapsedSamples = Math.floor(state.totalElapsedTime * sampleRate);
     state.pausedReadPos = elapsedSamples % samplesPerBar;
   }
 

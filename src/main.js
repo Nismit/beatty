@@ -32,7 +32,9 @@ async function init() {
   // Layer 0-1: State
   const eventBus = createEventBus();
   const playbackState = createPlaybackState(eventBus);
-  const audioSettings = createAudioSettings(eventBus);
+  const audioSettings = createAudioSettings(eventBus, {
+    isPlayingCheck: () => playbackState.isPlaying,
+  });
 
   // Layer 2: Core modules
   const audioEngine = new AudioEngine();

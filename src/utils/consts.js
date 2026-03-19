@@ -81,6 +81,7 @@ export const EVENTS = {
 
   // Audio Settings
   BPM_CHANGED: 'settings:bpmChanged',
+  BPM_CHANGE_BLOCKED: 'settings:bpmChangeBlocked',
   VOLUME_CHANGED: 'settings:volumeChanged',
 
   // Audio Buffer

@@ -36,6 +36,7 @@ export function createPlaybackController({
         playbackState.recordPauseTime(
           audioEngine.audioContext.currentTime,
           audioSettings.getSamplesPerBar(),
+          audioSettings.sampleRate,
         );
         playbackState.setPlaying(false, true);
       } else if (playbackState.isPaused) {

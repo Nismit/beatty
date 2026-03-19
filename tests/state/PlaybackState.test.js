@@ -97,7 +97,7 @@ describe('PlaybackState', () => {
 
       playbackState.recordStartTime(5.0);
       playbackState.setPlaying(true);
-      playbackState.recordPauseTime(8.0, 96000);
+      playbackState.recordPauseTime(8.0, 96000, 48000);
 
       expect(playbackState.totalElapsedTime).toBe(3.0);
     });
@@ -108,10 +108,24 @@ describe('PlaybackState', () => {
 
       playbackState.recordStartTime(0);
       playbackState.setPlaying(true);
-      playbackState.recordPauseTime(1.0, 48000);
+      playbackState.recordPauseTime(1.0, 48000, 48000);
 
       // 1 second at 48000 sample rate = 48000 samples
       // 48000 % 48000 = 0
+      expect(playbackState.pausedReadPos).toBe(0);
+    });
+
+    it('should handle different sample rates correctly', () => {
+      const eventBus = createMockEventBus();
+      const playbackState = createPlaybackState(eventBus);
+
+      playbackState.recordStartTime(0);
+      playbackState.setPlaying(true);
+      // 44100 Hz sample rate
+      playbackState.recordPauseTime(1.0, 44100, 44100);
+
+      // 1 second at 44100 sample rate = 44100 samples
+      // 44100 % 44100 = 0
       expect(playbackState.pausedReadPos).toBe(0);
     });
   });

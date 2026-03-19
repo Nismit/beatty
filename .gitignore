@@ -32,3 +32,4 @@ coverage/
 
 # Audio worklet (excluded from linting)
 # src/audio/audio-worklet.js
+copy.glsl
