@@ -52,7 +52,7 @@ describe('AudioSettings', () => {
       expect(audioSettings.bpm).toBe(150);
     });
 
-    it('should emit BPM_CHANGED event with old and new values', () => {
+    it('should emit BPM_CHANGED event with old, new values, and wasPlaying', () => {
       const eventBus = createMockEventBus();
       const audioSettings = createAudioSettings(eventBus);
 
@@ -61,6 +61,7 @@ describe('AudioSettings', () => {
       expect(eventBus.emit).toHaveBeenCalledWith(EVENTS.BPM_CHANGED, {
         old: AUDIO.DEFAULT_BPM,
         new: 140,
+        wasPlaying: false,
       });
     });
 
@@ -272,7 +273,7 @@ describe('AudioSettings', () => {
   });
 
   describe('BPM change during playback', () => {
-    it('should block BPM change when isPlayingCheck returns true', () => {
+    it('should allow BPM change when isPlayingCheck returns true (real-time BPM)', () => {
       const eventBus = createMockEventBus();
       const audioSettings = createAudioSettings(eventBus, {
         isPlayingCheck: () => true,
@@ -280,10 +281,12 @@ describe('AudioSettings', () => {
 
       const result = audioSettings.setBpm(140);
 
-      expect(result).toBe(false);
-      expect(audioSettings.bpm).toBe(AUDIO.DEFAULT_BPM); // unchanged
-      expect(eventBus.emit).toHaveBeenCalledWith(EVENTS.BPM_CHANGE_BLOCKED, {
-        attempted: 140,
+      expect(result).toBe(true);
+      expect(audioSettings.bpm).toBe(140);
+      expect(eventBus.emit).toHaveBeenCalledWith(EVENTS.BPM_CHANGED, {
+        old: AUDIO.DEFAULT_BPM,
+        new: 140,
+        wasPlaying: true,
       });
     });
 
@@ -300,6 +303,7 @@ describe('AudioSettings', () => {
       expect(eventBus.emit).toHaveBeenCalledWith(EVENTS.BPM_CHANGED, {
         old: AUDIO.DEFAULT_BPM,
         new: 140,
+        wasPlaying: false,
       });
     });
 
@@ -311,21 +315,6 @@ describe('AudioSettings', () => {
 
       expect(result).toBe(true);
       expect(audioSettings.bpm).toBe(140);
-    });
-
-    it('should emit BPM_CHANGE_BLOCKED before validation errors', () => {
-      const eventBus = createMockEventBus();
-      let isPlaying = false;
-      const audioSettings = createAudioSettings(eventBus, {
-        isPlayingCheck: () => isPlaying,
-      });
-
-      // First, verify it throws for invalid input when not playing
-      expect(() => audioSettings.setBpm('invalid')).toThrow(TypeError);
-
-      // When playing, validation error should still occur before playback check
-      isPlaying = true;
-      expect(() => audioSettings.setBpm('invalid')).toThrow(TypeError);
     });
   });
 });

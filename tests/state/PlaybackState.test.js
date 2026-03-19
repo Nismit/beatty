@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createPlaybackState } from '../../src/state/PlaybackState.js';
-import { EVENTS } from '../../src/utils/consts.js';
+import { AUDIO, EVENTS } from '../../src/utils/consts.js';
 
 function createMockEventBus() {
   return {
@@ -18,7 +18,7 @@ describe('PlaybackState', () => {
 
       expect(playbackState.isPlaying).toBe(false);
       expect(playbackState.isPaused).toBe(false);
-      expect(playbackState.blockOffset).toBe(0);
+      expect(playbackState.beatOffset).toBe(0);
       expect(playbackState.totalElapsedTime).toBe(0);
       expect(playbackState.pausedReadPos).toBe(0);
     });
@@ -64,15 +64,15 @@ describe('PlaybackState', () => {
   });
 
   describe('advanceBlock', () => {
-    it('should advance block offset by specified seconds', () => {
+    it('should advance beat offset by BEATS_PER_BAR (4)', () => {
       const eventBus = createMockEventBus();
       const playbackState = createPlaybackState(eventBus);
 
-      playbackState.advanceBlock(2.0);
-      expect(playbackState.blockOffset).toBe(2.0);
+      playbackState.advanceBlock();
+      expect(playbackState.beatOffset).toBe(AUDIO.BEATS_PER_BAR);
 
-      playbackState.advanceBlock(1.5);
-      expect(playbackState.blockOffset).toBe(3.5);
+      playbackState.advanceBlock();
+      expect(playbackState.beatOffset).toBe(AUDIO.BEATS_PER_BAR * 2);
     });
   });
 
@@ -167,7 +167,7 @@ describe('PlaybackState', () => {
 
       // Modify state
       playbackState.setPlaying(true);
-      playbackState.advanceBlock(5.0);
+      playbackState.advanceBlock();
       playbackState.recordStartTime(10.0);
 
       // Reset
@@ -175,7 +175,7 @@ describe('PlaybackState', () => {
 
       expect(playbackState.isPlaying).toBe(false);
       expect(playbackState.isPaused).toBe(false);
-      expect(playbackState.blockOffset).toBe(0);
+      expect(playbackState.beatOffset).toBe(0);
       expect(playbackState.totalElapsedTime).toBe(0);
       expect(playbackState.pausedReadPos).toBe(0);
     });
@@ -196,32 +196,15 @@ describe('PlaybackState', () => {
       const playbackState = createPlaybackState(eventBus);
 
       playbackState.setPlaying(true);
-      playbackState.advanceBlock(3.0);
+      playbackState.advanceBlock();
       playbackState.destroy();
 
       expect(playbackState.isPlaying).toBe(false);
-      expect(playbackState.blockOffset).toBe(0);
+      expect(playbackState.beatOffset).toBe(0);
     });
   });
 
   describe('input validation', () => {
-    it('should throw TypeError for non-number advanceBlock', () => {
-      const eventBus = createMockEventBus();
-      const playbackState = createPlaybackState(eventBus);
-
-      expect(() => playbackState.advanceBlock('5')).toThrow(TypeError);
-      expect(() => playbackState.advanceBlock(null)).toThrow(TypeError);
-      expect(() => playbackState.advanceBlock(NaN)).toThrow(TypeError);
-    });
-
-    it('should throw RangeError for non-positive advanceBlock', () => {
-      const eventBus = createMockEventBus();
-      const playbackState = createPlaybackState(eventBus);
-
-      expect(() => playbackState.advanceBlock(0)).toThrow(RangeError);
-      expect(() => playbackState.advanceBlock(-1)).toThrow(RangeError);
-    });
-
     it('should throw TypeError for non-number recordStartTime', () => {
       const eventBus = createMockEventBus();
       const playbackState = createPlaybackState(eventBus);

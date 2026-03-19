@@ -60,9 +60,10 @@ async function init() {
   });
 
   // Layer 2: Audio scheduling (injects generateBuffer to decouple Audio↔GL)
+  // generateBuffer receives (beatOffset, bpm) for beat-based tracking
   const audioScheduler = createAudioScheduler({
-    generateBuffer: (blockOffset) =>
-      soundRenderer.generateAudioBuffer(blockOffset, audioSettings.bpm, audioSettings.sampleRate),
+    generateBuffer: (beatOffset, bpm) =>
+      soundRenderer.generateAudioBuffer(beatOffset, bpm, audioSettings.sampleRate),
     audioSettings,
     audioEngine,
   });
@@ -146,6 +147,16 @@ async function init() {
     audioEngine.setVolume(newVolume);
   });
 
+  // BPM change during playback: clear pending buffers for seamless transition
+  // Beat-based tracking preserves musical position across BPM changes
+  const unsubscribeBpmChanged = eventBus.on(EVENTS.BPM_CHANGED, ({ wasPlaying }) => {
+    if (wasPlaying) {
+      // Clear stale buffers generated with old BPM
+      // beatOffset remains unchanged → same musical position continues
+      audioEngine.clearPendingBuffers();
+    }
+  });
+
   // Initialize
   try {
     // Load saved shaders or defaults
@@ -186,6 +197,7 @@ async function init() {
   // Cleanup on page unload
   window.addEventListener('beforeunload', () => {
     unsubscribeVolumeChanged();
+    unsubscribeBpmChanged();
     playbackController.destroy();
     keyboardController.destroy();
     mobileController.destroy();

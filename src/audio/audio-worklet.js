@@ -34,6 +34,12 @@ class GLSLAudioProcessor extends AudioWorkletProcessor {
         case 'setReadPosition':
           this.readPos = data;
           break;
+        case 'clearBuffer':
+          // Clear pending buffer for BPM changes during playback
+          this.nextBuffer = null;
+          this.nextBufferReady = false;
+          this.nextBufferRequested = false;
+          break;
       }
     };
   }

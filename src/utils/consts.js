@@ -18,6 +18,7 @@ export const AUDIO = {
   SAMPLES_PER_BAR_MULTIPLIER: 240,
   STEREO: 2,
   BYTES_PER_SAMPLE: 4, // Float32Array.BYTES_PER_ELEMENT
+  BEATS_PER_BAR: 4, // 4 beats per bar (1 bar = 4 quarter notes)
 };
 
 export const ANALYSIS = {
@@ -81,7 +82,6 @@ export const EVENTS = {
 
   // Audio Settings
   BPM_CHANGED: 'settings:bpmChanged',
-  BPM_CHANGE_BLOCKED: 'settings:bpmChangeBlocked',
   VOLUME_CHANGED: 'settings:volumeChanged',
 
   // Audio Buffer

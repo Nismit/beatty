@@ -164,6 +164,14 @@ export class AudioEngine {
   }
 
   /**
+   * Clear pending buffers in the worklet
+   * Used when BPM changes during playback to discard stale data
+   */
+  clearPendingBuffers() {
+    this.#postToWorklet('clearBuffer', null);
+  }
+
+  /**
    * Set playback volume
    * @param {number} volume
    */

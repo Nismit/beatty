@@ -26,6 +26,21 @@ export function createMobileController({
 }) {
   const cleanups = [];
   let isCompiled = false;
+  let bpmDebounceTimer = null;
+
+  /**
+   * Debounce BPM changes to avoid rapid resets during slider drag
+   * @param {number} value
+   */
+  function debouncedSetBpm(value) {
+    if (bpmDebounceTimer) {
+      clearTimeout(bpmDebounceTimer);
+    }
+    bpmDebounceTimer = setTimeout(() => {
+      audioSettings.setBpm(value);
+      bpmDebounceTimer = null;
+    }, 300);
+  }
 
   /**
    * Bind a click handler to an element by ID
@@ -95,9 +110,9 @@ export function createMobileController({
       editor.switchMode();
     });
 
-    // Sliders
+    // Sliders (BPM is debounced to avoid rapid resets during playback)
     bindInput('bpmSlider', (e) => {
-      audioSettings.setBpm(parseInt(e.target.value, 10));
+      debouncedSetBpm(parseInt(e.target.value, 10));
     });
 
     bindInput('volumeSlider', (e) => {
@@ -130,6 +145,10 @@ export function createMobileController({
   }
 
   function destroy() {
+    if (bpmDebounceTimer) {
+      clearTimeout(bpmDebounceTimer);
+      bpmDebounceTimer = null;
+    }
     for (const cleanup of cleanups) {
       cleanup();
     }

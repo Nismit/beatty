@@ -2,22 +2,26 @@
  * PlaybackState factory function
  * Manages playback state and timing information
  *
+ * Beat-based tracking enables seamless BPM changes during playback:
+ * - Internally tracks position in beats (not seconds)
+ * - Musical position is preserved when BPM changes
+ *
  * @param {import('./EventBus.js').EventBus} eventBus - EventBus instance
  * @returns {PlaybackState}
  */
 
-import { EVENTS } from '../utils/consts.js';
+import { AUDIO, EVENTS } from '../utils/consts.js';
 
 /**
  * @typedef {Object} PlaybackState
  * @property {boolean} isPlaying - Whether audio is currently playing
  * @property {boolean} isPaused - Whether audio is paused
- * @property {number} blockOffset - Current block offset for audio scheduling
+ * @property {number} beatOffset - Current beat offset for audio scheduling
  * @property {number} totalElapsedTime - Total elapsed playback time in seconds
  * @property {number} pausedReadPos - Read position when paused (in samples)
  * @property {function(boolean, boolean=): void} setPlaying - Set play state
  * @property {function(): void} reset - Reset all timing state
- * @property {function(number): void} advanceBlock - Advance block offset
+ * @property {function(): void} advanceBlock - Advance beat offset by one bar
  * @property {function(number): void} recordStartTime - Record playback start time
  * @property {function(number, number, number): void} recordPauseTime - Record pause time
  * @property {function(AudioContext | null): number} getCurrentTime - Get current playback time
@@ -33,7 +37,7 @@ export function createPlaybackState(eventBus) {
   const state = {
     isPlaying: false,
     isPaused: false,
-    blockOffset: 0,
+    beatOffset: 0,
     startTime: 0,
     totalElapsedTime: 0,
     pausedReadPos: 0,
@@ -45,14 +49,8 @@ export function createPlaybackState(eventBus) {
     eventBus.emit(EVENTS.PLAY_STATE_CHANGED, { isPlaying: playing, isPaused: paused });
   }
 
-  function advanceBlock(secondsPerBar) {
-    if (typeof secondsPerBar !== 'number' || Number.isNaN(secondsPerBar)) {
-      throw new TypeError('secondsPerBar must be a number');
-    }
-    if (secondsPerBar <= 0) {
-      throw new RangeError('secondsPerBar must be positive');
-    }
-    state.blockOffset += secondsPerBar;
+  function advanceBlock() {
+    state.beatOffset += AUDIO.BEATS_PER_BAR;
   }
 
   function recordStartTime(audioContextTime) {
@@ -84,7 +82,7 @@ export function createPlaybackState(eventBus) {
   function reset() {
     state.isPlaying = false;
     state.isPaused = false;
-    state.blockOffset = 0;
+    state.beatOffset = 0;
     state.startTime = 0;
     state.totalElapsedTime = 0;
     state.pausedReadPos = 0;
@@ -102,8 +100,8 @@ export function createPlaybackState(eventBus) {
     get isPaused() {
       return state.isPaused;
     },
-    get blockOffset() {
-      return state.blockOffset;
+    get beatOffset() {
+      return state.beatOffset;
     },
     get totalElapsedTime() {
       return state.totalElapsedTime;

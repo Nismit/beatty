@@ -49,16 +49,13 @@ export function createAudioSettings(eventBus, options = {}) {
       throw new TypeError('BPM must be a number');
     }
 
-    // Block BPM changes during playback to prevent timing issues
-    if (isPlayingCheck()) {
-      eventBus.emit(EVENTS.BPM_CHANGE_BLOCKED, { attempted: newBpm });
-      return false;
-    }
-
     const clamped = Math.max(20, Math.min(300, newBpm));
+    if (clamped === state.bpm) return true; // No change
+
     const oldBpm = state.bpm;
+    const wasPlaying = isPlayingCheck();
     state.bpm = clamped;
-    eventBus.emit(EVENTS.BPM_CHANGED, { old: oldBpm, new: clamped });
+    eventBus.emit(EVENTS.BPM_CHANGED, { old: oldBpm, new: clamped, wasPlaying });
     persist();
     return true;
   }

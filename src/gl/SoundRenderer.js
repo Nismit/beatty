@@ -80,16 +80,20 @@ export class SoundRenderer {
 
   /**
    * Generate an audio buffer using Transform Feedback
-   * @param {number} blockOffset - Time offset in seconds
-   * @param {number} bpm
-   * @param {number} sampleRate
+   * @param {number} beatOffset - Beat offset (musical position in beats)
+   * @param {number} bpm - Beats per minute
+   * @param {number} sampleRate - Audio sample rate
    * @returns {Promise<Float32Array>} Stereo interleaved audio data
    */
-  generateAudioBuffer(blockOffset, bpm, sampleRate) {
+  generateAudioBuffer(beatOffset, bpm, sampleRate) {
     return new Promise((resolve, reject) => {
       try {
         const gl = this.#gl;
         const samplesPerBar = Math.floor((AUDIO.SAMPLES_PER_BAR_MULTIPLIER * sampleRate) / bpm);
+
+        // Convert beat offset to seconds for shader
+        // beatOffset * 60 / bpm = seconds
+        const blockOffset = (beatOffset * 60.0) / bpm;
 
         const buffer = this.#getPooledBuffer(samplesPerBar);
 
