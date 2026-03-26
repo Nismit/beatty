@@ -121,6 +121,10 @@ body {
     overflow: hidden;
 }
 
+.cm-editor.ͼx {
+    background-color: unset;
+}
+
 .cm-scroller {
     overflow-x: auto !important;
 }
@@ -137,7 +141,7 @@ body {
 }
 
 .ͼ1 .cm-content {
-    padding: 8px 0;
+    padding: 1px 0 8px;
 }
 
 .status-line {
@@ -463,7 +467,7 @@ body {
 .modal-body {
     padding: 20px;
     overflow-y: auto;
-    max-height: calc(80vh - 80px);
+    max-height: calc(80vh - 100px);
     color: #f8f8f2;
 }
 
