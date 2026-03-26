@@ -1,7 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createKeyboardController } from '../../src/input/KeyboardController.js';
 
-function createMockDeps() {
+function createMockHotkeySettings(requiredModifiers = { ctrl: true, shift: true }) {
+  return {
+    isModifierPressed: vi.fn((event) => {
+      const ctrlMatch = !requiredModifiers.ctrl || event.ctrlKey;
+      const shiftMatch = !requiredModifiers.shift || event.shiftKey;
+      const altMatch = !requiredModifiers.alt || event.altKey;
+      const metaMatch = !requiredModifiers.meta || event.metaKey;
+      const anyPressed = event.ctrlKey || event.shiftKey || event.altKey || event.metaKey;
+      return ctrlMatch && shiftMatch && altMatch && metaMatch && anyPressed;
+    }),
+    getModifiers: vi.fn(() => requiredModifiers),
+  };
+}
+
+function createMockDeps(hotkeyModifiers) {
   return {
     playbackController: {
       togglePlayback: vi.fn(),
@@ -25,6 +39,7 @@ function createMockDeps() {
     debugOverlay: {
       toggle: vi.fn(),
     },
+    hotkeySettings: createMockHotkeySettings(hotkeyModifiers),
   };
 }
 
@@ -33,6 +48,8 @@ function createKeyboardEvent(key, options = {}) {
     key,
     ctrlKey: options.ctrlKey || false,
     shiftKey: options.shiftKey || false,
+    altKey: options.altKey || false,
+    metaKey: options.metaKey || false,
     bubbles: true,
   });
 }
@@ -125,6 +142,49 @@ describe('KeyboardController', () => {
       document.dispatchEvent(createKeyboardEvent('P', shortcutModifiers));
 
       expect(deps.playbackController.togglePlayback).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('custom hotkey modifiers', () => {
+    it('should work with Alt only modifier', () => {
+      const customDeps = createMockDeps({ alt: true });
+      const customController = createKeyboardController(customDeps);
+      customController.init();
+
+      document.dispatchEvent(createKeyboardEvent('P', { altKey: true }));
+
+      expect(customDeps.playbackController.togglePlayback).toHaveBeenCalled();
+
+      customController.destroy();
+    });
+
+    it('should not trigger with wrong modifier combination', () => {
+      const customDeps = createMockDeps({ alt: true });
+      const customController = createKeyboardController(customDeps);
+      customController.init();
+
+      // Using Ctrl instead of Alt
+      document.dispatchEvent(createKeyboardEvent('P', { ctrlKey: true }));
+
+      expect(customDeps.playbackController.togglePlayback).not.toHaveBeenCalled();
+
+      customController.destroy();
+    });
+
+    it('should work with multiple modifiers (Ctrl + Alt)', () => {
+      const customDeps = createMockDeps({ ctrl: true, alt: true });
+      const customController = createKeyboardController(customDeps);
+      customController.init();
+
+      // Only Ctrl - should not work
+      document.dispatchEvent(createKeyboardEvent('P', { ctrlKey: true }));
+      expect(customDeps.playbackController.togglePlayback).not.toHaveBeenCalled();
+
+      // Both Ctrl + Alt - should work
+      document.dispatchEvent(createKeyboardEvent('P', { ctrlKey: true, altKey: true }));
+      expect(customDeps.playbackController.togglePlayback).toHaveBeenCalled();
+
+      customController.destroy();
     });
   });
 });

@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { STORAGE_KEYS } from '../../src/utils/consts.js';
+import { DEFAULT_HOTKEY_MODIFIERS, STORAGE_KEYS } from '../../src/utils/consts.js';
 import {
   clearAllData,
   clearSettings,
   clearShader,
   getStorageInfo,
   hasShader,
+  loadHotkeySettings,
   loadSettings,
   loadShader,
+  saveHotkeySettings,
   saveSettings,
   saveShader,
 } from '../../src/utils/storage.js';
@@ -242,6 +244,78 @@ describe('storage', () => {
       clearAllData();
 
       expect(localStorage.getItem('other_app_key')).toBe('some value');
+    });
+
+    it('should clear hotkey settings', () => {
+      saveHotkeySettings({ ctrl: false, shift: true, alt: false, meta: false });
+
+      clearAllData();
+
+      expect(localStorage.getItem(STORAGE_KEYS.HOTKEY_SETTINGS)).toBeNull();
+    });
+  });
+
+  describe('saveHotkeySettings / loadHotkeySettings', () => {
+    it('should save and load hotkey settings', () => {
+      const modifiers = { ctrl: false, shift: true, alt: true, meta: false };
+
+      const saved = saveHotkeySettings(modifiers);
+      const loaded = loadHotkeySettings();
+
+      expect(saved).toBe(true);
+      expect(loaded).toEqual(modifiers);
+    });
+
+    it('should return defaults when no settings saved', () => {
+      const loaded = loadHotkeySettings();
+
+      expect(loaded).toEqual(DEFAULT_HOTKEY_MODIFIERS);
+    });
+
+    it('should handle corrupted JSON gracefully', () => {
+      localStorage.setItem(STORAGE_KEYS.HOTKEY_SETTINGS, 'invalid json');
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = loadHotkeySettings();
+      consoleSpy.mockRestore();
+
+      expect(result).toEqual(DEFAULT_HOTKEY_MODIFIERS);
+    });
+
+    it('should handle missing modifiers object', () => {
+      const invalidData = { timestamp: Date.now(), version: '1.0' };
+      localStorage.setItem(STORAGE_KEYS.HOTKEY_SETTINGS, JSON.stringify(invalidData));
+
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const result = loadHotkeySettings();
+      consoleSpy.mockRestore();
+
+      expect(result).toEqual(DEFAULT_HOTKEY_MODIFIERS);
+      // Should have removed invalid data
+      expect(localStorage.getItem(STORAGE_KEYS.HOTKEY_SETTINGS)).toBeNull();
+    });
+
+    it('should handle non-object modifiers value', () => {
+      const invalidData = { modifiers: 'not an object', timestamp: Date.now() };
+      localStorage.setItem(STORAGE_KEYS.HOTKEY_SETTINGS, JSON.stringify(invalidData));
+
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const result = loadHotkeySettings();
+      consoleSpy.mockRestore();
+
+      expect(result).toEqual(DEFAULT_HOTKEY_MODIFIERS);
+    });
+
+    it('should coerce values to boolean', () => {
+      const weirdModifiers = { ctrl: 1, shift: '', alt: 'truthy', meta: undefined };
+      saveHotkeySettings(weirdModifiers);
+
+      const loaded = loadHotkeySettings();
+
+      expect(loaded.ctrl).toBe(true);
+      expect(loaded.shift).toBe(false);
+      expect(loaded.alt).toBe(true);
+      expect(loaded.meta).toBe(false);
     });
   });
 });
