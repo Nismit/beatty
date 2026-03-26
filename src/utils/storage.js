@@ -3,7 +3,7 @@
  * Provides pure functions for saving and loading data to/from LocalStorage
  */
 
-import { STORAGE_KEYS } from './consts.js';
+import { DEFAULT_HOTKEY_MODIFIERS, STORAGE_KEYS } from './consts.js';
 
 /**
  * Get storage key for given mode
@@ -174,9 +174,63 @@ export function clearAllData() {
     localStorage.removeItem(STORAGE_KEYS.SOUND_SHADER);
     localStorage.removeItem(STORAGE_KEYS.VISUAL_SHADER);
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    localStorage.removeItem(STORAGE_KEYS.HOTKEY_SETTINGS);
     return true;
   } catch (error) {
     console.error('[Storage] Failed to clear all data:', error);
     return false;
+  }
+}
+
+/**
+ * Save hotkey settings to LocalStorage
+ * @param {{ ctrl: boolean, shift: boolean, alt: boolean, meta: boolean }} modifiers
+ * @returns {boolean} Success status
+ */
+export function saveHotkeySettings(modifiers) {
+  try {
+    const data = {
+      modifiers,
+      timestamp: Date.now(),
+      version: '1.0',
+    };
+
+    localStorage.setItem(STORAGE_KEYS.HOTKEY_SETTINGS, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error('[Storage] Failed to save hotkey settings:', error);
+    return false;
+  }
+}
+
+/**
+ * Load hotkey settings from LocalStorage
+ * @returns {{ ctrl: boolean, shift: boolean, alt: boolean, meta: boolean }}
+ */
+export function loadHotkeySettings() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.HOTKEY_SETTINGS);
+
+    if (!stored) {
+      return { ...DEFAULT_HOTKEY_MODIFIERS };
+    }
+
+    const data = JSON.parse(stored);
+
+    if (!data.modifiers || typeof data.modifiers !== 'object') {
+      console.warn('[Storage] Invalid hotkey settings data, using defaults');
+      localStorage.removeItem(STORAGE_KEYS.HOTKEY_SETTINGS);
+      return { ...DEFAULT_HOTKEY_MODIFIERS };
+    }
+
+    return {
+      ctrl: Boolean(data.modifiers.ctrl),
+      shift: Boolean(data.modifiers.shift),
+      alt: Boolean(data.modifiers.alt),
+      meta: Boolean(data.modifiers.meta),
+    };
+  } catch (error) {
+    console.error('[Storage] Failed to load hotkey settings:', error);
+    return { ...DEFAULT_HOTKEY_MODIFIERS };
   }
 }

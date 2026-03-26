@@ -67,6 +67,14 @@ export const STORAGE_KEYS = {
   VISUAL_SHADER: 'beatty_visual_shader',
   SETTINGS: 'beatty_settings',
   PRESETS: 'beatty_presets',
+  HOTKEY_SETTINGS: 'beatty_hotkey_settings',
+};
+
+export const DEFAULT_HOTKEY_MODIFIERS = {
+  ctrl: true,
+  shift: false,
+  alt: false,
+  meta: false,
 };
 
 export const PRESET = {
@@ -107,4 +115,7 @@ export const EVENTS = {
   PRESET_LOADED: 'preset:loaded',
   PRESET_DELETED: 'preset:deleted',
   PRESET_IMPORTED: 'preset:imported',
+
+  // Hotkey
+  HOTKEY_MODIFIERS_CHANGED: 'hotkey:modifiersChanged',
 };

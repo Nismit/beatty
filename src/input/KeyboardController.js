@@ -3,8 +3,6 @@
  * Manages keyboard shortcuts for playback, shader, and editor controls
  */
 
-const isMac = navigator.userAgent.includes('Mac');
-
 /**
  * @param {Object} deps
  * @param {import('../controllers/PlaybackController.js')} deps.playbackController
@@ -13,6 +11,7 @@ const isMac = navigator.userAgent.includes('Mac');
  * @param {import('../editor/Editor.js').Editor} deps.editor
  * @param {import('../ui/SettingsModal.js')} deps.settingsModal
  * @param {import('../ui/DebugOverlay.js')} deps.debugOverlay
+ * @param {import('../state/HotkeySettings.js')} deps.hotkeySettings
  */
 export function createKeyboardController({
   playbackController,
@@ -21,6 +20,7 @@ export function createKeyboardController({
   editor,
   settingsModal,
   debugOverlay,
+  hotkeySettings,
 }) {
   function handleKeydown(e) {
     if (e.key === 'Escape') {
@@ -29,7 +29,7 @@ export function createKeyboardController({
       return;
     }
 
-    const modifierPressed = isMac ? e.ctrlKey : e.ctrlKey && e.shiftKey;
+    const modifierPressed = hotkeySettings.isModifierPressed(e);
 
     if (modifierPressed) {
       switch (e.key.toLowerCase()) {

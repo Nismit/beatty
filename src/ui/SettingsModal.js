@@ -17,9 +17,10 @@ import {
  * @param {Object} deps
  * @param {import('../state/EventBus.js').EventBus} deps.eventBus
  * @param {import('../editor/Editor.js').Editor} deps.editor
+ * @param {import('../state/HotkeySettings.js')} deps.hotkeySettings
  * @param {function(string): void} deps.onLoad - Callback when preset is loaded
  */
-export function createSettingsModal({ eventBus, editor, onLoad }) {
+export function createSettingsModal({ eventBus, editor, hotkeySettings, onLoad }) {
   const cleanups = [];
 
   function getModal() {
@@ -222,6 +223,58 @@ export function createSettingsModal({ eventBus, editor, onLoad }) {
     }
   }
 
+  function renderHotkeySettings() {
+    const modifiers = hotkeySettings.getModifiers();
+
+    const ctrlCheckbox = document.getElementById('hotkeyCtrl');
+    const shiftCheckbox = document.getElementById('hotkeyShift');
+    const altCheckbox = document.getElementById('hotkeyAlt');
+    const metaCheckbox = document.getElementById('hotkeyMeta');
+
+    if (ctrlCheckbox) ctrlCheckbox.checked = modifiers.ctrl;
+    if (shiftCheckbox) shiftCheckbox.checked = modifiers.shift;
+    if (altCheckbox) altCheckbox.checked = modifiers.alt;
+    if (metaCheckbox) metaCheckbox.checked = modifiers.meta;
+
+    updateHotkeyPreview();
+  }
+
+  function updateHotkeyPreview() {
+    const previewEl = document.getElementById('hotkeyPreview');
+    if (previewEl) {
+      previewEl.textContent = `${hotkeySettings.getDisplayString()} + P, C, A, V, M, I, D`;
+    }
+  }
+
+  function handleHotkeyChange() {
+    const ctrlCheckbox = document.getElementById('hotkeyCtrl');
+    const shiftCheckbox = document.getElementById('hotkeyShift');
+    const altCheckbox = document.getElementById('hotkeyAlt');
+    const metaCheckbox = document.getElementById('hotkeyMeta');
+
+    const newModifiers = {
+      ctrl: ctrlCheckbox?.checked ?? false,
+      shift: shiftCheckbox?.checked ?? false,
+      alt: altCheckbox?.checked ?? false,
+      meta: metaCheckbox?.checked ?? false,
+    };
+
+    // At least one must be selected
+    if (!newModifiers.ctrl && !newModifiers.shift && !newModifiers.alt && !newModifiers.meta) {
+      alert('At least one modifier key must be selected.');
+      renderHotkeySettings(); // Reset to current values
+      return;
+    }
+
+    hotkeySettings.setModifiers(newModifiers);
+    updateHotkeyPreview();
+  }
+
+  function handleHotkeyReset() {
+    hotkeySettings.resetToDefault();
+    renderHotkeySettings();
+  }
+
   function init() {
     // Tab switching
     const tabContainer = document.querySelector('.settings-tabs');
@@ -250,6 +303,26 @@ export function createSettingsModal({ eventBus, editor, onLoad }) {
       closeBtn.addEventListener('click', hide);
       cleanups.push(() => closeBtn.removeEventListener('click', hide));
     }
+
+    // Hotkey checkboxes
+    const hotkeyCheckboxes = ['hotkeyCtrl', 'hotkeyShift', 'hotkeyAlt', 'hotkeyMeta'];
+    for (const id of hotkeyCheckboxes) {
+      const checkbox = document.getElementById(id);
+      if (checkbox) {
+        checkbox.addEventListener('change', handleHotkeyChange);
+        cleanups.push(() => checkbox.removeEventListener('change', handleHotkeyChange));
+      }
+    }
+
+    // Hotkey reset button
+    const hotkeyResetBtn = document.getElementById('hotkeyResetBtn');
+    if (hotkeyResetBtn) {
+      hotkeyResetBtn.addEventListener('click', handleHotkeyReset);
+      cleanups.push(() => hotkeyResetBtn.removeEventListener('click', handleHotkeyReset));
+    }
+
+    // Initial render of hotkey settings
+    renderHotkeySettings();
   }
 
   function destroy() {

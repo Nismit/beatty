@@ -170,6 +170,7 @@
             <div class="settings-tabs">
                 <button class="settings-tab active" data-tab="presets">Presets</button>
                 <button class="settings-tab" data-tab="audio">Audio</button>
+                <button class="settings-tab" data-tab="hotkeys">Hotkeys</button>
             </div>
             <div class="modal-body">
                 <!-- Presets Tab -->
@@ -192,6 +193,32 @@
                                 <option value="8192">8192 (High stability)</option>
                             </select>
                         </label>
+                    </div>
+                </div>
+                <!-- Hotkeys Tab -->
+                <div class="settings-tab-content" id="tab-hotkeys">
+                    <div class="settings-section">
+                        <label class="settings-label">Modifier Keys</label>
+                        <div class="hotkey-checkboxes">
+                            <label class="hotkey-checkbox">
+                                <input type="checkbox" id="hotkeyCtrl">
+                                <span>Ctrl</span>
+                            </label>
+                            <label class="hotkey-checkbox">
+                                <input type="checkbox" id="hotkeyShift">
+                                <span>Shift</span>
+                            </label>
+                            <label class="hotkey-checkbox">
+                                <input type="checkbox" id="hotkeyAlt">
+                                <span>Alt</span>
+                            </label>
+                            <label class="hotkey-checkbox">
+                                <input type="checkbox" id="hotkeyMeta">
+                                <span>Meta</span>
+                            </label>
+                        </div>
+                        <div class="hotkey-preview" id="hotkeyPreview">Ctrl + P, C, A, V, M, I, D</div>
+                        <button id="hotkeyResetBtn" class="preset-action-btn">Reset to Default</button>
                     </div>
                 </div>
             </div>

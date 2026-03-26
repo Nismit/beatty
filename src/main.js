@@ -19,6 +19,7 @@ import { createMobileController } from './input/MobileController.js';
 import { createModalController } from './input/ModalController.js';
 import { createAudioSettings } from './state/AudioSettings.js';
 import { createEventBus } from './state/EventBus.js';
+import { createHotkeySettings } from './state/HotkeySettings.js';
 import { createPlaybackState } from './state/PlaybackState.js';
 import { createDebugOverlay } from './ui/DebugOverlay.js';
 import { createSettingsModal } from './ui/SettingsModal.js';
@@ -35,6 +36,7 @@ async function init() {
   const audioSettings = createAudioSettings(eventBus, {
     isPlayingCheck: () => playbackState.isPlaying,
   });
+  const hotkeySettings = createHotkeySettings(eventBus);
 
   // Layer 2: Core modules
   const audioEngine = new AudioEngine();
@@ -110,6 +112,7 @@ async function init() {
   const settingsModal = createSettingsModal({
     eventBus,
     editor,
+    hotkeySettings,
     onLoad: (presetId) => presetController.loadPreset(presetId),
   });
 
@@ -128,6 +131,7 @@ async function init() {
     editor,
     settingsModal,
     debugOverlay,
+    hotkeySettings,
   });
 
   const mobileController = createMobileController({
@@ -217,6 +221,7 @@ async function init() {
     editor.destroy();
     playbackState.destroy();
     audioSettings.destroy();
+    hotkeySettings.destroy();
     eventBus.destroy();
   });
 
