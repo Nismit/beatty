@@ -11,19 +11,13 @@ import {
 import { EVENTS } from '../utils/consts.js';
 import { saveShader } from '../utils/storage.js';
 
-const BUILT_IN_PRESETS = {
-  default: {
-    soundMain: DEFAULT_SOUND_SHADER,
-    soundUtils: '',
-    visualMain: DEFAULT_VISUAL_SHADER,
-    visualUtils: '',
-  },
-  demo: {
-    soundMain: DEMO_SOUND_SHADER,
-    soundUtils: '',
-    visualMain: DEFAULT_VISUAL_SHADER,
-    visualUtils: '',
-  },
+const SOUND_PRESETS = {
+  default: { main: DEFAULT_SOUND_SHADER, utils: '' },
+  demo: { main: DEMO_SOUND_SHADER, utils: '' },
+};
+
+const VISUAL_PRESETS = {
+  default: { main: DEFAULT_VISUAL_SHADER, utils: '' },
 };
 
 /**
@@ -126,21 +120,43 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, initShad
     input.click();
   }
 
-  function applyPreset(presetName) {
-    const preset = BUILT_IN_PRESETS[presetName];
+  function applySoundPreset(presetName) {
+    const preset = SOUND_PRESETS[presetName];
     if (!preset) return;
 
-    const { soundMain, soundUtils, visualMain, visualUtils } = preset;
+    const { main, utils } = preset;
+    const currentCodes = editor.getAllCodes();
 
-    // Update editor
-    editor.setAllCodes({ soundMain, soundUtils, visualMain, visualUtils });
+    // Update editor (sound only)
+    editor.setAllCodes({ soundMain: main, soundUtils: utils });
 
     // Save to LocalStorage
-    saveShader('sound', soundMain, soundUtils);
-    saveShader('visual', visualMain, visualUtils);
+    saveShader('sound', main, utils);
 
-    // Compile and apply
-    initShaders({ main: soundMain, utils: soundUtils }, { main: visualMain, utils: visualUtils });
+    // Compile and apply (keep current visual)
+    initShaders(
+      { main, utils },
+      { main: currentCodes.visualMain, utils: currentCodes.visualUtils },
+    );
+
+    hide();
+  }
+
+  function applyVisualPreset(presetName) {
+    const preset = VISUAL_PRESETS[presetName];
+    if (!preset) return;
+
+    const { main, utils } = preset;
+    const currentCodes = editor.getAllCodes();
+
+    // Update editor (visual only)
+    editor.setAllCodes({ visualMain: main, visualUtils: utils });
+
+    // Save to LocalStorage
+    saveShader('visual', main, utils);
+
+    // Compile and apply (keep current sound)
+    initShaders({ main: currentCodes.soundMain, utils: currentCodes.soundUtils }, { main, utils });
 
     hide();
   }
@@ -231,19 +247,30 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, initShad
       cleanups.push(() => tabContainer.removeEventListener('click', handleTabClick));
     }
 
-    // Preset buttons
-    const defaultBtn = document.getElementById('presetDefaultBtn');
-    if (defaultBtn) {
-      const handler = () => applyPreset('default');
-      defaultBtn.addEventListener('click', handler);
-      cleanups.push(() => defaultBtn.removeEventListener('click', handler));
+    // Sound preset select
+    const soundPresetSelect = document.getElementById('soundPresetSelect');
+    if (soundPresetSelect) {
+      const handler = (e) => {
+        if (e.target.value) {
+          applySoundPreset(e.target.value);
+          e.target.value = ''; // Reset to placeholder
+        }
+      };
+      soundPresetSelect.addEventListener('change', handler);
+      cleanups.push(() => soundPresetSelect.removeEventListener('change', handler));
     }
 
-    const demoBtn = document.getElementById('presetDemoBtn');
-    if (demoBtn) {
-      const handler = () => applyPreset('demo');
-      demoBtn.addEventListener('click', handler);
-      cleanups.push(() => demoBtn.removeEventListener('click', handler));
+    // Visual preset select
+    const visualPresetSelect = document.getElementById('visualPresetSelect');
+    if (visualPresetSelect) {
+      const handler = (e) => {
+        if (e.target.value) {
+          applyVisualPreset(e.target.value);
+          e.target.value = ''; // Reset to placeholder
+        }
+      };
+      visualPresetSelect.addEventListener('change', handler);
+      cleanups.push(() => visualPresetSelect.removeEventListener('change', handler));
     }
 
     // Load button

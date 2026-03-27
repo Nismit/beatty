@@ -184,18 +184,26 @@
                 <!-- Shader Tab -->
                 <div class="settings-tab-content active" id="tab-shader">
                     <div class="settings-section">
-                        <label class="settings-label">Built-in Presets</label>
-                        <div class="preset-actions-bar">
-                            <button id="presetDefaultBtn" class="preset-action-btn">Default</button>
-                            <button id="presetDemoBtn" class="preset-action-btn">Demo</button>
-                        </div>
-                    </div>
-                    <div class="settings-section">
                         <label class="settings-label">File</label>
                         <div class="preset-actions-bar">
                             <button id="shaderLoadBtn" class="preset-action-btn">Load</button>
                             <button id="shaderExportBtn" class="preset-action-btn">Export</button>
                         </div>
+                    </div>
+                    <div class="settings-section">
+                        <label class="settings-label">Sound Preset</label>
+                        <select id="soundPresetSelect" class="settings-select">
+                            <option value="">-- Select --</option>
+                            <option value="default">Default</option>
+                            <option value="demo">Demo</option>
+                        </select>
+                    </div>
+                    <div class="settings-section">
+                        <label class="settings-label">Visual Preset</label>
+                        <select id="visualPresetSelect" class="settings-select">
+                            <option value="">-- Select --</option>
+                            <option value="default">Default</option>
+                        </select>
                     </div>
                 </div>
                 <!-- Audio Tab -->

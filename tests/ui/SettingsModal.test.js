@@ -47,8 +47,15 @@ function setupDOM() {
       </div>
       <div class="settings-tab-content active" id="tab-shader"></div>
       <div class="settings-tab-content" id="tab-hotkeys"></div>
-      <button id="presetDefaultBtn">Default</button>
-      <button id="presetDemoBtn">Demo</button>
+      <select id="soundPresetSelect">
+        <option value="">-- Select --</option>
+        <option value="default">Default</option>
+        <option value="demo">Demo</option>
+      </select>
+      <select id="visualPresetSelect">
+        <option value="">-- Select --</option>
+        <option value="default">Default</option>
+      </select>
       <button id="closeSettings">Close</button>
       <div id="hotkeyPreview"></div>
     </div>
@@ -94,23 +101,79 @@ describe('SettingsModal', () => {
     });
   });
 
-  describe('preset buttons', () => {
-    it('should apply default preset and close modal', () => {
+  describe('preset selects', () => {
+    it('should apply sound default preset and close modal', () => {
       const deps = createMockDeps();
       const modal = createSettingsModal(deps);
       modal.init();
       modal.show();
 
-      document.getElementById('presetDefaultBtn').click();
+      const select = document.getElementById('soundPresetSelect');
+      select.value = 'default';
+      select.dispatchEvent(new Event('change'));
 
       expect(deps.editor.setAllCodes).toHaveBeenCalledWith({
         soundMain: DEFAULT_SOUND_SHADER,
         soundUtils: '',
-        visualMain: DEFAULT_VISUAL_SHADER,
-        visualUtils: '',
+      });
+      expect(deps.initShaders).toHaveBeenCalledWith(
+        { main: DEFAULT_SOUND_SHADER, utils: '' },
+        { main: 'visual code', utils: '' },
+      );
+      expect(modal.isVisible()).toBe(false);
+    });
+
+    it('should apply sound demo preset and close modal', () => {
+      const deps = createMockDeps();
+      const modal = createSettingsModal(deps);
+      modal.init();
+      modal.show();
+
+      const select = document.getElementById('soundPresetSelect');
+      select.value = 'demo';
+      select.dispatchEvent(new Event('change'));
+
+      expect(deps.editor.setAllCodes).toHaveBeenCalledWith({
+        soundMain: DEMO_SOUND_SHADER,
+        soundUtils: '',
       });
       expect(deps.initShaders).toHaveBeenCalled();
       expect(modal.isVisible()).toBe(false);
+    });
+
+    it('should apply visual default preset and close modal', () => {
+      const deps = createMockDeps();
+      const modal = createSettingsModal(deps);
+      modal.init();
+      modal.show();
+
+      const select = document.getElementById('visualPresetSelect');
+      select.value = 'default';
+      select.dispatchEvent(new Event('change'));
+
+      expect(deps.editor.setAllCodes).toHaveBeenCalledWith({
+        visualMain: DEFAULT_VISUAL_SHADER,
+        visualUtils: '',
+      });
+      expect(deps.initShaders).toHaveBeenCalledWith(
+        { main: 'sound code', utils: '' },
+        { main: DEFAULT_VISUAL_SHADER, utils: '' },
+      );
+      expect(modal.isVisible()).toBe(false);
+    });
+
+    it('should not apply preset when selecting empty value', () => {
+      const deps = createMockDeps();
+      const modal = createSettingsModal(deps);
+      modal.init();
+      modal.show();
+
+      const select = document.getElementById('soundPresetSelect');
+      select.value = '';
+      select.dispatchEvent(new Event('change'));
+
+      expect(deps.editor.setAllCodes).not.toHaveBeenCalled();
+      expect(deps.initShaders).not.toHaveBeenCalled();
     });
   });
 
@@ -122,10 +185,12 @@ describe('SettingsModal', () => {
 
       modal.destroy();
 
-      // After destroy, clicking preset button should not call initShaders
+      // After destroy, changing preset select should not call initShaders
       modal.show();
       deps.initShaders.mockClear();
-      document.getElementById('presetDefaultBtn').click();
+      const select = document.getElementById('soundPresetSelect');
+      select.value = 'default';
+      select.dispatchEvent(new Event('change'));
 
       expect(deps.initShaders).not.toHaveBeenCalled();
     });
