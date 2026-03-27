@@ -306,11 +306,16 @@ export class Editor {
       el.style.color = isSound ? '#51cf66' : '#ffd43b';
     }
 
-    // Update tab bar mode class
+    // Update tab bar mode class and main tab label
     const tabBar = document.getElementById('tabBar');
     if (tabBar) {
       tabBar.classList.remove('sound', 'visual');
       tabBar.classList.add(this.#editMode);
+    }
+
+    const tabMain = document.getElementById('tabMain');
+    if (tabMain) {
+      tabMain.textContent = this.#editMode;
     }
   }
 
