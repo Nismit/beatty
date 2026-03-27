@@ -63,10 +63,10 @@ export function createStatusDisplay({ eventBus, playbackState, audioSettings, ge
   }
 
   function showStatus(message, type = UI.STATUS_TYPES.READY) {
-    const dot = document.getElementById('statusDot');
-    if (dot) {
-      dot.classList.remove('initializing', 'ready', 'compiling', 'compiled', 'applied', 'error');
-      dot.classList.add(type);
+    const tabBar = document.getElementById('tabBar');
+    if (tabBar) {
+      tabBar.classList.remove('initializing', 'ready', 'compiling', 'compiled', 'applied', 'error');
+      tabBar.classList.add(type);
     }
     // Clear error bar on non-error status
     if (type !== UI.STATUS_TYPES.ERROR) {

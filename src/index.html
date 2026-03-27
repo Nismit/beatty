@@ -38,9 +38,27 @@
     <div class="editor-layer">
         <div class="editor-container">
             <div class="toolbar" id="toolbar">
+                <div class="toolbar-left">
+                    <span id="statusBars">0</span>bars
+                    <span class="toolbar-separator">|</span>
+                    <span class="toolbar-clickable" id="bpmStatus"><span id="statusBpm">120</span>bpm</span>
+                    <span class="toolbar-separator">|</span>
+                    <span class="toolbar-clickable" id="volumeStatus"><span id="statusVolume">30</span>%</span>
+                </div>
                 <div class="toolbar-right">
-                    <span class="toolbar-btn" id="toolbarSettings">SETTINGS</span>
-                    <span class="toolbar-btn" id="toolbarHelp">HELP</span>
+                    <span class="toolbar-btn toolbar-icon" id="toolbarSettings" title="Settings">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </span>
+                    <span class="toolbar-btn toolbar-icon" id="toolbarHelp" title="Help">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                    </span>
                 </div>
             </div>
             <div class="tab-bar" id="tabBar">
@@ -51,18 +69,6 @@
                 <div id="editor"></div>
             </div>
             <div class="error-bar" id="errorBar"></div>
-            <div class="status-line" id="statusLine">
-                <div class="status-left">
-                    <span class="status-dot" id="statusDot"></span>
-                </div>
-                <div class="status-right">
-                    <span id="statusBars">0</span>bars
-                    <span class="status-separator">|</span>
-                    <span class="status-clickable" id="bpmStatus"><span id="statusBpm">120</span>bpm</span>
-                    <span class="status-separator">|</span>
-                    <span class="status-clickable" id="volumeStatus"><span id="statusVolume">30</span>%</span>
-                </div>
-            </div>
         </div>
     </div>
     
@@ -118,19 +124,14 @@
                 </div>
 
                 <div class="help-section">
-                    <h3>Status Bar</h3>
-                    <p class="help-description">The status bar background color indicates the current editor mode:</p>
+                    <h3>Tab Bar</h3>
+                    <p class="help-description">The tab bar background color indicates the shader state:</p>
                     <ul class="indicator-list">
-                        <li><span class="indicator-sample sound-bg"></span> Sound Mode</li>
-                        <li><span class="indicator-sample visual-bg"></span> Visual Mode</li>
-                    </ul>
-                    <p class="help-description">The dot indicator shows the shader state:</p>
-                    <ul class="indicator-list">
-                        <li><span class="indicator-dot ready"></span> Ready</li>
-                        <li><span class="indicator-dot compiling"></span> Compiling</li>
-                        <li><span class="indicator-dot compiled"></span> Compiled</li>
-                        <li><span class="indicator-dot applied"></span> Applied</li>
-                        <li><span class="indicator-dot error"></span> Error</li>
+                        <li><span class="indicator-bar ready"></span> Ready</li>
+                        <li><span class="indicator-bar compiling"></span> Compiling</li>
+                        <li><span class="indicator-bar compiled"></span> Compiled</li>
+                        <li><span class="indicator-bar applied"></span> Applied</li>
+                        <li><span class="indicator-bar error"></span> Error</li>
                     </ul>
                 </div>
 

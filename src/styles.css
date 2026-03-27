@@ -67,7 +67,7 @@ body {
 }
 
 .toolbar {
-    height: 24px;
+    height: 28px;
     background: #2a2a2a;
     color: #f8f8f2;
     font-family: monospace;
@@ -80,6 +80,26 @@ body {
     flex-shrink: 0;
 }
 
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #888;
+}
+
+.toolbar-separator {
+    color: #555;
+}
+
+.toolbar-clickable {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.toolbar-clickable:hover {
+    color: #f8f8f2;
+}
+
 .toolbar-right {
     display: flex;
     align-items: center;
@@ -89,6 +109,8 @@ body {
 .toolbar-btn {
     cursor: pointer;
     padding: 2px 6px;
+    display: flex;
+    align-items: center;
     border-radius: 2px;
     transition: background-color 0.2s;
     user-select: none;
@@ -148,10 +170,35 @@ body {
     background: rgba(129, 140, 248, 0.15);
 }
 
+/* Tab bar status indicator (background) */
+.tab-bar.initializing {
+    background: rgba(136, 136, 136, 0.3);
+}
+
+.tab-bar.ready {
+    background: rgba(94, 234, 212, 0.25);
+}
+
+.tab-bar.compiling {
+    background: rgba(250, 204, 21, 0.3);
+}
+
+.tab-bar.compiled {
+    background: rgba(74, 222, 128, 0.3);
+}
+
+.tab-bar.applied {
+    background: rgba(251, 146, 60, 0.25);
+}
+
+.tab-bar.error {
+    background: rgba(248, 113, 113, 0.35);
+}
+
 .editor-content {
     flex: 1;
     margin-bottom: 0;
-    height: calc(100% - 77px);
+    height: calc(100% - 56px);
     overflow: hidden;
     min-width: 0;
 }
@@ -190,82 +237,6 @@ body {
     padding: 1px 0 8px;
 }
 
-.status-line {
-    height: 24px;
-    background: #2a2a2a;
-    color: #f8f8f2;
-    font-family: monospace;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    border-top: 1px solid #444;
-    transition: background-color 0.3s ease;
-}
-
-.status-line.sound {
-    background: #18302c;
-}
-
-.status-line.visual {
-    background: #1e2234;
-}
-
-.status-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.status-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.status-separator {
-    color: #666;
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #666;
-    transition: background-color 0.2s ease;
-}
-
-.status-dot.initializing {
-    background-color: #888;
-}
-
-.status-dot.ready {
-    background-color: #5eead4;
-    box-shadow: 0 0 8px rgba(94, 234, 212, 0.6);
-}
-
-.status-dot.compiling {
-    background-color: #facc15;
-    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
-}
-
-.status-dot.compiled {
-    background-color: #4ade80;
-    box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
-}
-
-.status-dot.applied {
-    background-color: #fb923c;
-    box-shadow: 0 0 8px rgba(251, 146, 60, 0.6);
-}
-
-.status-dot.error {
-    background-color: #f87171;
-    box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
-}
-
 .error-bar {
     display: none;
     background: rgba(255, 107, 107, 0.15);
@@ -283,20 +254,10 @@ body {
     display: block;
 }
 
-.status-clickable {
-    cursor: pointer;
-    padding: 2px 4px;
-    border-radius: 2px;
-    transition: background-color 0.2s;
-}
-
-.status-clickable:hover {
-    background-color: rgba(255,255,255,0.1);
-}
-
 .slider-popup {
     position: absolute;
-    bottom: 30px;
+    top: 32px;
+    width: 300px;
     background: #2a2a2a;
     border: 1px solid #444;
     border-radius: 4px;
@@ -304,29 +265,40 @@ body {
     z-index: 10;
     display: none;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    min-width: 150px;
 }
 
 .slider-popup.visible {
-    display: block;
+    display: flex;
+    align-items: center;
 }
 
 .slider-popup input[type="range"] {
-    width: 120px;
+    width: 210px;
     margin: 0 10px;
-}
-
-#bpmSliderPopup {
-    min-width: 240px;
-}
-
-#bpmSlider {
-    width: 200px;
 }
 
 .slider-popup label {
     font-size: 11px;
     color: #ccc;
+}
+
+@media (max-width: 768px) {
+    .slider-popup {
+        left: 8px !important;
+        max-width: calc(100vw - 85px);
+    }
+
+    #bpmSliderPopup {
+        min-width: auto;
+    }
+
+    #bpmSlider {
+        width: 100%;
+    }
+
+    .slider-popup input[type="range"] {
+        width: calc(100% - 50px);
+    }
 }
 
 .status-compiling { color: #ffd43b; }
@@ -347,7 +319,7 @@ body {
 /* Mobile Controls */
 .mobile-controls {
     position: fixed;
-    top: 33px;
+    top: 40px;
     right: 10px;
     z-index: 100;
     display: none; /* Hidden by default, shown only on mobile */
@@ -414,18 +386,8 @@ body {
         box-sizing: border-box;
     }
 
-    .status-line {
-        font-size: 11px;
-        padding: 0 16px;
-        padding-bottom: env(safe-area-inset-bottom, 0);
-    }
-
-    .status-right {
-        flex-shrink: 1;
-    }
-
     .editor-content {
-        height: calc(100dvh - 77px - env(safe-area-inset-bottom, 0));
+        height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0));
     }
 
     .toolbar {
@@ -636,50 +598,31 @@ code {
     font-size: 13px;
 }
 
-.indicator-sample {
+.indicator-bar {
     width: 40px;
     height: 16px;
     border-radius: 3px;
     border: 1px solid #555;
 }
 
-.indicator-sample.sound-bg {
-    background: #18302c;
+.indicator-bar.ready {
+    background: rgba(94, 234, 212, 0.25);
 }
 
-.indicator-sample.visual-bg {
-    background: #1e2234;
+.indicator-bar.compiling {
+    background: rgba(250, 204, 21, 0.3);
 }
 
-.indicator-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
+.indicator-bar.compiled {
+    background: rgba(74, 222, 128, 0.3);
 }
 
-.indicator-dot.ready {
-    background-color: #5eead4;
-    box-shadow: 0 0 8px rgba(94, 234, 212, 0.6);
+.indicator-bar.applied {
+    background: rgba(251, 146, 60, 0.25);
 }
 
-.indicator-dot.compiling {
-    background-color: #facc15;
-    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
-}
-
-.indicator-dot.compiled {
-    background-color: #4ade80;
-    box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
-}
-
-.indicator-dot.applied {
-    background-color: #fb923c;
-    box-shadow: 0 0 8px rgba(251, 146, 60, 0.6);
-}
-
-.indicator-dot.error {
-    background-color: #f87171;
-    box-shadow: 0 0 8px rgba(248, 113, 113, 0.6);
+.indicator-bar.error {
+    background: rgba(248, 113, 113, 0.35);
 }
 
 /* Settings Modal */

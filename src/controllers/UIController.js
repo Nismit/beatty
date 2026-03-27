@@ -97,8 +97,8 @@ export function createUIController({ playbackState, audioSettings, editor, event
     }
 
     const rect = event.target.getBoundingClientRect();
-    popup.style.right = '25px';
-    popup.style.bottom = `${window.innerHeight - rect.top + 13}px`;
+    popup.style.left = `${rect.left}px`;
+    popup.style.top = `${rect.bottom + 8}px`;
     popup.classList.add('visible');
   }
 
