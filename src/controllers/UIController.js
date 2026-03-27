@@ -111,6 +111,15 @@ export function createUIController({ playbackState, audioSettings, editor, event
     if (modal) modal.classList.remove('visible');
   }
 
+  function toggleHelpModal() {
+    const modal = document.getElementById('helpModal');
+    if (modal?.classList.contains('visible')) {
+      hideHelpModal();
+    } else {
+      showHelpModal();
+    }
+  }
+
   /**
    * Initialize all button states
    */
@@ -134,6 +143,7 @@ export function createUIController({ playbackState, audioSettings, editor, event
     hideAllSliderPopups,
     showHelpModal,
     hideHelpModal,
+    toggleHelpModal,
     initButtonStates,
     destroy,
   };

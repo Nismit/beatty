@@ -3,6 +3,11 @@
  * Manages keyboard shortcuts for playback, shader, and editor controls
  */
 
+import { UI } from '../utils/consts.js';
+
+// Tab order for cycling with [ and ]
+const TAB_ORDER = [UI.EDITOR_TABS.MAIN, UI.EDITOR_TABS.UTILS];
+
 /**
  * @param {Object} deps
  * @param {import('../controllers/PlaybackController.js')} deps.playbackController
@@ -22,6 +27,12 @@ export function createKeyboardController({
   debugOverlay,
   hotkeySettings,
 }) {
+  function switchTab(direction) {
+    const currentIndex = TAB_ORDER.indexOf(editor.tab);
+    const nextIndex = (currentIndex + direction + TAB_ORDER.length) % TAB_ORDER.length;
+    editor.switchTab(TAB_ORDER[nextIndex]);
+  }
+
   function handleKeydown(e) {
     if (e.key === 'Escape') {
       uiController.hideHelpModal();
@@ -62,8 +73,17 @@ export function createKeyboardController({
           debugOverlay.toggle();
           break;
         case '?':
+        case '/':
           e.preventDefault();
-          uiController.showHelpModal();
+          uiController.toggleHelpModal();
+          break;
+        case '[':
+          e.preventDefault();
+          switchTab(-1);
+          break;
+        case ']':
+          e.preventDefault();
+          switchTab(1);
           break;
       }
     }
