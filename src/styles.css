@@ -487,6 +487,26 @@ body {
     margin-bottom: 0;
 }
 
+.help-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+}
+
+.help-footer a {
+    color: #888;
+    text-decoration: none;
+}
+
+.help-footer a:hover {
+    color: #4ecdc4;
+}
+
 .help-section h3 {
     margin: 0 0 12px 0;
     color: #4ecdc4;
