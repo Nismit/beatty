@@ -11,6 +11,7 @@ import {
   syntaxHighlighting,
   syntaxTree,
 } from 'https://esm.sh/@codemirror/language';
+import { EditorState } from 'https://esm.sh/@codemirror/state';
 import { Decoration, keymap, ViewPlugin } from 'https://esm.sh/@codemirror/view';
 import { tags as t } from 'https://esm.sh/@lezer/highlight@1.2.3';
 import { basicSetup, EditorView } from 'https://esm.sh/codemirror@6.0.2';
@@ -22,10 +23,8 @@ export class Editor {
   #editorView;
   #editMode;
   #activeTab;
-  #soundMain;
-  #soundUtils;
-  #visualMain;
-  #visualUtils;
+  #states; // { soundMain, soundUtils, visualMain, visualUtils } - EditorState objects
+  #extensions;
   #isVisible;
   #eventBus;
 
@@ -40,10 +39,13 @@ export class Editor {
     this.#editorView = null;
     this.#editMode = editMode;
     this.#activeTab = UI.EDITOR_TABS.MAIN;
-    this.#soundMain = '';
-    this.#soundUtils = '';
-    this.#visualMain = '';
-    this.#visualUtils = '';
+    this.#states = {
+      soundMain: null,
+      soundUtils: null,
+      visualMain: null,
+      visualUtils: null,
+    };
+    this.#extensions = null;
     this.#isVisible = isVisible;
   }
 
@@ -73,13 +75,19 @@ export class Editor {
    * @returns {{ main: string, utils: string }}
    */
   getCodeForCompile() {
-    if (this.#editorView) {
-      this.#saveCurrentCode();
-    }
+    // Sync current editor state
+    this.#syncCurrentState();
+
     if (this.#editMode === UI.EDITOR_MODES.SOUND) {
-      return { main: this.#soundMain, utils: this.#soundUtils };
+      return {
+        main: this.#getCodeFromState('soundMain'),
+        utils: this.#getCodeFromState('soundUtils'),
+      };
     }
-    return { main: this.#visualMain, utils: this.#visualUtils };
+    return {
+      main: this.#getCodeFromState('visualMain'),
+      utils: this.#getCodeFromState('visualUtils'),
+    };
   }
 
   /**
@@ -88,14 +96,14 @@ export class Editor {
    * @returns {{ soundMain: string, soundUtils: string, visualMain: string, visualUtils: string }}
    */
   getAllCodes() {
-    if (this.#editorView) {
-      this.#saveCurrentCode();
-    }
+    // Sync current editor state
+    this.#syncCurrentState();
+
     return {
-      soundMain: this.#soundMain,
-      soundUtils: this.#soundUtils,
-      visualMain: this.#visualMain,
-      visualUtils: this.#visualUtils,
+      soundMain: this.#getCodeFromState('soundMain'),
+      soundUtils: this.#getCodeFromState('soundUtils'),
+      visualMain: this.#getCodeFromState('visualMain'),
+      visualUtils: this.#getCodeFromState('visualUtils'),
     };
   }
 
@@ -115,12 +123,14 @@ export class Editor {
    * @param {string} code
    */
   setCodeForTab(mode, tab, code) {
-    this.#setCodeForModeAndTab(mode, tab, code);
+    const stateKey = this.#getStateKey(mode, tab);
 
+    // Create new state with fresh history
+    this.#states[stateKey] = this.#createEditorState(code);
+
+    // If this is the current tab, update the view
     if (this.#editMode === mode && this.#activeTab === tab && this.#editorView) {
-      this.#editorView.dispatch({
-        changes: { from: 0, to: this.#editorView.state.doc.length, insert: code },
-      });
+      this.#editorView.setState(this.#states[stateKey]);
     }
   }
 
@@ -129,17 +139,24 @@ export class Editor {
    * @param {{ soundMain?: string, soundUtils?: string, visualMain?: string, visualUtils?: string }} codes
    */
   setAllCodes(codes) {
-    if (codes.soundMain !== undefined) this.#soundMain = codes.soundMain;
-    if (codes.soundUtils !== undefined) this.#soundUtils = codes.soundUtils;
-    if (codes.visualMain !== undefined) this.#visualMain = codes.visualMain;
-    if (codes.visualUtils !== undefined) this.#visualUtils = codes.visualUtils;
+    // Create new states with fresh history for each provided code
+    if (codes.soundMain !== undefined) {
+      this.#states.soundMain = this.#createEditorState(codes.soundMain);
+    }
+    if (codes.soundUtils !== undefined) {
+      this.#states.soundUtils = this.#createEditorState(codes.soundUtils);
+    }
+    if (codes.visualMain !== undefined) {
+      this.#states.visualMain = this.#createEditorState(codes.visualMain);
+    }
+    if (codes.visualUtils !== undefined) {
+      this.#states.visualUtils = this.#createEditorState(codes.visualUtils);
+    }
 
-    // Update editor if showing one of the changed codes
+    // Update editor view with current tab's state
     if (this.#editorView) {
-      const currentCode = this.#getCodeForModeAndTab(this.#editMode, this.#activeTab);
-      this.#editorView.dispatch({
-        changes: { from: 0, to: this.#editorView.state.doc.length, insert: currentCode },
-      });
+      const stateKey = this.#getStateKey(this.#editMode, this.#activeTab);
+      this.#editorView.setState(this.#states[stateKey]);
     }
   }
 
@@ -147,10 +164,19 @@ export class Editor {
    * Initialize the CodeMirror editor
    */
   init() {
+    // Initialize all 4 editor states (only if not already set)
+    const keys = ['soundMain', 'soundUtils', 'visualMain', 'visualUtils'];
+    for (const key of keys) {
+      if (!this.#states[key]) {
+        this.#states[key] = this.#createEditorState('');
+      }
+    }
+
+    // Create view with current tab's state
+    const currentStateKey = this.#getStateKey(this.#editMode, this.#activeTab);
     this.#editorView = new EditorView({
-      doc: this.getCurrentCode(),
+      state: this.#states[currentStateKey],
       parent: document.getElementById('editor'),
-      extensions: this.#createExtensions(),
     });
 
     this.#initTabBar();
@@ -185,20 +211,16 @@ export class Editor {
 
     const oldTab = this.#activeTab;
 
-    // Save current content
-    if (this.#editorView) {
-      this.#saveCurrentCode();
-    }
+    // Sync current editor state before switching
+    this.#syncCurrentState();
 
     // Switch tab
     this.#activeTab = tab;
 
-    // Load code for the new tab
+    // Switch to the new tab's state (preserves its own undo history)
     if (this.#editorView) {
-      const newCode = this.#getCodeForModeAndTab(this.#editMode, this.#activeTab);
-      this.#editorView.dispatch({
-        changes: { from: 0, to: this.#editorView.state.doc.length, insert: newCode },
-      });
+      const newStateKey = this.#getStateKey(this.#editMode, this.#activeTab);
+      this.#editorView.setState(this.#states[newStateKey]);
     }
 
     this.#updateTabDisplay();
@@ -211,21 +233,17 @@ export class Editor {
   switchMode() {
     const oldMode = this.#editMode;
 
-    // Save current content
-    if (this.#editorView) {
-      this.#saveCurrentCode();
-    }
+    // Sync current editor state before switching
+    this.#syncCurrentState();
 
     // Toggle mode
     this.#editMode =
       this.#editMode === UI.EDITOR_MODES.SOUND ? UI.EDITOR_MODES.VISUAL : UI.EDITOR_MODES.SOUND;
 
-    // Load code for the new mode (keeping same tab)
+    // Switch to the new mode's state (preserves its own undo history)
     if (this.#editorView) {
-      const newCode = this.#getCodeForModeAndTab(this.#editMode, this.#activeTab);
-      this.#editorView.dispatch({
-        changes: { from: 0, to: this.#editorView.state.doc.length, insert: newCode },
-      });
+      const newStateKey = this.#getStateKey(this.#editMode, this.#activeTab);
+      this.#editorView.setState(this.#states[newStateKey]);
     }
 
     this.#updateModeDisplay();
@@ -252,12 +270,34 @@ export class Editor {
   }
 
   /**
-   * Save current editor content to the appropriate code store
+   * Sync current editor view state to the states map
    */
-  #saveCurrentCode() {
+  #syncCurrentState() {
     if (!this.#editorView) return;
-    const code = this.#editorView.state.doc.toString();
-    this.#setCodeForModeAndTab(this.#editMode, this.#activeTab, code);
+    const stateKey = this.#getStateKey(this.#editMode, this.#activeTab);
+    this.#states[stateKey] = this.#editorView.state;
+  }
+
+  /**
+   * Get state key for a specific mode and tab
+   * @param {'sound' | 'visual'} mode
+   * @param {'main' | 'utils'} tab
+   * @returns {'soundMain' | 'soundUtils' | 'visualMain' | 'visualUtils'}
+   */
+  #getStateKey(mode, tab) {
+    const modePrefix = mode === UI.EDITOR_MODES.SOUND ? 'sound' : 'visual';
+    const tabSuffix = tab === UI.EDITOR_TABS.MAIN ? 'Main' : 'Utils';
+    return `${modePrefix}${tabSuffix}`;
+  }
+
+  /**
+   * Get code from a specific state
+   * @param {'soundMain' | 'soundUtils' | 'visualMain' | 'visualUtils'} stateKey
+   * @returns {string}
+   */
+  #getCodeFromState(stateKey) {
+    const state = this.#states[stateKey];
+    return state ? state.doc.toString() : '';
   }
 
   /**
@@ -267,32 +307,31 @@ export class Editor {
    * @returns {string}
    */
   #getCodeForModeAndTab(mode, tab) {
-    if (mode === UI.EDITOR_MODES.SOUND) {
-      return tab === UI.EDITOR_TABS.MAIN ? this.#soundMain : this.#soundUtils;
-    }
-    return tab === UI.EDITOR_TABS.MAIN ? this.#visualMain : this.#visualUtils;
+    const stateKey = this.#getStateKey(mode, tab);
+    return this.#getCodeFromState(stateKey);
   }
 
   /**
-   * Set code for a specific mode and tab
-   * @param {'sound' | 'visual'} mode
-   * @param {'main' | 'utils'} tab
-   * @param {string} code
+   * Get or create extensions (lazy initialization)
+   * @returns {Extension[]}
    */
-  #setCodeForModeAndTab(mode, tab, code) {
-    if (mode === UI.EDITOR_MODES.SOUND) {
-      if (tab === UI.EDITOR_TABS.MAIN) {
-        this.#soundMain = code;
-      } else {
-        this.#soundUtils = code;
-      }
-    } else {
-      if (tab === UI.EDITOR_TABS.MAIN) {
-        this.#visualMain = code;
-      } else {
-        this.#visualUtils = code;
-      }
+  #getExtensions() {
+    if (!this.#extensions) {
+      this.#extensions = this.#createExtensions();
     }
+    return this.#extensions;
+  }
+
+  /**
+   * Create a new EditorState with the given code
+   * @param {string} code
+   * @returns {EditorState}
+   */
+  #createEditorState(code) {
+    return EditorState.create({
+      doc: code,
+      extensions: this.#getExtensions(),
+    });
   }
 
   /**
@@ -503,7 +542,7 @@ export class Editor {
       EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
-          this.#saveCurrentCode();
+          this.#syncCurrentState();
         }
       }),
     ];
