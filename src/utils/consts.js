@@ -61,7 +61,6 @@ export const UI = {
     READY: 'ready',
     ERROR: 'error',
     COMPILING: 'compiling',
-    COMPILED: 'compiled',
     APPLIED: 'applied',
   },
 };

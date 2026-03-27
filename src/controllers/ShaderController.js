@@ -44,6 +44,7 @@ export function createShaderController({
       const { main, utils } = editor.getCodeForCompile();
 
       eventBus.emit(EVENTS.SHADER_COMPILE_START, { mode });
+      statusDisplay.showStatus(null, UI.STATUS_TYPES.COMPILING);
 
       if (mode === UI.EDITOR_MODES.SOUND) {
         soundRenderer.compile(main, utils);
@@ -52,10 +53,9 @@ export function createShaderController({
         visualRenderer.compile(main, utils);
         saveShader('visual', main, utils);
       }
-      statusDisplay.showStatus(null, UI.STATUS_TYPES.COMPILED);
 
       eventBus.emit(EVENTS.SHADER_COMPILE_SUCCESS, { mode });
-      clearStatusAfter(3000);
+      clearStatusAfter(1500);
     } catch (error) {
       eventBus.emit(EVENTS.SHADER_COMPILE_ERROR, { error });
       errorHandler(error);

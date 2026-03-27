@@ -85,6 +85,7 @@ body {
     align-items: center;
     gap: 6px;
     color: #888;
+    margin-top: 4px;
 }
 
 .toolbar-separator {
@@ -104,6 +105,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-top: 4px;
 }
 
 .toolbar-btn {
@@ -171,10 +173,7 @@ body {
 }
 
 /* Tab bar status indicator (background) */
-.tab-bar.initializing {
-    background: rgba(136, 136, 136, 0.3);
-}
-
+.tab-bar.initializing,
 .tab-bar.ready {
     background: rgba(94, 234, 212, 0.25);
 }
@@ -183,12 +182,8 @@ body {
     background: rgba(250, 204, 21, 0.3);
 }
 
-.tab-bar.compiled {
-    background: rgba(74, 222, 128, 0.3);
-}
-
 .tab-bar.applied {
-    background: rgba(251, 146, 60, 0.25);
+    background: rgba(74, 222, 128, 0.3);
 }
 
 .tab-bar.error {
@@ -393,6 +388,11 @@ body {
     .toolbar {
         font-size: 11px;
         padding: 0 8px;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+        margin-top: 0;
     }
 
     .toolbar-right {
@@ -633,12 +633,8 @@ code {
     background: rgba(250, 204, 21, 0.3);
 }
 
-.indicator-bar.compiled {
-    background: rgba(74, 222, 128, 0.3);
-}
-
 .indicator-bar.applied {
-    background: rgba(251, 146, 60, 0.25);
+    background: rgba(74, 222, 128, 0.3);
 }
 
 .indicator-bar.error {

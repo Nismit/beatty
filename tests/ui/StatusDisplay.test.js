@@ -101,11 +101,11 @@ describe('StatusDisplay', () => {
       const display = createStatusDisplay(deps);
 
       display.showStatus(null, UI.STATUS_TYPES.COMPILING);
-      display.showStatus(null, UI.STATUS_TYPES.COMPILED);
+      display.showStatus(null, UI.STATUS_TYPES.APPLIED);
 
       const tabBar = document.getElementById('tabBar');
       expect(tabBar.classList.contains('compiling')).toBe(false);
-      expect(tabBar.classList.contains('compiled')).toBe(true);
+      expect(tabBar.classList.contains('applied')).toBe(true);
     });
 
     it('should clear error bar on non-error status', () => {
