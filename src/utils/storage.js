@@ -190,10 +190,9 @@ export function clearSettings() {
  */
 export function clearAllData() {
   try {
-    localStorage.removeItem(STORAGE_KEYS.SOUND_SHADER);
-    localStorage.removeItem(STORAGE_KEYS.VISUAL_SHADER);
-    localStorage.removeItem(STORAGE_KEYS.SETTINGS);
-    localStorage.removeItem(STORAGE_KEYS.HOTKEY_SETTINGS);
+    for (const key of Object.values(STORAGE_KEYS)) {
+      localStorage.removeItem(key);
+    }
     return true;
   } catch (error) {
     console.error('[Storage] Failed to clear all data:', error);

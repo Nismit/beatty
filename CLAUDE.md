@@ -214,6 +214,7 @@ Mac: `Ctrl + (key)` / Windows: `Ctrl + Shift + (key)`
 | `V` | **V**isibility (エディタ表示切替) |
 | `M` | **M**ode (Sound/Visualモード切替) |
 | `D` | **D**ebug (デバッグオーバーレイ) |
+| `?` | **H**elp (ヘルプモーダル表示) |
 | `Escape` | モーダルを閉じる |
 
 ## 主要クラス

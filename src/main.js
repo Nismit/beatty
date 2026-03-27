@@ -7,7 +7,6 @@ import { AudioAnalyzer } from './audio/AudioAnalyzer.js';
 import { AudioEngine } from './audio/AudioEngine.js';
 import { createAudioScheduler } from './audio/AudioScheduler.js';
 import { createPlaybackController } from './controllers/PlaybackController.js';
-import { createPresetController } from './controllers/PresetController.js';
 import { createShaderController } from './controllers/ShaderController.js';
 import { createUIController } from './controllers/UIController.js';
 import { Editor } from './editor/Editor.js';
@@ -102,25 +101,16 @@ async function init() {
     eventBus,
   });
 
-  // Layer 3: Preset management
-  const presetController = createPresetController({
-    editor,
-    initShaders: shaderController.initShaders,
-    eventBus,
-  });
-
   const settingsModal = createSettingsModal({
     eventBus,
     editor,
     hotkeySettings,
-    onLoad: (presetId) => presetController.loadPreset(presetId),
+    initShaders: shaderController.initShaders,
   });
 
   const toolbarController = createToolbarController({
-    editor,
     uiController,
     settingsModal,
-    eventBus,
   });
 
   // Layer 3: Input
@@ -215,7 +205,6 @@ async function init() {
     modalController.destroy();
     settingsModal.destroy();
     toolbarController.destroy();
-    presetController.destroy();
     debugOverlay.destroy();
     statusDisplay.destroy();
     uiController.destroy();

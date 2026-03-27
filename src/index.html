@@ -39,8 +39,6 @@
         <div class="editor-container">
             <div class="toolbar" id="toolbar">
                 <div class="toolbar-right">
-                    <span class="toolbar-btn" id="toolbarLoad">LOAD</span>
-                    <span class="toolbar-btn" id="toolbarExport">EXPORT</span>
                     <span class="toolbar-btn" id="toolbarSettings">SETTINGS</span>
                     <span class="toolbar-btn" id="toolbarHelp">HELP</span>
                 </div>
@@ -100,6 +98,7 @@
                         <li><kbd>V</kbd> Editor <strong>V</strong>isibility</li>
                         <li><kbd>M</kbd> <strong>M</strong>ode Switch (Sound/Visual)</li>
                         <li><kbd>D</kbd> <strong>D</strong>ebug Overlay</li>
+                        <li><kbd>?</kbd> Show <strong>H</strong>elp</li>
                     </ul>
                 </div>
 
@@ -172,18 +171,27 @@
                 <button class="modal-close" id="closeSettings">&times;</button>
             </div>
             <div class="settings-tabs">
-                <button class="settings-tab active" data-tab="presets">Presets</button>
+                <button class="settings-tab active" data-tab="shader">Shader</button>
                 <button class="settings-tab" data-tab="audio">Audio</button>
                 <button class="settings-tab" data-tab="hotkeys">Hotkeys</button>
             </div>
             <div class="modal-body">
-                <!-- Presets Tab -->
-                <div class="settings-tab-content active" id="tab-presets">
-                    <div class="preset-actions-bar">
-                        <button id="presetSaveBtn" class="preset-action-btn">Save Current</button>
-                        <button id="presetImportBtn" class="preset-action-btn">Import</button>
+                <!-- Shader Tab -->
+                <div class="settings-tab-content active" id="tab-shader">
+                    <div class="settings-section">
+                        <label class="settings-label">Built-in Presets</label>
+                        <div class="preset-actions-bar">
+                            <button id="presetDefaultBtn" class="preset-action-btn">Default</button>
+                            <button id="presetDemoBtn" class="preset-action-btn">Demo</button>
+                        </div>
                     </div>
-                    <div class="preset-list" id="presetList"></div>
+                    <div class="settings-section">
+                        <label class="settings-label">File</label>
+                        <div class="preset-actions-bar">
+                            <button id="shaderLoadBtn" class="preset-action-btn">Load</button>
+                            <button id="shaderExportBtn" class="preset-action-btn">Export</button>
+                        </div>
+                    </div>
                 </div>
                 <!-- Audio Tab -->
                 <div class="settings-tab-content" id="tab-audio">

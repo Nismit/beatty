@@ -761,8 +761,12 @@ code {
     display: flex;
     gap: 10px;
     margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #444;
+}
+
+.settings-hint {
+    color: #888;
+    font-size: 12px;
+    margin: 0;
 }
 
 .preset-action-btn {

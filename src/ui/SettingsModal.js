@@ -1,26 +1,39 @@
 /**
  * SettingsModal factory function
- * Manages the settings modal UI with tabs for presets and audio settings
+ * Manages the settings modal UI with tabs for shader load/export, audio, and hotkeys
  */
 
-import { EVENTS, PRESET } from '../utils/consts.js';
 import {
-  canSaveMorePresets,
-  createPreset,
-  deletePreset,
-  exportPreset,
-  getAllPresets,
-  importPreset,
-} from '../utils/presets.js';
+  DEFAULT_SOUND_SHADER,
+  DEFAULT_VISUAL_SHADER,
+  DEMO_SOUND_SHADER,
+} from '../gl/shader-templates.js';
+import { EVENTS } from '../utils/consts.js';
+import { saveShader } from '../utils/storage.js';
+
+const BUILT_IN_PRESETS = {
+  default: {
+    soundMain: DEFAULT_SOUND_SHADER,
+    soundUtils: '',
+    visualMain: DEFAULT_VISUAL_SHADER,
+    visualUtils: '',
+  },
+  demo: {
+    soundMain: DEMO_SOUND_SHADER,
+    soundUtils: '',
+    visualMain: DEFAULT_VISUAL_SHADER,
+    visualUtils: '',
+  },
+};
 
 /**
  * @param {Object} deps
  * @param {import('../state/EventBus.js').EventBus} deps.eventBus
  * @param {import('../editor/Editor.js').Editor} deps.editor
  * @param {import('../state/HotkeySettings.js')} deps.hotkeySettings
- * @param {function(string): void} deps.onLoad - Callback when preset is loaded
+ * @param {function({ main: string, utils: string }, { main: string, utils: string }): void} deps.initShaders
  */
-export function createSettingsModal({ eventBus, editor, hotkeySettings, onLoad }) {
+export function createSettingsModal({ eventBus, editor, hotkeySettings, initShaders }) {
   const cleanups = [];
 
   function getModal() {
@@ -30,7 +43,6 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, onLoad }
   function show() {
     const modal = getModal();
     if (modal) {
-      renderPresetList();
       modal.classList.add('visible');
     }
   }
@@ -60,135 +72,14 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, onLoad }
     }
   }
 
-  function renderPresetList() {
-    const listEl = document.getElementById('presetList');
-    if (!listEl) return;
-
-    const presets = getAllPresets();
-    listEl.innerHTML = '';
-
-    for (const preset of presets) {
-      const item = document.createElement('div');
-      item.className = 'preset-item';
-      item.dataset.presetId = preset.id;
-
-      const nameEl = document.createElement('span');
-      nameEl.className = 'preset-name';
-      nameEl.textContent = preset.name;
-      if (preset.isDefault) {
-        nameEl.classList.add('default');
-      }
-      item.appendChild(nameEl);
-
-      const actionsEl = document.createElement('div');
-      actionsEl.className = 'preset-actions';
-
-      // Load button
-      const loadBtn = document.createElement('button');
-      loadBtn.className = 'preset-btn load';
-      loadBtn.textContent = 'Load';
-      loadBtn.title = 'Load this preset';
-      loadBtn.addEventListener('click', () => handleLoad(preset.id));
-      actionsEl.appendChild(loadBtn);
-
-      // Export button
-      const exportBtn = document.createElement('button');
-      exportBtn.className = 'preset-btn export';
-      exportBtn.textContent = 'Export';
-      exportBtn.title = 'Export to JSON file';
-      exportBtn.addEventListener('click', () => handleExport(preset.id, preset.name));
-      actionsEl.appendChild(exportBtn);
-
-      // Delete button (not for default)
-      if (!preset.isDefault) {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'preset-btn delete';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.title = 'Delete this preset';
-        deleteBtn.addEventListener('click', () => handleDelete(preset.id, preset.name));
-        actionsEl.appendChild(deleteBtn);
-      }
-
-      item.appendChild(actionsEl);
-      listEl.appendChild(item);
-    }
-
-    updateSaveButtonState();
-  }
-
-  function updateSaveButtonState() {
-    const saveBtn = document.getElementById('presetSaveBtn');
-    if (!saveBtn) return;
-
-    if (canSaveMorePresets()) {
-      saveBtn.disabled = false;
-      saveBtn.title = 'Save current shader code as a preset';
-    } else {
-      saveBtn.disabled = true;
-      saveBtn.title = `Maximum ${PRESET.MAX_COUNT} presets reached`;
+  function handleTabClick(e) {
+    const tab = e.target.closest('.settings-tab');
+    if (tab) {
+      switchTab(tab.dataset.tab);
     }
   }
 
-  function handleSave() {
-    if (!canSaveMorePresets()) {
-      alert(`Maximum ${PRESET.MAX_COUNT} presets reached. Delete some presets first.`);
-      return;
-    }
-
-    const name = window.prompt('Enter preset name:');
-    if (!name) return;
-
-    const codes = editor.getAllCodes();
-    const result = createPreset(name, codes);
-
-    if (result.success) {
-      eventBus.emit(EVENTS.PRESET_SAVED, { preset: result.preset });
-      renderPresetList();
-    } else {
-      alert(result.error);
-    }
-  }
-
-  function handleLoad(presetId) {
-    onLoad(presetId);
-    hide();
-  }
-
-  function handleExport(presetId, presetName) {
-    const result = exportPreset(presetId);
-    if (!result.success) {
-      alert(result.error);
-      return;
-    }
-
-    const blob = new Blob([JSON.stringify(result.data, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${presetName.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  function handleDelete(presetId, presetName) {
-    if (!window.confirm(`Delete preset "${presetName}"?`)) {
-      return;
-    }
-
-    const result = deletePreset(presetId);
-    if (result.success) {
-      eventBus.emit(EVENTS.PRESET_DELETED, { id: presetId });
-      renderPresetList();
-    } else {
-      alert(result.error);
-    }
-  }
-
-  function handleImport() {
+  function handleLoad() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json,application/json';
@@ -200,27 +91,84 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, onLoad }
       try {
         const text = await file.text();
         const data = JSON.parse(text);
-        const result = importPreset(data);
 
-        if (result.success) {
-          eventBus.emit(EVENTS.PRESET_IMPORTED, { preset: result.preset });
-          renderPresetList();
-        } else {
-          alert(result.error);
+        // Support both old format (soundCode/visualCode) and new format (soundMain/etc)
+        const soundMain = data.soundMain ?? data.soundCode ?? '';
+        const soundUtils = data.soundUtils ?? '';
+        const visualMain = data.visualMain ?? data.visualCode ?? '';
+        const visualUtils = data.visualUtils ?? '';
+
+        if (!soundMain || !visualMain) {
+          alert('Invalid shader file: missing sound or visual code');
+          return;
         }
+
+        // Update editor
+        editor.setAllCodes({ soundMain, soundUtils, visualMain, visualUtils });
+
+        // Save to LocalStorage
+        saveShader('sound', soundMain, soundUtils);
+        saveShader('visual', visualMain, visualUtils);
+
+        // Compile and apply
+        initShaders(
+          { main: soundMain, utils: soundUtils },
+          { main: visualMain, utils: visualUtils },
+        );
+
+        eventBus.emit(EVENTS.SHADER_IMPORTED, { data });
+        hide();
       } catch {
-        alert('Failed to import preset: Invalid JSON file');
+        alert('Failed to load shader: Invalid JSON file');
       }
     });
 
     input.click();
   }
 
-  function handleTabClick(e) {
-    const tab = e.target.closest('.settings-tab');
-    if (tab) {
-      switchTab(tab.dataset.tab);
-    }
+  function applyPreset(presetName) {
+    const preset = BUILT_IN_PRESETS[presetName];
+    if (!preset) return;
+
+    const { soundMain, soundUtils, visualMain, visualUtils } = preset;
+
+    // Update editor
+    editor.setAllCodes({ soundMain, soundUtils, visualMain, visualUtils });
+
+    // Save to LocalStorage
+    saveShader('sound', soundMain, soundUtils);
+    saveShader('visual', visualMain, visualUtils);
+
+    // Compile and apply
+    initShaders({ main: soundMain, utils: soundUtils }, { main: visualMain, utils: visualUtils });
+
+    hide();
+  }
+
+  function handleExport() {
+    const codes = editor.getAllCodes();
+    const data = {
+      version: 2,
+      name: 'Custom',
+      soundMain: codes.soundMain,
+      soundUtils: codes.soundUtils,
+      visualMain: codes.visualMain,
+      visualUtils: codes.visualUtils,
+      exportedAt: Date.now(),
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `beatty-shader-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
   }
 
   function renderHotkeySettings() {
@@ -242,7 +190,7 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, onLoad }
   function updateHotkeyPreview() {
     const previewEl = document.getElementById('hotkeyPreview');
     if (previewEl) {
-      previewEl.textContent = `${hotkeySettings.getDisplayString()} + P, C, A, V, M, I, D`;
+      previewEl.textContent = `${hotkeySettings.getDisplayString()} + P, C, A, V, M, I, D, ?`;
     }
   }
 
@@ -283,18 +231,33 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, onLoad }
       cleanups.push(() => tabContainer.removeEventListener('click', handleTabClick));
     }
 
-    // Save button
-    const saveBtn = document.getElementById('presetSaveBtn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', handleSave);
-      cleanups.push(() => saveBtn.removeEventListener('click', handleSave));
+    // Preset buttons
+    const defaultBtn = document.getElementById('presetDefaultBtn');
+    if (defaultBtn) {
+      const handler = () => applyPreset('default');
+      defaultBtn.addEventListener('click', handler);
+      cleanups.push(() => defaultBtn.removeEventListener('click', handler));
     }
 
-    // Import button
-    const importBtn = document.getElementById('presetImportBtn');
-    if (importBtn) {
-      importBtn.addEventListener('click', handleImport);
-      cleanups.push(() => importBtn.removeEventListener('click', handleImport));
+    const demoBtn = document.getElementById('presetDemoBtn');
+    if (demoBtn) {
+      const handler = () => applyPreset('demo');
+      demoBtn.addEventListener('click', handler);
+      cleanups.push(() => demoBtn.removeEventListener('click', handler));
+    }
+
+    // Load button
+    const loadBtn = document.getElementById('shaderLoadBtn');
+    if (loadBtn) {
+      loadBtn.addEventListener('click', handleLoad);
+      cleanups.push(() => loadBtn.removeEventListener('click', handleLoad));
+    }
+
+    // Export button
+    const exportBtn = document.getElementById('shaderExportBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', handleExport);
+      cleanups.push(() => exportBtn.removeEventListener('click', handleExport));
     }
 
     // Close button

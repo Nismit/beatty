@@ -61,6 +61,10 @@ export function createKeyboardController({
           e.preventDefault();
           debugOverlay.toggle();
           break;
+        case '?':
+          e.preventDefault();
+          uiController.showHelpModal();
+          break;
       }
     }
   }
