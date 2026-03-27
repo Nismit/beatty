@@ -81,7 +81,7 @@ vec2 mainSound(float time) {
 // =============================================================================
 // DEMO: Full track with bass, lead, pad (120 BPM recommended)
 // =============================================================================
-export const DEMO_SOUND_SHADER = `// Utility functions
+export const DEMO_SOUND_SHADER_UTILS = `// Utility functions
 float timeToBeat(float time) {
   return time / 60.0 * u_bpm;
 }
@@ -277,9 +277,9 @@ float chorus(float phase, float depth, float rate, float time) {
   float mod1 = sine(phase + depth * lfo(time, rate));
   float mod2 = sine(phase + depth * lfo(time, rate * 1.1));
   return (sine(phase) + mod1 + mod2) / 3.0;
-}
+}`;
 
-vec2 mainSound(float time) {
+export const DEMO_SOUND_SHADER = `vec2 mainSound(float time) {
   float beat = timeToBeat(time);
   vec2 o = vec2(0.0);
 

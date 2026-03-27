@@ -11,8 +11,8 @@ import { createProgram } from './gl-utils.js';
  * Used to adjust error line numbers to match user code
  */
 export const PREAMBLE_LINES = {
-  SOUND: 13,
-  VISUAL: 29,
+  SOUND: 12,
+  VISUAL: 28,
 };
 
 /**

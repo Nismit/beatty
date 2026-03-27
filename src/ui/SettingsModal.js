@@ -7,13 +7,14 @@ import {
   DEFAULT_SOUND_SHADER,
   DEFAULT_VISUAL_SHADER,
   DEMO_SOUND_SHADER,
+  DEMO_SOUND_SHADER_UTILS,
 } from '../gl/shader-templates.js';
 import { EVENTS } from '../utils/consts.js';
 import { saveShader } from '../utils/storage.js';
 
 const SOUND_PRESETS = {
   default: { main: DEFAULT_SOUND_SHADER, utils: '' },
-  demo: { main: DEMO_SOUND_SHADER, utils: '' },
+  demo: { main: DEMO_SOUND_SHADER, utils: DEMO_SOUND_SHADER_UTILS },
 };
 
 const VISUAL_PRESETS = {
@@ -97,6 +98,10 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, initShad
           return;
         }
 
+        if (!confirm('This will overwrite your current shaders. Continue?')) {
+          return;
+        }
+
         // Update editor
         editor.setAllCodes({ soundMain, soundUtils, visualMain, visualUtils });
 
@@ -124,6 +129,10 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, initShad
     const preset = SOUND_PRESETS[presetName];
     if (!preset) return;
 
+    if (!confirm('This will overwrite your current sound shader. Continue?')) {
+      return;
+    }
+
     const { main, utils } = preset;
     const currentCodes = editor.getAllCodes();
 
@@ -145,6 +154,10 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, initShad
   function applyVisualPreset(presetName) {
     const preset = VISUAL_PRESETS[presetName];
     if (!preset) return;
+
+    if (!confirm('This will overwrite your current visual shader. Continue?')) {
+      return;
+    }
 
     const { main, utils } = preset;
     const currentCodes = editor.getAllCodes();

@@ -10,6 +10,7 @@ import {
   DEFAULT_SOUND_SHADER,
   DEFAULT_VISUAL_SHADER,
   DEMO_SOUND_SHADER,
+  DEMO_SOUND_SHADER_UTILS,
 } from '../../src/gl/shader-templates.js';
 
 function createMockDeps() {
@@ -66,6 +67,8 @@ describe('SettingsModal', () => {
   beforeEach(() => {
     setupDOM();
     vi.clearAllMocks();
+    // Mock confirm to return true by default
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   describe('show/hide/isVisible with missing DOM', () => {
@@ -135,7 +138,7 @@ describe('SettingsModal', () => {
 
       expect(deps.editor.setAllCodes).toHaveBeenCalledWith({
         soundMain: DEMO_SOUND_SHADER,
-        soundUtils: '',
+        soundUtils: DEMO_SOUND_SHADER_UTILS,
       });
       expect(deps.initShaders).toHaveBeenCalled();
       expect(modal.isVisible()).toBe(false);
@@ -172,6 +175,23 @@ describe('SettingsModal', () => {
       select.value = '';
       select.dispatchEvent(new Event('change'));
 
+      expect(deps.editor.setAllCodes).not.toHaveBeenCalled();
+      expect(deps.initShaders).not.toHaveBeenCalled();
+    });
+
+    it('should not apply preset when user cancels confirmation', () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+      const deps = createMockDeps();
+      const modal = createSettingsModal(deps);
+      modal.init();
+      modal.show();
+
+      const select = document.getElementById('soundPresetSelect');
+      select.value = 'default';
+      select.dispatchEvent(new Event('change'));
+
+      expect(window.confirm).toHaveBeenCalled();
       expect(deps.editor.setAllCodes).not.toHaveBeenCalled();
       expect(deps.initShaders).not.toHaveBeenCalled();
     });
