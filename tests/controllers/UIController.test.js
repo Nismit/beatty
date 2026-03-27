@@ -28,7 +28,6 @@ function setupDOM() {
     <button id="mobilePlayToggle"></button>
     <button id="mobileToggleEditor"></button>
     <button id="mobileToggleMode"></button>
-    <div id="statusLine"></div>
     <div id="bpmSliderPopup" class="slider-popup">
       <input id="bpmSlider" type="range" min="20" max="300" step="1" />
       <span id="bpmValue"></span>
