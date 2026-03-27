@@ -56,12 +56,13 @@ export class VisualRenderer {
 
   /**
    * Compile a visual shader (stages it, does not apply immediately)
-   * @param {string} userCode - User GLSL code containing visualMain()
+   * @param {string} mainCode - User GLSL code containing visualMain()
+   * @param {string} [utilsCode=''] - Optional utility functions
    * @throws {ShaderCompileError}
    */
-  compile(userCode) {
+  compile(mainCode, utilsCode = '') {
     const gl = this.#gl;
-    const program = compileVisualShader(gl, userCode);
+    const program = compileVisualShader(gl, mainCode, utilsCode);
 
     if (this.#compiledProgram && this.#compiledProgram !== this.#program) {
       deleteResource(gl, 'program', this.#compiledProgram);

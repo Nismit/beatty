@@ -21,12 +21,14 @@ export class ShaderCompileError extends BeattyError {
    * @param {string} message - Error message
    * @param {'sound' | 'visual'} shaderType - Type of shader that failed
    * @param {number | null} lineNumber - Line number where error occurred
+   * @param {'main' | 'utils' | null} file - Which file the error is in
    */
-  constructor(message, shaderType, lineNumber = null) {
+  constructor(message, shaderType, lineNumber = null, file = null) {
     super(message);
     this.name = 'ShaderCompileError';
     this.shaderType = shaderType;
     this.lineNumber = lineNumber;
+    this.file = file;
   }
 }
 
@@ -65,8 +67,10 @@ export function createErrorHandler(statusDisplay) {
     console.error(error);
 
     if (error instanceof ShaderCompileError) {
-      const line = error.lineNumber ? ` (line ${error.lineNumber})` : '';
-      statusDisplay.showError(`Shader Error${line}: ${error.message}`);
+      const file = error.file ? `[${error.file}]` : '';
+      const line = error.lineNumber ? `:${error.lineNumber}` : '';
+      const location = file || line ? ` ${file}${line}` : '';
+      statusDisplay.showError(`Shader Error${location}: ${error.message}`);
     } else if (error instanceof AudioContextError) {
       statusDisplay.showError(`Audio Error: ${error.message}`);
     } else if (error instanceof WebGLError) {

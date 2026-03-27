@@ -102,10 +102,56 @@ body {
     background-color: rgba(255, 255, 255, 0.15);
 }
 
+/* Tab Bar */
+.tab-bar {
+    height: 28px;
+    background: #1e1e1e;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 4px;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+}
+
+.tab-bar .tab {
+    padding: 4px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    color: #888;
+    font-family: monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-bar .tab:hover {
+    color: #ccc;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-bar .tab.active {
+    color: #f8f8f2;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Sound mode tab colors */
+.tab-bar.sound .tab.active {
+    color: #5eead4;
+    background: rgba(94, 234, 212, 0.15);
+}
+
+/* Visual mode tab colors */
+.tab-bar.visual .tab.active {
+    color: #818cf8;
+    background: rgba(129, 140, 248, 0.15);
+}
+
 .editor-content {
     flex: 1;
     margin-bottom: 0;
-    height: calc(100% - 48px);
+    height: calc(100% - 77px);
     overflow: hidden;
     min-width: 0;
 }
@@ -379,7 +425,7 @@ body {
     }
 
     .editor-content {
-        height: calc(100dvh - 48px - env(safe-area-inset-bottom, 0));
+        height: calc(100dvh - 77px - env(safe-area-inset-bottom, 0));
     }
 
     .toolbar {

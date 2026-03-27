@@ -7,7 +7,7 @@ import { WEBGL } from '../utils/consts.js';
 import { createProgram } from './gl-utils.js';
 
 /**
- * Number of lines in shader preambles (before user code)
+ * Base number of lines in shader preambles (before user code)
  * Used to adjust error line numbers to match user code
  */
 export const PREAMBLE_LINES = {
@@ -16,12 +16,41 @@ export const PREAMBLE_LINES = {
 };
 
 /**
- * Build a sound vertex shader from user code
- * @param {string} userCode - User-provided GLSL mainSound function
- * @returns {string} Complete vertex shader source
+ * Count lines in a string
+ * @param {string} code
+ * @returns {number}
  */
-export function buildSoundShader(userCode) {
-  return `#version 300 es
+function countLines(code) {
+  if (!code) return 0;
+  return code.split('\n').length;
+}
+
+/**
+ * Combine utils and main code with proper separation
+ * @param {string} mainCode
+ * @param {string} utilsCode
+ * @returns {{ combined: string, utilsLines: number }}
+ */
+function combineCode(mainCode, utilsCode) {
+  if (!utilsCode || utilsCode.trim() === '') {
+    return { combined: mainCode, utilsLines: 0 };
+  }
+  // Add blank line between utils and main for clarity
+  const combined = `${utilsCode}\n\n${mainCode}`;
+  // +2 for the blank lines between utils and main
+  const utilsLines = countLines(utilsCode) + 2;
+  return { combined, utilsLines };
+}
+
+/**
+ * Build a sound vertex shader from user code
+ * @param {string} mainCode - User-provided GLSL mainSound function
+ * @param {string} [utilsCode=''] - Optional utility functions
+ * @returns {{ source: string, utilsLines: number }} Complete vertex shader source and utils line count
+ */
+export function buildSoundShader(mainCode, utilsCode = '') {
+  const { combined, utilsLines } = combineCode(mainCode, utilsCode);
+  const source = `#version 300 es
 precision highp float;
 uniform float u_sampleRate;
 uniform float u_bpm;
@@ -34,7 +63,7 @@ out vec2 v_audioSample;
 #define SEMITONE 1.05946309436
 #define saturate(x) clamp((x), 0.0, 1.0)
 
-${userCode}
+${combined}
 
 void main() {
   float time = u_blockOffset + float(gl_VertexID) / u_sampleRate;
@@ -47,15 +76,18 @@ void main() {
 
   v_audioSample = out2;
 }`;
+  return { source, utilsLines };
 }
 
 /**
  * Build a visual fragment shader from user code
- * @param {string} userCode - User-provided GLSL visualMain function
- * @returns {string} Complete fragment shader source
+ * @param {string} mainCode - User-provided GLSL visualMain function
+ * @param {string} [utilsCode=''] - Optional utility functions
+ * @returns {{ source: string, utilsLines: number }} Complete fragment shader source and utils line count
  */
-export function buildVisualShader(userCode) {
-  return `#version 300 es
+export function buildVisualShader(mainCode, utilsCode = '') {
+  const { combined, utilsLines } = combineCode(mainCode, utilsCode);
+  const source = `#version 300 es
 precision highp float;
 uniform vec2 u_resolution;
 uniform float u_time;
@@ -84,12 +116,13 @@ out vec4 fragColor;
 #define SEMITONE 1.05946309436
 #define saturate(x) clamp((x), 0.0, 1.0)
 
-${userCode}
+${combined}
 
 void main() {
   vec3 color = visualMain(v_uv, u_resolution);
   fragColor = vec4(color, 1.0);
 }`;
+  return { source, utilsLines };
 }
 
 /**
@@ -118,12 +151,13 @@ void main(void) {}`;
 /**
  * Compile a sound shader program with Transform Feedback
  * @param {WebGL2RenderingContext} gl
- * @param {string} userCode - User GLSL code
+ * @param {string} mainCode - User GLSL main code
+ * @param {string} [utilsCode=''] - Optional utility functions
  * @returns {WebGLProgram}
  * @throws {ShaderCompileError}
  */
-export function compileSoundShader(gl, userCode) {
-  const vertexSource = buildSoundShader(userCode);
+export function compileSoundShader(gl, mainCode, utilsCode = '') {
+  const { source: vertexSource, utilsLines } = buildSoundShader(mainCode, utilsCode);
   const fragmentSource = getAudioFragmentShader();
   return createProgram(
     gl,
@@ -131,21 +165,23 @@ export function compileSoundShader(gl, userCode) {
     fragmentSource,
     'sound',
     WEBGL.TRANSFORM_FEEDBACK_VARYINGS,
-    { vertex: PREAMBLE_LINES.SOUND },
+    { vertex: PREAMBLE_LINES.SOUND, utilsLines },
   );
 }
 
 /**
  * Compile a visual shader program
  * @param {WebGL2RenderingContext} gl
- * @param {string} userCode - User GLSL code
+ * @param {string} mainCode - User GLSL main code
+ * @param {string} [utilsCode=''] - Optional utility functions
  * @returns {WebGLProgram}
  * @throws {ShaderCompileError}
  */
-export function compileVisualShader(gl, userCode) {
+export function compileVisualShader(gl, mainCode, utilsCode = '') {
   const vertexSource = getFullscreenVertexShader();
-  const fragmentSource = buildVisualShader(userCode);
+  const { source: fragmentSource, utilsLines } = buildVisualShader(mainCode, utilsCode);
   return createProgram(gl, vertexSource, fragmentSource, 'visual', null, {
     fragment: PREAMBLE_LINES.VISUAL,
+    utilsLines,
   });
 }

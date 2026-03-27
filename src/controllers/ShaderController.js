@@ -27,30 +27,30 @@ export function createShaderController({
 
   /**
    * Initialize shaders with the code currently loaded in the editor
-   * @param {string} soundCode
-   * @param {string} visualCode
+   * @param {{ main: string, utils: string }} soundCode
+   * @param {{ main: string, utils: string }} visualCode
    */
   function initShaders(soundCode, visualCode) {
-    soundRenderer.compile(soundCode);
-    visualRenderer.compile(visualCode);
+    soundRenderer.compile(soundCode.main, soundCode.utils);
+    visualRenderer.compile(visualCode.main, visualCode.utils);
   }
 
   /**
-   * Compile the current editor code
+   * Compile the current editor code (main + utils)
    */
   function compileShader() {
     try {
       const mode = editor.mode;
-      const code = editor.getCurrentCode();
+      const { main, utils } = editor.getCodeForCompile();
 
       eventBus.emit(EVENTS.SHADER_COMPILE_START, { mode });
 
       if (mode === UI.EDITOR_MODES.SOUND) {
-        soundRenderer.compile(code);
-        saveShader('sound', code);
+        soundRenderer.compile(main, utils);
+        saveShader('sound', main, utils);
       } else {
-        visualRenderer.compile(code);
-        saveShader('visual', code);
+        visualRenderer.compile(main, utils);
+        saveShader('visual', main, utils);
       }
       statusDisplay.showStatus(null, UI.STATUS_TYPES.COMPILED);
 

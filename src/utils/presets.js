@@ -68,22 +68,26 @@ export function savePresets(presets) {
 }
 
 /**
- * Built-in presets definition
+ * Built-in presets definition (new format with main/utils)
  */
 const BUILT_IN_PRESETS = [
   {
     id: 'default',
     name: 'Default',
-    soundCode: DEFAULT_SOUND_SHADER,
-    visualCode: DEFAULT_VISUAL_SHADER,
+    soundMain: DEFAULT_SOUND_SHADER,
+    soundUtils: '',
+    visualMain: DEFAULT_VISUAL_SHADER,
+    visualUtils: '',
     isBuiltIn: true,
     createdAt: 0,
   },
   {
     id: 'demo',
     name: 'Demo',
-    soundCode: DEMO_SOUND_SHADER,
-    visualCode: DEFAULT_VISUAL_SHADER,
+    soundMain: DEMO_SOUND_SHADER,
+    soundUtils: '',
+    visualMain: DEFAULT_VISUAL_SHADER,
+    visualUtils: '',
     isBuiltIn: true,
     createdAt: 0,
   },
@@ -117,11 +121,10 @@ export function getAllPresets() {
 /**
  * Create a new preset
  * @param {string} name - Preset name
- * @param {string} soundCode - Sound shader code
- * @param {string} visualCode - Visual shader code
+ * @param {{ soundMain: string, soundUtils: string, visualMain: string, visualUtils: string }} codes - Shader codes
  * @returns {{ success: boolean, preset?: Object, error?: string }}
  */
-export function createPreset(name, soundCode, visualCode) {
+export function createPreset(name, codes) {
   if (!name || !name.trim()) {
     return { success: false, error: 'Preset name is required' };
   }
@@ -142,8 +145,10 @@ export function createPreset(name, soundCode, visualCode) {
   const preset = {
     id: generateId(),
     name: trimmedName,
-    soundCode,
-    visualCode,
+    soundMain: codes.soundMain,
+    soundUtils: codes.soundUtils,
+    visualMain: codes.visualMain,
+    visualUtils: codes.visualUtils,
     isDefault: false,
     createdAt: Date.now(),
   };
@@ -221,11 +226,14 @@ export function exportPreset(id) {
     return { success: false, error: 'Preset not found' };
   }
 
+  // Support both old and new format presets
   const exportData = {
-    version: PRESET.STORAGE_VERSION,
+    version: 2,
     name: preset.name,
-    soundCode: preset.soundCode,
-    visualCode: preset.visualCode,
+    soundMain: preset.soundMain ?? preset.soundCode ?? '',
+    soundUtils: preset.soundUtils ?? '',
+    visualMain: preset.visualMain ?? preset.visualCode ?? '',
+    visualUtils: preset.visualUtils ?? '',
     exportedAt: Date.now(),
   };
 
@@ -233,7 +241,7 @@ export function exportPreset(id) {
 }
 
 /**
- * Validate import data structure
+ * Validate import data structure (supports old and new formats)
  * @param {Object} data - Import data to validate
  * @returns {{ valid: boolean, error?: string }}
  */
@@ -246,11 +254,15 @@ function validateImportData(data) {
     return { valid: false, error: 'Invalid preset name' };
   }
 
-  if (typeof data.soundCode !== 'string') {
+  // Support both old format (soundCode/visualCode) and new format (soundMain/etc)
+  const hasSoundCode = typeof data.soundMain === 'string' || typeof data.soundCode === 'string';
+  const hasVisualCode = typeof data.visualMain === 'string' || typeof data.visualCode === 'string';
+
+  if (!hasSoundCode) {
     return { valid: false, error: 'Invalid sound shader code' };
   }
 
-  if (typeof data.visualCode !== 'string') {
+  if (!hasVisualCode) {
     return { valid: false, error: 'Invalid visual shader code' };
   }
 
@@ -258,7 +270,7 @@ function validateImportData(data) {
 }
 
 /**
- * Import a preset from JSON data
+ * Import a preset from JSON data (supports old and new formats)
  * @param {Object} data - Import data
  * @returns {{ success: boolean, preset?: Object, error?: string }}
  */
@@ -268,7 +280,15 @@ export function importPreset(data) {
     return { success: false, error: validation.error };
   }
 
-  return createPreset(data.name, data.soundCode, data.visualCode);
+  // Convert old format to new format
+  const codes = {
+    soundMain: data.soundMain ?? data.soundCode ?? '',
+    soundUtils: data.soundUtils ?? '',
+    visualMain: data.visualMain ?? data.visualCode ?? '',
+    visualUtils: data.visualUtils ?? '',
+  };
+
+  return createPreset(data.name, codes);
 }
 
 /**

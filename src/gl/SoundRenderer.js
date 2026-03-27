@@ -33,11 +33,12 @@ export class SoundRenderer {
 
   /**
    * Compile a sound shader (stages it, does not apply immediately)
-   * @param {string} userCode - User GLSL code containing mainSound()
+   * @param {string} mainCode - User GLSL code containing mainSound()
+   * @param {string} [utilsCode=''] - Optional utility functions
    * @throws {ShaderCompileError}
    */
-  compile(userCode) {
-    const program = compileSoundShader(this.#gl, userCode);
+  compile(mainCode, utilsCode = '') {
+    const program = compileSoundShader(this.#gl, mainCode, utilsCode);
 
     if (this.#compiledProgram && this.#compiledProgram !== this.#program) {
       deleteResource(this.#gl, 'program', this.#compiledProgram);

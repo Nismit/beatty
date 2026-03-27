@@ -68,8 +68,8 @@ describe('presets', () => {
       expect(preset.id).toBe('default');
       expect(preset.name).toBe(PRESET.DEFAULT_NAME);
       expect(preset.isBuiltIn).toBe(true);
-      expect(preset.soundCode).toBeDefined();
-      expect(preset.visualCode).toBeDefined();
+      expect(preset.soundMain).toBeDefined();
+      expect(preset.visualMain).toBeDefined();
     });
   });
 
@@ -94,25 +94,27 @@ describe('presets', () => {
   });
 
   describe('createPreset', () => {
+    const codes = { soundMain: 'sound main', soundUtils: '', visualMain: 'visual main', visualUtils: '' };
+
     it('should create a new preset', () => {
-      const result = createPreset('My Preset', 'sound code', 'visual code');
+      const result = createPreset('My Preset', codes);
 
       expect(result.success).toBe(true);
       expect(result.preset.name).toBe('My Preset');
-      expect(result.preset.soundCode).toBe('sound code');
-      expect(result.preset.visualCode).toBe('visual code');
+      expect(result.preset.soundMain).toBe('sound main');
+      expect(result.preset.visualMain).toBe('visual main');
       expect(result.preset.id).toBeDefined();
     });
 
     it('should fail with empty name', () => {
-      const result = createPreset('', 'sound', 'visual');
+      const result = createPreset('', codes);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Preset name is required');
     });
 
     it('should fail with reserved name "Default"', () => {
-      const result = createPreset('Default', 'sound', 'visual');
+      const result = createPreset('Default', codes);
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Cannot use reserved name "Default"');
@@ -126,14 +128,14 @@ describe('presets', () => {
       }));
       savePresets(presets);
 
-      const result = createPreset('One More', 'sound', 'visual');
+      const result = createPreset('One More', codes);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Maximum');
     });
 
     it('should trim whitespace from name', () => {
-      const result = createPreset('  Spaced Name  ', 'sound', 'visual');
+      const result = createPreset('  Spaced Name  ', codes);
 
       expect(result.success).toBe(true);
       expect(result.preset.name).toBe('Spaced Name');
@@ -190,15 +192,25 @@ describe('presets', () => {
 
   describe('exportPreset', () => {
     it('should export a preset', () => {
-      savePresets([{ id: 'export-me', name: 'Export', soundCode: 's', visualCode: 'v' }]);
+      savePresets([{ id: 'export-me', name: 'Export', soundMain: 's', soundUtils: '', visualMain: 'v', visualUtils: '' }]);
 
       const result = exportPreset('export-me');
 
       expect(result.success).toBe(true);
       expect(result.data.name).toBe('Export');
-      expect(result.data.soundCode).toBe('s');
-      expect(result.data.visualCode).toBe('v');
+      expect(result.data.soundMain).toBe('s');
+      expect(result.data.visualMain).toBe('v');
       expect(result.data.exportedAt).toBeDefined();
+    });
+
+    it('should export old format preset with new format', () => {
+      savePresets([{ id: 'old', name: 'Old', soundCode: 'old-s', visualCode: 'old-v' }]);
+
+      const result = exportPreset('old');
+
+      expect(result.success).toBe(true);
+      expect(result.data.soundMain).toBe('old-s');
+      expect(result.data.visualMain).toBe('old-v');
     });
 
     it('should fail for non-existent preset', () => {
@@ -210,9 +222,25 @@ describe('presets', () => {
   });
 
   describe('importPreset', () => {
-    it('should import valid preset data', () => {
+    it('should import valid preset data (new format)', () => {
       const data = {
         name: 'Imported',
+        soundMain: 'sound',
+        soundUtils: '',
+        visualMain: 'visual',
+        visualUtils: '',
+      };
+
+      const result = importPreset(data);
+
+      expect(result.success).toBe(true);
+      expect(result.preset.name).toBe('Imported');
+      expect(result.preset.soundMain).toBe('sound');
+    });
+
+    it('should import old format preset data', () => {
+      const data = {
+        name: 'Old Import',
         soundCode: 'sound',
         visualCode: 'visual',
       };
@@ -220,14 +248,15 @@ describe('presets', () => {
       const result = importPreset(data);
 
       expect(result.success).toBe(true);
-      expect(result.preset.name).toBe('Imported');
+      expect(result.preset.name).toBe('Old Import');
+      expect(result.preset.soundMain).toBe('sound');
     });
 
     it('should fail with invalid data', () => {
       expect(importPreset(null).success).toBe(false);
       expect(importPreset({}).success).toBe(false);
       expect(importPreset({ name: '' }).success).toBe(false);
-      expect(importPreset({ name: 'Test', soundCode: 123 }).success).toBe(false);
+      expect(importPreset({ name: 'Test', soundMain: 123 }).success).toBe(false);
     });
   });
 

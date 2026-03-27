@@ -106,7 +106,17 @@ describe('errors', () => {
 
       handler(error);
 
-      expect(statusDisplay.showError).toHaveBeenCalledWith('Shader Error (line 10): Undefined');
+      expect(statusDisplay.showError).toHaveBeenCalledWith('Shader Error :10: Undefined');
+    });
+
+    it('should include file and line number for ShaderCompileError with file', () => {
+      const statusDisplay = { showError: vi.fn() };
+      const handler = createErrorHandler(statusDisplay);
+      const error = new ShaderCompileError('Undefined', 'visual', 10, 'utils');
+
+      handler(error);
+
+      expect(statusDisplay.showError).toHaveBeenCalledWith('Shader Error [utils]:10: Undefined');
     });
 
     it('should handle AudioContextError', () => {

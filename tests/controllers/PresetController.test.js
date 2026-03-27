@@ -16,7 +16,7 @@ import { saveShader } from '../../src/utils/storage.js';
 function createMockDeps() {
   return {
     editor: {
-      setCode: vi.fn(),
+      setAllCodes: vi.fn(),
     },
     initShaders: vi.fn(),
     eventBus: {
@@ -28,8 +28,10 @@ function createMockDeps() {
 const mockPreset = {
   id: 'test-preset-id',
   name: 'Test Preset',
-  soundCode: 'vec2 mainSound(float t) { return vec2(sin(t)); }',
-  visualCode: 'vec3 visualMain(vec2 uv) { return vec3(uv, 0.5); }',
+  soundMain: 'vec2 mainSound(float t) { return vec2(sin(t)); }',
+  soundUtils: '',
+  visualMain: 'vec3 visualMain(vec2 uv) { return vec3(uv, 0.5); }',
+  visualUtils: '',
   isDefault: false,
   createdAt: 1234567890,
 };
@@ -49,8 +51,16 @@ describe('PresetController', () => {
       const result = controller.loadPreset('test-preset-id');
 
       expect(result).toEqual({ success: true });
-      expect(deps.editor.setCode).toHaveBeenCalledWith('sound', mockPreset.soundCode);
-      expect(deps.editor.setCode).toHaveBeenCalledWith('visual', mockPreset.visualCode);
+      expect(deps.editor.setAllCodes).toHaveBeenCalledWith({
+        soundMain: mockPreset.soundMain,
+        soundUtils: mockPreset.soundUtils,
+        visualMain: mockPreset.visualMain,
+        visualUtils: mockPreset.visualUtils,
+      });
+      expect(deps.initShaders).toHaveBeenCalledWith(
+        { main: mockPreset.soundMain, utils: mockPreset.soundUtils },
+        { main: mockPreset.visualMain, utils: mockPreset.visualUtils },
+      );
       expect(deps.eventBus.emit).toHaveBeenCalledWith(EVENTS.PRESET_LOADED, {
         preset: mockPreset,
       });
@@ -64,19 +74,19 @@ describe('PresetController', () => {
       const result = controller.loadPreset('non-existent-id');
 
       expect(result).toEqual({ success: false, error: 'Preset not found' });
-      expect(deps.editor.setCode).not.toHaveBeenCalled();
+      expect(deps.editor.setAllCodes).not.toHaveBeenCalled();
       expect(deps.initShaders).not.toHaveBeenCalled();
     });
 
-    it('should handle editor.setCode throwing', () => {
+    it('should handle editor.setAllCodes throwing', () => {
       const deps = createMockDeps();
       getPresetById.mockReturnValue(mockPreset);
-      deps.editor.setCode.mockImplementation(() => {
-        throw new Error('setCode failed');
+      deps.editor.setAllCodes.mockImplementation(() => {
+        throw new Error('setAllCodes failed');
       });
       const controller = createPresetController(deps);
 
-      expect(() => controller.loadPreset('test-preset-id')).toThrow('setCode failed');
+      expect(() => controller.loadPreset('test-preset-id')).toThrow('setAllCodes failed');
     });
   });
 

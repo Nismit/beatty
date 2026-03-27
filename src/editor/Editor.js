@@ -21,8 +21,11 @@ import { EVENTS, UI } from '../utils/consts.js';
 export class Editor {
   #editorView;
   #editMode;
-  #soundCode;
-  #visualCode;
+  #activeTab;
+  #soundMain;
+  #soundUtils;
+  #visualMain;
+  #visualUtils;
   #isVisible;
   #eventBus;
 
@@ -36,59 +39,106 @@ export class Editor {
     this.#eventBus = eventBus;
     this.#editorView = null;
     this.#editMode = editMode;
-    this.#soundCode = '';
-    this.#visualCode = '';
+    this.#activeTab = UI.EDITOR_TABS.MAIN;
+    this.#soundMain = '';
+    this.#soundUtils = '';
+    this.#visualMain = '';
+    this.#visualUtils = '';
     this.#isVisible = isVisible;
   }
 
   get mode() {
     return this.#editMode;
   }
+  get tab() {
+    return this.#activeTab;
+  }
   get isVisible() {
     return this.#isVisible;
   }
 
   /**
-   * Get current code from the active editor
+   * Get current code from the active editor (current mode + tab)
    * @returns {string}
    */
   getCurrentCode() {
     if (this.#editorView) {
       return this.#editorView.state.doc.toString();
     }
-    return this.#editMode === UI.EDITOR_MODES.SOUND ? this.#soundCode : this.#visualCode;
+    return this.#getCodeForModeAndTab(this.#editMode, this.#activeTab);
   }
 
   /**
-   * Get both sound and visual codes
+   * Get code for compile (main + utils for current mode)
+   * @returns {{ main: string, utils: string }}
+   */
+  getCodeForCompile() {
+    if (this.#editorView) {
+      this.#saveCurrentCode();
+    }
+    if (this.#editMode === UI.EDITOR_MODES.SOUND) {
+      return { main: this.#soundMain, utils: this.#soundUtils };
+    }
+    return { main: this.#visualMain, utils: this.#visualUtils };
+  }
+
+  /**
+   * Get all codes (4 states)
    * Saves current editor content before returning
-   * @returns {{ soundCode: string, visualCode: string }}
+   * @returns {{ soundMain: string, soundUtils: string, visualMain: string, visualUtils: string }}
    */
   getAllCodes() {
     if (this.#editorView) {
       this.#saveCurrentCode();
     }
     return {
-      soundCode: this.#soundCode,
-      visualCode: this.#visualCode,
+      soundMain: this.#soundMain,
+      soundUtils: this.#soundUtils,
+      visualMain: this.#visualMain,
+      visualUtils: this.#visualUtils,
     };
   }
 
   /**
-   * Set code for a specific mode
+   * Set code for a specific mode (backwards compatible - sets main)
    * @param {'sound' | 'visual'} mode
    * @param {string} code
    */
   setCode(mode, code) {
-    if (mode === UI.EDITOR_MODES.SOUND) {
-      this.#soundCode = code;
-    } else {
-      this.#visualCode = code;
-    }
+    this.setCodeForTab(mode, UI.EDITOR_TABS.MAIN, code);
+  }
 
-    if (this.#editMode === mode && this.#editorView) {
+  /**
+   * Set code for a specific mode and tab
+   * @param {'sound' | 'visual'} mode
+   * @param {'main' | 'utils'} tab
+   * @param {string} code
+   */
+  setCodeForTab(mode, tab, code) {
+    this.#setCodeForModeAndTab(mode, tab, code);
+
+    if (this.#editMode === mode && this.#activeTab === tab && this.#editorView) {
       this.#editorView.dispatch({
         changes: { from: 0, to: this.#editorView.state.doc.length, insert: code },
+      });
+    }
+  }
+
+  /**
+   * Set all codes at once (for loading presets)
+   * @param {{ soundMain?: string, soundUtils?: string, visualMain?: string, visualUtils?: string }} codes
+   */
+  setAllCodes(codes) {
+    if (codes.soundMain !== undefined) this.#soundMain = codes.soundMain;
+    if (codes.soundUtils !== undefined) this.#soundUtils = codes.soundUtils;
+    if (codes.visualMain !== undefined) this.#visualMain = codes.visualMain;
+    if (codes.visualUtils !== undefined) this.#visualUtils = codes.visualUtils;
+
+    // Update editor if showing one of the changed codes
+    if (this.#editorView) {
+      const currentCode = this.#getCodeForModeAndTab(this.#editMode, this.#activeTab);
+      this.#editorView.dispatch({
+        changes: { from: 0, to: this.#editorView.state.doc.length, insert: currentCode },
       });
     }
   }
@@ -103,7 +153,56 @@ export class Editor {
       extensions: this.#createExtensions(),
     });
 
+    this.#initTabBar();
     this.#updateModeDisplay();
+    this.#updateTabDisplay();
+  }
+
+  /**
+   * Initialize tab bar event handlers
+   */
+  #initTabBar() {
+    const tabBar = document.getElementById('tabBar');
+    if (!tabBar) return;
+
+    tabBar.addEventListener('click', (e) => {
+      const tabBtn = e.target.closest('.tab');
+      if (!tabBtn) return;
+
+      const tab = tabBtn.dataset.tab;
+      if (tab && tab !== this.#activeTab) {
+        this.switchTab(tab);
+      }
+    });
+  }
+
+  /**
+   * Switch between main and utils tabs
+   * @param {'main' | 'utils'} tab
+   */
+  switchTab(tab) {
+    if (tab === this.#activeTab) return;
+
+    const oldTab = this.#activeTab;
+
+    // Save current content
+    if (this.#editorView) {
+      this.#saveCurrentCode();
+    }
+
+    // Switch tab
+    this.#activeTab = tab;
+
+    // Load code for the new tab
+    if (this.#editorView) {
+      const newCode = this.#getCodeForModeAndTab(this.#editMode, this.#activeTab);
+      this.#editorView.dispatch({
+        changes: { from: 0, to: this.#editorView.state.doc.length, insert: newCode },
+      });
+    }
+
+    this.#updateTabDisplay();
+    this.#eventBus.emit(EVENTS.EDITOR_TAB_CHANGED, { old: oldTab, new: this.#activeTab });
   }
 
   /**
@@ -121,15 +220,16 @@ export class Editor {
     this.#editMode =
       this.#editMode === UI.EDITOR_MODES.SOUND ? UI.EDITOR_MODES.VISUAL : UI.EDITOR_MODES.SOUND;
 
-    // Load code for the new mode
+    // Load code for the new mode (keeping same tab)
     if (this.#editorView) {
-      const newCode = this.#editMode === UI.EDITOR_MODES.SOUND ? this.#soundCode : this.#visualCode;
+      const newCode = this.#getCodeForModeAndTab(this.#editMode, this.#activeTab);
       this.#editorView.dispatch({
         changes: { from: 0, to: this.#editorView.state.doc.length, insert: newCode },
       });
     }
 
     this.#updateModeDisplay();
+    this.#updateTabDisplay();
     this.#eventBus.emit(EVENTS.EDITOR_MODE_CHANGED, { old: oldMode, new: this.#editMode });
   }
 
@@ -157,10 +257,41 @@ export class Editor {
   #saveCurrentCode() {
     if (!this.#editorView) return;
     const code = this.#editorView.state.doc.toString();
-    if (this.#editMode === UI.EDITOR_MODES.SOUND) {
-      this.#soundCode = code;
+    this.#setCodeForModeAndTab(this.#editMode, this.#activeTab, code);
+  }
+
+  /**
+   * Get code for a specific mode and tab
+   * @param {'sound' | 'visual'} mode
+   * @param {'main' | 'utils'} tab
+   * @returns {string}
+   */
+  #getCodeForModeAndTab(mode, tab) {
+    if (mode === UI.EDITOR_MODES.SOUND) {
+      return tab === UI.EDITOR_TABS.MAIN ? this.#soundMain : this.#soundUtils;
+    }
+    return tab === UI.EDITOR_TABS.MAIN ? this.#visualMain : this.#visualUtils;
+  }
+
+  /**
+   * Set code for a specific mode and tab
+   * @param {'sound' | 'visual'} mode
+   * @param {'main' | 'utils'} tab
+   * @param {string} code
+   */
+  #setCodeForModeAndTab(mode, tab, code) {
+    if (mode === UI.EDITOR_MODES.SOUND) {
+      if (tab === UI.EDITOR_TABS.MAIN) {
+        this.#soundMain = code;
+      } else {
+        this.#soundUtils = code;
+      }
     } else {
-      this.#visualCode = code;
+      if (tab === UI.EDITOR_TABS.MAIN) {
+        this.#visualMain = code;
+      } else {
+        this.#visualUtils = code;
+      }
     }
   }
 
@@ -169,11 +300,35 @@ export class Editor {
    */
   #updateModeDisplay() {
     const el = document.getElementById('editMode');
-    if (!el) return;
+    if (el) {
+      const isSound = this.#editMode === UI.EDITOR_MODES.SOUND;
+      el.textContent = isSound ? '[Sound]' : '[Visual]';
+      el.style.color = isSound ? '#51cf66' : '#ffd43b';
+    }
 
-    const isSound = this.#editMode === UI.EDITOR_MODES.SOUND;
-    el.textContent = isSound ? '[Sound]' : '[Visual]';
-    el.style.color = isSound ? '#51cf66' : '#ffd43b';
+    // Update tab bar mode class
+    const tabBar = document.getElementById('tabBar');
+    if (tabBar) {
+      tabBar.classList.remove('sound', 'visual');
+      tabBar.classList.add(this.#editMode);
+    }
+  }
+
+  /**
+   * Update tab bar active state
+   */
+  #updateTabDisplay() {
+    const tabBar = document.getElementById('tabBar');
+    if (!tabBar) return;
+
+    const tabs = tabBar.querySelectorAll('.tab');
+    for (const tab of tabs) {
+      if (tab.dataset.tab === this.#activeTab) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    }
   }
 
   /**

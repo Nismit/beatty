@@ -139,7 +139,7 @@ export function createSettingsModal({ eventBus, editor, hotkeySettings, onLoad }
     if (!name) return;
 
     const codes = editor.getAllCodes();
-    const result = createPreset(name, codes.soundCode, codes.visualCode);
+    const result = createPreset(name, codes);
 
     if (result.success) {
       eventBus.emit(EVENTS.PRESET_SAVED, { preset: result.preset });

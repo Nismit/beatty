@@ -15,18 +15,20 @@ function getStorageKey(mode) {
 }
 
 /**
- * Save shader code to LocalStorage
+ * Save shader code to LocalStorage (new format with main/utils)
  * @param {'sound' | 'visual'} mode - Shader mode
- * @param {string} code - Shader code to save
+ * @param {string} main - Main shader code
+ * @param {string} [utils=''] - Utils shader code
  * @returns {boolean} Success status
  */
-export function saveShader(mode, code) {
+export function saveShader(mode, main, utils = '') {
   try {
     const key = getStorageKey(mode);
     const data = {
-      code,
+      main,
+      utils,
       timestamp: Date.now(),
-      version: '1.0',
+      version: '2.0',
     };
 
     localStorage.setItem(key, JSON.stringify(data));
@@ -39,8 +41,9 @@ export function saveShader(mode, code) {
 
 /**
  * Load shader code from LocalStorage
+ * Handles migration from old format (code only) to new format (main + utils)
  * @param {'sound' | 'visual'} mode - Shader mode
- * @returns {string | null} Shader code or null if not found
+ * @returns {{ main: string, utils: string } | null} Shader codes or null if not found
  */
 export function loadShader(mode) {
   try {
@@ -53,14 +56,30 @@ export function loadShader(mode) {
 
     const data = JSON.parse(stored);
 
-    // Validate data structure
-    if (!data.code || typeof data.code !== 'string') {
+    // Migration: old format (version 1.0 with 'code') -> new format (version 2.0 with 'main'/'utils')
+    if (data.version === '1.0' || data.code !== undefined) {
+      if (!data.code || typeof data.code !== 'string') {
+        console.warn(`[Storage] Invalid ${mode} shader data, removing`);
+        localStorage.removeItem(key);
+        return null;
+      }
+      // Migrate to new format
+      const migrated = { main: data.code, utils: '' };
+      saveShader(mode, migrated.main, migrated.utils);
+      return migrated;
+    }
+
+    // New format validation
+    if (!data.main || typeof data.main !== 'string') {
       console.warn(`[Storage] Invalid ${mode} shader data, removing`);
       localStorage.removeItem(key);
       return null;
     }
 
-    return data.code;
+    return {
+      main: data.main,
+      utils: data.utils || '',
+    };
   } catch (error) {
     console.error(`[Storage] Failed to load ${mode} shader:`, error);
     return null;

@@ -163,16 +163,23 @@ async function init() {
 
   // Initialize
   try {
-    // Load saved shaders or defaults
-    const soundCode = loadShader('sound') || DEFAULT_SOUND_SHADER;
-    const visualCode = loadShader('visual') || DEFAULT_VISUAL_SHADER;
+    // Load saved shaders or defaults (new format: { main, utils })
+    const savedSound = loadShader('sound');
+    const savedVisual = loadShader('visual');
 
-    editor.setCode('sound', soundCode);
-    editor.setCode('visual', visualCode);
+    const soundMain = savedSound?.main || DEFAULT_SOUND_SHADER;
+    const soundUtils = savedSound?.utils || '';
+    const visualMain = savedVisual?.main || DEFAULT_VISUAL_SHADER;
+    const visualUtils = savedVisual?.utils || '';
+
+    editor.setAllCodes({ soundMain, soundUtils, visualMain, visualUtils });
     editor.init();
 
     visualRenderer.init();
-    shaderController.initShaders(soundCode, visualCode);
+    shaderController.initShaders(
+      { main: soundMain, utils: soundUtils },
+      { main: visualMain, utils: visualUtils },
+    );
 
     await audioEngine.init();
     audioSettings.setSampleRate(audioEngine.sampleRate);

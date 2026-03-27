@@ -10,12 +10,13 @@ import { saveShader } from '../utils/storage.js';
 /**
  * @param {Object} deps
  * @param {import('../editor/Editor.js').Editor} deps.editor
- * @param {function(string, string): void} deps.initShaders - ShaderController.initShaders
+ * @param {function({ main: string, utils: string }, { main: string, utils: string }): void} deps.initShaders
  * @param {import('../state/EventBus.js').EventBus} deps.eventBus
  */
 export function createPresetController({ editor, initShaders, eventBus }) {
   /**
    * Load a preset by ID into the editor and compile
+   * Handles both old format (soundCode/visualCode) and new format (soundMain/soundUtils/etc)
    * @param {string} presetId - Preset ID to load
    * @returns {{ success: boolean, error?: string }}
    */
@@ -25,16 +26,21 @@ export function createPresetController({ editor, initShaders, eventBus }) {
       return { success: false, error: 'Preset not found' };
     }
 
+    // Handle both old and new preset formats
+    const soundMain = preset.soundMain ?? preset.soundCode ?? '';
+    const soundUtils = preset.soundUtils ?? '';
+    const visualMain = preset.visualMain ?? preset.visualCode ?? '';
+    const visualUtils = preset.visualUtils ?? '';
+
     // Update editor with preset code
-    editor.setCode('sound', preset.soundCode);
-    editor.setCode('visual', preset.visualCode);
+    editor.setAllCodes({ soundMain, soundUtils, visualMain, visualUtils });
 
     // Save to LocalStorage for persistence
-    saveShader('sound', preset.soundCode);
-    saveShader('visual', preset.visualCode);
+    saveShader('sound', soundMain, soundUtils);
+    saveShader('visual', visualMain, visualUtils);
 
     // Compile and apply shaders
-    initShaders(preset.soundCode, preset.visualCode);
+    initShaders({ main: soundMain, utils: soundUtils }, { main: visualMain, utils: visualUtils });
 
     // Emit event
     eventBus.emit(EVENTS.PRESET_LOADED, { preset });

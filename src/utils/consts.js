@@ -52,6 +52,10 @@ export const UI = {
     SOUND: 'sound',
     VISUAL: 'visual',
   },
+  EDITOR_TABS: {
+    MAIN: 'main',
+    UTILS: 'utils',
+  },
   STATUS_TYPES: {
     INITIALIZING: 'initializing',
     READY: 'ready',
@@ -105,6 +109,7 @@ export const EVENTS = {
 
   // Editor
   EDITOR_MODE_CHANGED: 'editor:modeChanged',
+  EDITOR_TAB_CHANGED: 'editor:tabChanged',
   EDITOR_VISIBILITY_CHANGED: 'editor:visibilityChanged',
 
   // UI

@@ -20,7 +20,10 @@ function createMockDeps() {
     },
     editor: {
       mode: UI.EDITOR_MODES.SOUND,
-      getCurrentCode: vi.fn(() => 'vec2 mainSound(float t) { return vec2(0.0); }'),
+      getCodeForCompile: vi.fn(() => ({
+        main: 'vec2 mainSound(float t) { return vec2(0.0); }',
+        utils: '',
+      })),
     },
     statusDisplay: {
       showStatus: vi.fn(),
@@ -49,10 +52,13 @@ describe('ShaderController', () => {
       const deps = createMockDeps();
       const controller = createShaderController(deps);
 
-      controller.initShaders('sound code', 'visual code');
+      controller.initShaders(
+        { main: 'sound main', utils: 'sound utils' },
+        { main: 'visual main', utils: 'visual utils' },
+      );
 
-      expect(deps.soundRenderer.compile).toHaveBeenCalledWith('sound code');
-      expect(deps.visualRenderer.compile).toHaveBeenCalledWith('visual code');
+      expect(deps.soundRenderer.compile).toHaveBeenCalledWith('sound main', 'sound utils');
+      expect(deps.visualRenderer.compile).toHaveBeenCalledWith('visual main', 'visual utils');
     });
 
     it('should throw on compile error', () => {
@@ -62,7 +68,7 @@ describe('ShaderController', () => {
       });
       const controller = createShaderController(deps);
 
-      expect(() => controller.initShaders('bad', 'visual')).toThrow('Compile failed');
+      expect(() => controller.initShaders({ main: 'bad', utils: '' }, { main: 'visual', utils: '' })).toThrow('Compile failed');
     });
   });
 

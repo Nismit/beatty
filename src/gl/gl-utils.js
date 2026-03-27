@@ -17,16 +17,32 @@ function parseErrorLineNumber(errorMessage) {
 }
 
 /**
- * Adjust error message line numbers by subtracting preamble lines
+ * Adjust error message line numbers and add file indicator (main/utils)
  * @param {string} errorMessage
  * @param {number} preambleLines
- * @returns {string}
+ * @param {number} utilsLines
+ * @returns {{ message: string, file: 'main' | 'utils' | null }}
  */
-function adjustErrorLineNumbers(errorMessage, preambleLines) {
-  return errorMessage.replace(/ERROR:\s*(\d+):(\d+):/g, (match, col, line) => {
-    const adjustedLine = Math.max(1, Number.parseInt(line, 10) - preambleLines);
-    return `ERROR: ${col}:${adjustedLine}:`;
+function adjustErrorLineNumbers(errorMessage, preambleLines, utilsLines = 0) {
+  let file = null;
+
+  const adjustedMessage = errorMessage.replace(/ERROR:\s*(\d+):(\d+):/g, (match, col, line) => {
+    const rawLine = Number.parseInt(line, 10);
+    const userCodeLine = rawLine - preambleLines;
+
+    if (utilsLines > 0 && userCodeLine <= utilsLines) {
+      // Error is in utils section
+      file = 'utils';
+      const adjustedLine = Math.max(1, userCodeLine);
+      return `ERROR: ${col}:${adjustedLine}: [utils]`;
+    }
+    // Error is in main section
+    file = 'main';
+    const adjustedLine = Math.max(1, userCodeLine - utilsLines);
+    return `ERROR: ${col}:${adjustedLine}: [main]`;
   });
+
+  return { message: adjustedMessage, file };
 }
 
 /**
@@ -36,10 +52,11 @@ function adjustErrorLineNumbers(errorMessage, preambleLines) {
  * @param {string} source - GLSL source code
  * @param {'sound' | 'visual'} shaderType - Shader type for error reporting
  * @param {number} [preambleLines=0] - Lines to subtract from error line numbers
+ * @param {number} [utilsLines=0] - Lines in utils section (to determine main vs utils)
  * @returns {WebGLShader}
  * @throws {ShaderCompileError}
  */
-export function compileShader(gl, type, source, shaderType, preambleLines = 0) {
+export function compileShader(gl, type, source, shaderType, preambleLines = 0, utilsLines = 0) {
   const shader = gl.createShader(type);
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
@@ -49,11 +66,24 @@ export function compileShader(gl, type, source, shaderType, preambleLines = 0) {
     gl.deleteShader(shader);
 
     const rawLineNumber = parseErrorLineNumber(error);
-    const userLineNumber =
-      rawLineNumber !== null ? Math.max(1, rawLineNumber - preambleLines) : null;
-    const adjustedError = preambleLines > 0 ? adjustErrorLineNumbers(error, preambleLines) : error;
+    const { message: adjustedError, file } = adjustErrorLineNumbers(
+      error,
+      preambleLines,
+      utilsLines,
+    );
 
-    throw new ShaderCompileError(adjustedError, shaderType, userLineNumber);
+    // Calculate user line number in the correct file
+    let userLineNumber = null;
+    if (rawLineNumber !== null) {
+      const userCodeLine = rawLineNumber - preambleLines;
+      if (utilsLines > 0 && userCodeLine <= utilsLines) {
+        userLineNumber = Math.max(1, userCodeLine);
+      } else {
+        userLineNumber = Math.max(1, userCodeLine - utilsLines);
+      }
+    }
+
+    throw new ShaderCompileError(adjustedError, shaderType, userLineNumber, file);
   }
 
   return shader;
@@ -66,7 +96,7 @@ export function compileShader(gl, type, source, shaderType, preambleLines = 0) {
  * @param {string} fragmentSource
  * @param {'sound' | 'visual'} shaderType - For error reporting
  * @param {string[] | null} [transformFeedbackVaryings]
- * @param {{ vertex?: number, fragment?: number }} [preambleLines] - Lines to subtract from errors
+ * @param {{ vertex?: number, fragment?: number, utilsLines?: number }} [preambleLines] - Lines to subtract from errors
  * @returns {WebGLProgram}
  * @throws {WebGLError}
  */
@@ -78,12 +108,14 @@ export function createProgram(
   transformFeedbackVaryings = null,
   preambleLines = {},
 ) {
+  const utilsLines = preambleLines.utilsLines ?? 0;
   const vertexShader = compileShader(
     gl,
     gl.VERTEX_SHADER,
     vertexSource,
     shaderType,
     preambleLines.vertex ?? 0,
+    utilsLines,
   );
   const fragmentShader = compileShader(
     gl,
@@ -91,6 +123,7 @@ export function createProgram(
     fragmentSource,
     shaderType,
     preambleLines.fragment ?? 0,
+    utilsLines,
   );
 
   const program = gl.createProgram();

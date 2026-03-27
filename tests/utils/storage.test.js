@@ -21,23 +21,24 @@ describe('storage', () => {
 
   describe('saveShader / loadShader', () => {
     it('should save and load sound shader code', () => {
-      const code = 'vec2 mainSound(float t) { return vec2(sin(t * 440.0)); }';
+      const main = 'vec2 mainSound(float t) { return vec2(sin(t * 440.0)); }';
+      const utils = '// utils';
 
-      const saved = saveShader('sound', code);
+      const saved = saveShader('sound', main, utils);
       const loaded = loadShader('sound');
 
       expect(saved).toBe(true);
-      expect(loaded).toBe(code);
+      expect(loaded).toEqual({ main, utils });
     });
 
     it('should save and load visual shader code', () => {
-      const code = 'vec3 visualMain(vec2 uv) { return vec3(uv, 0.5); }';
+      const main = 'vec3 visualMain(vec2 uv) { return vec3(uv, 0.5); }';
 
-      const saved = saveShader('visual', code);
+      const saved = saveShader('visual', main);
       const loaded = loadShader('visual');
 
       expect(saved).toBe(true);
-      expect(loaded).toBe(code);
+      expect(loaded).toEqual({ main, utils: '' });
     });
 
     it('should return null for non-existent shader', () => {
@@ -46,12 +47,13 @@ describe('storage', () => {
     });
 
     it('should include timestamp and version in stored data', () => {
-      const code = 'test code';
-      saveShader('sound', code);
+      const main = 'test code';
+      saveShader('sound', main);
 
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOUND_SHADER));
-      expect(stored.code).toBe(code);
-      expect(stored.version).toBe('1.0');
+      expect(stored.main).toBe(main);
+      expect(stored.utils).toBe('');
+      expect(stored.version).toBe('2.0');
       expect(typeof stored.timestamp).toBe('number');
     });
 
@@ -59,7 +61,7 @@ describe('storage', () => {
       saveShader('sound', 'first version');
       saveShader('sound', 'second version');
 
-      expect(loadShader('sound')).toBe('second version');
+      expect(loadShader('sound')).toEqual({ main: 'second version', utils: '' });
     });
 
     it('should handle invalid stored data gracefully', () => {
@@ -72,8 +74,8 @@ describe('storage', () => {
       expect(result).toBeNull();
     });
 
-    it('should handle stored data without code field', () => {
-      const invalidData = { timestamp: Date.now(), version: '1.0' };
+    it('should handle stored data without main field', () => {
+      const invalidData = { timestamp: Date.now(), version: '2.0' };
       localStorage.setItem(STORAGE_KEYS.SOUND_SHADER, JSON.stringify(invalidData));
 
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -83,6 +85,20 @@ describe('storage', () => {
       expect(result).toBeNull();
       // Should have removed the invalid data
       expect(localStorage.getItem(STORAGE_KEYS.SOUND_SHADER)).toBeNull();
+    });
+
+    it('should migrate old format (version 1.0) to new format', () => {
+      const oldData = { code: 'old code', timestamp: Date.now(), version: '1.0' };
+      localStorage.setItem(STORAGE_KEYS.SOUND_SHADER, JSON.stringify(oldData));
+
+      const loaded = loadShader('sound');
+
+      expect(loaded).toEqual({ main: 'old code', utils: '' });
+
+      // Should have migrated to new format
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOUND_SHADER));
+      expect(stored.version).toBe('2.0');
+      expect(stored.main).toBe('old code');
     });
   });
 
